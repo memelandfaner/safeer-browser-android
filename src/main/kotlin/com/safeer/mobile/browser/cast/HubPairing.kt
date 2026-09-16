@@ -62,10 +62,13 @@ object HubPairing {
             .getString(KEY_CONTROL_TOKEN, null)
 
     private fun shraniZeton(context: Context, zeton: String, odtis: String) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
             .putString(KEY_CONTROL_TOKEN, zeton)
             .putString(HubTls.KEY_HUB_FP, odtis)
             .apply()
+        // Tudi v seznam seznanitev: ko ta Hub ugasne in se vrne drug znani, ni nove kode.
+        Seznanitve.zapomni(context, odtis, zeton, prefs.getString("hub_url", "") ?: "")
     }
 
     /** Odjemalec, ki pred seznanitvijo sprejme katerokoli potrdilo in si zapomni njegov odtis. */

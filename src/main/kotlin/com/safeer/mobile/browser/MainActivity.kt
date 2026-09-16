@@ -306,6 +306,7 @@ class MainActivity : android.app.Activity() {
     override fun onPause() {
         super.onPause()
         inForeground = false
+        com.safeer.mobile.browser.cast.HubKrmilnik.naPrijavoZaZaslon = null
         val playing = tabManager.getPlayingTab()
         if (playing != null) {
             // 🎵 Sound keeps playing: the WebView stays "visible" (ChromiumEngineView) and a foreground service with
@@ -319,6 +320,8 @@ class MainActivity : android.app.Activity() {
     override fun onResume() {
         super.onResume()
         inForeground = true
+        com.safeer.mobile.browser.cast.HubKrmilnik.naPrijavoZaZaslon = { runOnUiThread { pokaziKodoZaSeznanitev() } }
+        pokaziKodoZaSeznanitev()
         MediaPlaybackService.stop(this)
         tabManager.getActiveTab()?.loadedWebView?.onResume()
     }
@@ -1075,6 +1078,62 @@ class MainActivity : android.app.Activity() {
     // ------------------------------------------------------------------
 
     private var linkOkno: Dialog? = null
+
+    // ---- Safeer Link: koda za seznanitev, ko stran Linka ni odprta ----
+    private var kodaOkno: AlertDialog? = null
+
+    /**
+     * Druga naprava se zeli povezati na Hub tega telefona: kodo pokazemo takoj, tudi ce
+     * uporabnik bere stran. Ce je odprta stran Safeer Linka, kodo pokaze ona.
+     */
+    private fun pokaziKodoZaSeznanitev() {
+        try {
+            if (linkOkno != null) {
+                kodaOkno?.let { if (it.isShowing) it.dismiss() }
+                kodaOkno = null
+                return
+            }
+            val p = com.safeer.mobile.browser.cast.HubKrmilnik.usmerjevalnik?.cakajocePrijave()?.lastOrNull()
+            if (p == null) {
+                kodaOkno?.let { if (it.isShowing) it.dismiss() }
+                kodaOkno = null
+                return
+            }
+            val obstojece = kodaOkno
+            if (obstojece != null && obstojece.isShowing && obstojece.window?.decorView?.tag == p.pairId) return
+            obstojece?.let { if (it.isShowing) it.dismiss() }
+            val koda = p.pin.map { it.toString() }.joinToString("  ")
+            val vsebina = android.widget.LinearLayout(this).apply {
+                orientation = android.widget.LinearLayout.VERTICAL
+                setPadding(48, 24, 48, 8)
+                addView(android.widget.TextView(this@MainActivity).apply {
+                    text = I18n.t(this@MainActivity, "pair_code_body").replace("{ime}", p.ime)
+                    textSize = 16f
+                })
+                addView(android.widget.TextView(this@MainActivity).apply {
+                    text = koda
+                    textSize = 40f
+                    setTypeface(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD)
+                    gravity = android.view.Gravity.CENTER
+                    setPadding(0, 24, 0, 8)
+                })
+            }
+            val okno = AlertDialog.Builder(this)
+                .setTitle(I18n.t(this, "pair_code_title"))
+                .setView(vsebina)
+                .setNegativeButton(I18n.t(this, "pair_code_reject")) { _, _ ->
+                    try { com.safeer.mobile.browser.cast.HubKrmilnik.usmerjevalnik?.zavrniPrijavo(p.pairId) } catch (_: Exception) { }
+                }
+                .setPositiveButton(android.R.string.ok, null)
+                .create()
+            okno.setOnDismissListener { if (kodaOkno === okno) kodaOkno = null }
+            kodaOkno = okno
+            okno.show()
+            try { okno.window?.decorView?.tag = p.pairId } catch (_: Exception) { }
+        } catch (e: Exception) {
+            android.util.Log.w("SafeerLink", "Kode za seznanitev ni bilo mogoce pokazati: " + e.message)
+        }
+    }
     private var linkMost: com.safeer.mobile.browser.link.LinkMost? = null
     private var linkDatotekaCilj: String = ""
     private var linkZaslonCilj: String = ""

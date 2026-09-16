@@ -289,12 +289,13 @@ class CastSenderClient(
                     mainHandler.post { onPlaybackStatus?.invoke(status) }
                 }
 
-                "share.text", "share.file", "share.screen" -> {
+                "share.text", "share.file", "share.screen", "cast.url" -> {
                     // Hub je posiljatelja ze vpisal (sender, sender_name); vsebina je v payload.
+                    // cast.url pride, ko stran poslje televizor ali druga naprava: telefon jo odpre.
                     mainHandler.post { onShare?.invoke(json) }
                     val ack = JSONObject().apply {
                         put("id", UUID.randomUUID().toString())
-                        put("type", "share.ack")
+                        put("type", if (type == "cast.url") "cast.ack" else "share.ack")
                         put("ref_id", json.optString("id", ""))
                         put("status", "accepted")
                     }

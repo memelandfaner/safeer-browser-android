@@ -63,7 +63,7 @@
       cakaNaPotrditev: "Čaka na tvojo potrditev",
       niVklopljen: "Ni povezano",
       brezHubaNaslov: "Safeer Link še ni vklopljen",
-      brezHubaOpis: "Safeer Link pošlje odprto stran na televizor in poveže tvoje naprave doma — brez oblaka in brez računa. Za to mora ena naprava v hiši prevzeti vlogo središča; ostale se povežejo nanjo.",
+      brezHubaOpis: "Safeer Link poveže tvoje naprave doma — telefon, računalnik in televizor. Z ene na drugo pošlješ stran, besedilo, datoteko ali zaslon, brez oblaka in brez računa. Ena naprava je središče (lahko tudi ta), ostale se povežejo nanjo.",
       brezHubaPomirilo: "Brskalnik deluje povsem normalno tudi brez njega. Ničesar ne izgubiš, če to okno zapreš.",
       poisci: "Poišči v mojem omrežju",
       kakoDobim: "Kako to vklopim",
@@ -94,9 +94,10 @@
       zaslon: "Zaslon",
       televizor: "Televizor",
       posljiNaZaslon: "Pošlji na ta zaslon",
+      posljiNaNapravo: "Pošlji na to napravo",
       poslji: "Pošlji",
       povezan: "Povezan",
-      brezZaslonov: "Noben zaslon se še ni javil. Na televizorju odpri Safeer brskalnik in potrdi njegovo kodo.",
+      brezZaslonov: "Nobena druga naprava še ni povezana. Na njej odpri Safeer Link in vtipkaj kodo, ki jo pokaže središče.",
       poslanoNa: "Poslano na {ime}.",
       niDosegljiv: "{ime} trenutno ni dosegljiv. Preveri, ali je prižgan, in poskusi znova.",
       neMorePoslati: "Te strani ni mogoče poslati. Odpri spletno stran in poskusi znova.",
@@ -167,7 +168,7 @@
       cakaNaPotrditev: "Waiting for your approval",
       niVklopljen: "Not connected",
       brezHubaNaslov: "Safeer Link is not set up yet",
-      brezHubaOpis: "Safeer Link sends the open page to your television and connects the devices in your home — no cloud, no account. One device in the house takes the role of the hub; the others connect to it.",
+      brezHubaOpis: "Safeer Link connects the devices in your home — phone, computer and television. Send a page, text, a file or your screen from one to another, with no cloud and no account. One device is the hub (this one can be), the others connect to it.",
       brezHubaPomirilo: "The browser works exactly as before without it. You lose nothing by closing this window.",
       poisci: "Look on my network",
       kakoDobim: "How do I turn this on",
@@ -198,9 +199,10 @@
       zaslon: "Screen",
       televizor: "Television",
       posljiNaZaslon: "Send to this screen",
+      posljiNaNapravo: "Send to this device",
       poslji: "Send",
       povezan: "Connected",
-      brezZaslonov: "No screen has appeared yet. Open the Safeer browser on your television and approve its code.",
+      brezZaslonov: "No other device is connected yet. Open Safeer Link on it and type the code shown by the hub.",
       poslanoNa: "Sent to {ime}.",
       niDosegljiv: "{ime} cannot be reached right now. Check that it is on and try again.",
       neMorePoslati: "This page cannot be sent. Open a website and try again.",
@@ -271,7 +273,7 @@
       cakaNaPotrditev: "Warte auf deine Bestätigung",
       niVklopljen: "Nicht verbunden",
       brezHubaNaslov: "Safeer Link ist noch nicht eingerichtet",
-      brezHubaOpis: "Safeer Link sendet die geöffnete Seite an deinen Fernseher und verbindet die Geräte bei dir zu Hause — ohne Cloud, ohne Konto. Ein Gerät im Haus übernimmt die Rolle des Hubs, die anderen verbinden sich damit.",
+      brezHubaOpis: "Safeer Link verbindet die Geräte bei dir zu Hause — Telefon, Computer und Fernseher. Sende eine Seite, Text, eine Datei oder deinen Bildschirm von einem zum anderen, ohne Cloud und ohne Konto. Ein Gerät ist der Hub (auch dieses kann es sein), die anderen verbinden sich damit.",
       brezHubaPomirilo: "Ohne ihn funktioniert der Browser genau wie vorher. Du verlierst nichts, wenn du dieses Fenster schließt.",
       poisci: "In meinem Netzwerk suchen",
       kakoDobim: "Wie schalte ich das ein",
@@ -302,9 +304,10 @@
       zaslon: "Bildschirm",
       televizor: "Fernseher",
       posljiNaZaslon: "An diesen Bildschirm senden",
+      posljiNaNapravo: "An dieses Gerät senden",
       poslji: "Senden",
       povezan: "Verbunden",
-      brezZaslonov: "Es ist noch kein Bildschirm aufgetaucht. Öffne den Safeer-Browser auf deinem Fernseher und bestätige seinen Code.",
+      brezZaslonov: "Noch kein anderes Gerät ist verbunden. Öffne dort Safeer Link und gib den Code ein, den der Hub anzeigt.",
       poslanoNa: "An {ime} gesendet.",
       niDosegljiv: "{ime} ist gerade nicht erreichbar. Prüfe, ob das Gerät an ist, und versuche es erneut.",
       neMorePoslati: "Diese Seite kann nicht gesendet werden. Öffne eine Website und versuche es erneut.",
@@ -375,7 +378,7 @@
       cakaNaPotrditev: "Esperando tu aprobación",
       niVklopljen: "Sin conexión",
       brezHubaNaslov: "Safeer Link todavía no está configurado",
-      brezHubaOpis: "Safeer Link envía la página abierta a tu televisor y conecta los dispositivos de tu casa: sin nube, sin cuenta. Un dispositivo de la casa asume el papel de hub y los demás se conectan a él.",
+      brezHubaOpis: "Safeer Link conecta los dispositivos de tu casa: teléfono, ordenador y televisor. Envía una página, texto, un archivo o tu pantalla de uno a otro, sin nube y sin cuenta. Un dispositivo es el hub (puede ser este) y los demás se conectan a él.",
       brezHubaPomirilo: "Sin él, el navegador funciona exactamente igual que antes. No pierdes nada al cerrar esta ventana.",
       poisci: "Buscar en mi red",
       kakoDobim: "Cómo activo esto",
@@ -406,9 +409,10 @@
       zaslon: "Pantalla",
       televizor: "Televisor",
       posljiNaZaslon: "Enviar a esta pantalla",
+      posljiNaNapravo: "Enviar a este dispositivo",
       poslji: "Enviar",
       povezan: "Conectado",
-      brezZaslonov: "Todavía no ha aparecido ninguna pantalla. Abre el navegador Safeer en tu televisor y aprueba su código.",
+      brezZaslonov: "Todavía no hay ningún otro dispositivo conectado. Abre Safeer Link en él y escribe el código que muestra el hub.",
       poslanoNa: "Enviado a {ime}.",
       niDosegljiv: "Ahora mismo no se puede llegar a {ime}. Comprueba que esté encendido e inténtalo de nuevo.",
       neMorePoslati: "Esta página no se puede enviar. Abre un sitio web e inténtalo de nuevo.",
@@ -479,7 +483,7 @@
       cakaNaPotrditev: "En attente de ton approbation",
       niVklopljen: "Non connecté",
       brezHubaNaslov: "Safeer Link n\'est pas encore configuré",
-      brezHubaOpis: "Safeer Link envoie la page ouverte vers ton téléviseur et relie les appareils de ta maison — sans cloud, sans compte. Un appareil de la maison joue le rôle du hub, les autres s\'y connectent.",
+      brezHubaOpis: "Safeer Link relie les appareils de ta maison — téléphone, ordinateur et téléviseur. Envoie une page, un texte, un fichier ou ton écran de l\'un à l\'autre, sans cloud et sans compte. Un appareil est le hub (celui-ci peut l\'être), les autres s\'y connectent.",
       brezHubaPomirilo: "Sans lui, le navigateur fonctionne exactement comme avant. Tu ne perds rien en fermant cette fenêtre.",
       poisci: "Chercher sur mon réseau",
       kakoDobim: "Comment activer cela",
@@ -510,9 +514,10 @@
       zaslon: "Écran",
       televizor: "Téléviseur",
       posljiNaZaslon: "Envoyer vers cet écran",
+      posljiNaNapravo: "Envoyer vers cet appareil",
       poslji: "Envoyer",
       povezan: "Connecté",
-      brezZaslonov: "Aucun écran n\'est encore apparu. Ouvre le navigateur Safeer sur ton téléviseur et approuve son code.",
+      brezZaslonov: "Aucun autre appareil n\'est encore connecté. Ouvre Safeer Link dessus et saisis le code affiché par le hub.",
       poslanoNa: "Envoyé vers {ime}.",
       niDosegljiv: "{ime} est injoignable pour le moment. Vérifie qu\'il est allumé et réessaie.",
       neMorePoslati: "Cette page ne peut pas être envoyée. Ouvre un site web et réessaie.",
@@ -583,7 +588,7 @@
       cakaNaPotrditev: "In attesa della tua approvazione",
       niVklopljen: "Non connesso",
       brezHubaNaslov: "Safeer Link non è ancora configurato",
-      brezHubaOpis: "Safeer Link invia la pagina aperta al televisore e collega i dispositivi di casa tua: niente cloud, niente account. Un dispositivo in casa assume il ruolo di hub, gli altri si collegano a esso.",
+      brezHubaOpis: "Safeer Link collega i dispositivi di casa tua: telefono, computer e televisore. Invia una pagina, un testo, un file o il tuo schermo da uno all\'altro, senza cloud e senza account. Un dispositivo è l\'hub (può esserlo anche questo), gli altri si collegano a esso.",
       brezHubaPomirilo: "Senza di esso il browser funziona esattamente come prima. Non perdi nulla chiudendo questa finestra.",
       poisci: "Cerca nella mia rete",
       kakoDobim: "Come lo attivo",
@@ -614,9 +619,10 @@
       zaslon: "Schermo",
       televizor: "Televisore",
       posljiNaZaslon: "Invia a questo schermo",
+      posljiNaNapravo: "Invia a questo dispositivo",
       poslji: "Invia",
       povezan: "Connesso",
-      brezZaslonov: "Non è ancora comparso nessuno schermo. Apri il browser Safeer sul televisore e approva il suo codice.",
+      brezZaslonov: "Nessun altro dispositivo è ancora collegato. Apri Safeer Link su di esso e digita il codice mostrato dall\'hub.",
       poslanoNa: "Inviato a {ime}.",
       niDosegljiv: "{ime} non è raggiungibile in questo momento. Controlla che sia acceso e riprova.",
       neMorePoslati: "Questa pagina non può essere inviata. Apri un sito web e riprova.",
@@ -712,6 +718,7 @@
       poslanoNapravi: "Poslano na {ime}.",
       napDeljenje: "Ni uspelo: {napaka}",
       prejetoBesedilo: "Prejeto sporočilo z naprave {ime}",
+      prejetaStran: "Stran z naprave {ime} se odpira",
       prejetaDatoteka: "Prejeta datoteka {ime} ({mapa})",
       prejetZaslon: "{ime} deli zaslon s to napravo",
       naprava: "Naprava",
@@ -749,6 +756,7 @@
       poslanoNapravi: "Sent to {ime}.",
       napDeljenje: "Failed: {napaka}",
       prejetoBesedilo: "Message received from {ime}",
+      prejetaStran: "Opening a page from {ime}",
       prejetaDatoteka: "File received: {ime} ({mapa})",
       prejetZaslon: "{ime} is sharing its screen with this device",
       naprava: "Device",
@@ -786,6 +794,7 @@
       poslanoNapravi: "An {ime} gesendet.",
       napDeljenje: "Fehlgeschlagen: {napaka}",
       prejetoBesedilo: "Nachricht von {ime} erhalten",
+      prejetaStran: "Seite von {ime} wird geöffnet",
       prejetaDatoteka: "Datei erhalten: {ime} ({mapa})",
       prejetZaslon: "{ime} teilt den Bildschirm mit diesem Gerät",
       naprava: "Gerät",
@@ -823,6 +832,7 @@
       poslanoNapravi: "Enviado a {ime}.",
       napDeljenje: "No se pudo: {napaka}",
       prejetoBesedilo: "Mensaje recibido de {ime}",
+      prejetaStran: "Abriendo una página de {ime}",
       prejetaDatoteka: "Archivo recibido: {ime} ({mapa})",
       prejetZaslon: "{ime} comparte su pantalla con este dispositivo",
       naprava: "Dispositivo",
@@ -860,6 +870,7 @@
       poslanoNapravi: "Envoyé à {ime}.",
       napDeljenje: "Échec : {napaka}",
       prejetoBesedilo: "Message reçu de {ime}",
+      prejetaStran: "Ouverture d’une page de {ime}",
       prejetaDatoteka: "Fichier reçu : {ime} ({mapa})",
       prejetZaslon: "{ime} partage son écran avec cet appareil",
       naprava: "Appareil",
@@ -897,6 +908,7 @@
       poslanoNapravi: "Inviato a {ime}.",
       napDeljenje: "Non riuscito: {napaka}",
       prejetoBesedilo: "Messaggio ricevuto da {ime}",
+      prejetaStran: "Apertura di una pagina da {ime}",
       prejetaDatoteka: "File ricevuto: {ime} ({mapa})",
       prejetZaslon: "{ime} condivide lo schermo con questo dispositivo",
       naprava: "Dispositivo",
@@ -914,13 +926,14 @@
     try {
       if (most && most.jezik) oznaka = String(most.jezik() || "");
     } catch (e) {}
-    if (!oznaka) oznaka = (navigator.language || navigator.userLanguage || "sl");
+    if (!oznaka) oznaka = (navigator.language || navigator.userLanguage || "en");
     oznaka = oznaka.toLowerCase().slice(0, 2);
     return BESEDILA[oznaka] ? oznaka : "en";
   })();
 
   function t(kljuc, nadomestki) {
     var niz = (BESEDILA[jezik] && BESEDILA[jezik][kljuc]);
+    if (niz === undefined) niz = (BESEDILA.en && BESEDILA.en[kljuc]);
     if (niz === undefined) niz = BESEDILA.sl[kljuc];
     if (niz === undefined) return "";
     if (nadomestki) {
@@ -948,6 +961,135 @@
     }
   }
 
+  // Besedila za sredisce na televizorju. Dodana so tu na kupu, da se v obeh jezikih
+  // vidijo skupaj -- kar je treba prevesti, je na enem mestu.
+  var BESEDILA_HUB = {
+    sl: {
+      tuOpis: "Središče je lahko katerakoli naprava — telefon, računalnik ali televizor. Vklopi ga tu in ostale se povežejo na to napravo.",
+      tuOpisTv: "Če doma nimaš računalnika ali telefona pri roki, je središče lahko ta televizor.",
+      vklopiLink: "Vklopi Safeer Link",
+      izklopiLink: "Izklopi Safeer Link",
+      tuNaslov: "Ta naprava je središče",
+      tuNaslovTv: "Ta televizor je središče",
+      tuPojasnilo: "Naprave v domačem omrežju se povezujejo na to napravo. Ko se povežejo, si lahko med seboj pošiljajo strani, besedila, datoteke in zaslon.",
+      tuSredisce: "Središče teče tu",
+      povezana: "Povezana",
+      sePotrdi: "Še enkrat pritisni, da ji odvzameš dostop",
+      cakaPrijava: "Naprava se želi povezati",
+      primerjajKodo: "Na tej napravi vtipkaj številko, ki jo vidiš tukaj",
+      potrdi: "Potrdi",
+      zavrni: "Zavrni",
+      odstrani: "Odstrani",
+      povezanNaTv: "Sme pošiljati na to napravo",
+      nobeneNaprave: "Povežite naprave za lažje delo",
+      prizigam: "Prižigam …"
+    },
+    en: {
+      tuOpis: "Any device can be the hub — a phone, a computer or a television. Turn it on here and the others connect to this device.",
+      tuOpisTv: "If there is no computer or phone at hand, this television can be the hub.",
+      vklopiLink: "Turn on Safeer Link",
+      izklopiLink: "Turn off Safeer Link",
+      tuNaslov: "This device is the hub",
+      tuNaslovTv: "This television is the hub",
+      tuPojasnilo: "Devices on your home network connect to this device. Once connected, they can send each other pages, text, files and their screen.",
+      tuSredisce: "The hub runs here",
+      povezana: "Connected",
+      sePotrdi: "Press again to revoke access",
+      cakaPrijava: "A device wants to connect",
+      primerjajKodo: "On that device, type the number you see here",
+      potrdi: "Approve",
+      zavrni: "Decline",
+      odstrani: "Remove",
+      povezanNaTv: "May send to this device",
+      nobeneNaprave: "Connect your devices to make work easier",
+      prizigam: "Turning on …"
+    },
+    de: {
+      tuOpis: "Jedes Gerät kann der Hub sein — Telefon, Computer oder Fernseher. Schalte ihn hier ein, die anderen verbinden sich mit diesem Gerät.",
+      tuOpisTv: "Wenn kein Computer oder Telefon zur Hand ist, kann dieser Fernseher der Hub sein.",
+      vklopiLink: "Safeer Link einschalten",
+      izklopiLink: "Safeer Link ausschalten",
+      tuNaslov: "Dieses Gerät ist der Hub",
+      tuNaslovTv: "Dieser Fernseher ist der Hub",
+      tuPojasnilo: "Geräte im Heimnetz verbinden sich mit diesem Gerät. Danach können sie sich gegenseitig Seiten, Text, Dateien und den Bildschirm senden.",
+      tuSredisce: "Der Hub läuft hier",
+      povezana: "Verbunden",
+      sePotrdi: "Erneut drücken, um den Zugriff zu entziehen",
+      cakaPrijava: "Ein Gerät möchte sich verbinden",
+      primerjajKodo: "Gib auf diesem Gerät die Zahl ein, die du hier siehst",
+      potrdi: "Bestätigen",
+      zavrni: "Ablehnen",
+      odstrani: "Entfernen",
+      povezanNaTv: "Darf an dieses Gerät senden",
+      nobeneNaprave: "Verbinde deine Geräte, um dir die Arbeit zu erleichtern",
+      prizigam: "Wird eingeschaltet …"
+    },
+    es: {
+      tuOpis: "Cualquier dispositivo puede ser el hub: un teléfono, un ordenador o un televisor. Actívalo aquí y los demás se conectarán a este dispositivo.",
+      tuOpisTv: "Si no hay ordenador ni teléfono a mano, este televisor puede ser el hub.",
+      vklopiLink: "Activar Safeer Link",
+      izklopiLink: "Desactivar Safeer Link",
+      tuNaslov: "Este dispositivo es el hub",
+      tuNaslovTv: "Este televisor es el hub",
+      tuPojasnilo: "Los dispositivos de tu red doméstica se conectan a este dispositivo. Una vez conectados, pueden enviarse páginas, texto, archivos y la pantalla.",
+      tuSredisce: "El hub funciona aquí",
+      povezana: "Conectado",
+      sePotrdi: "Pulsa de nuevo para retirarle el acceso",
+      cakaPrijava: "Un dispositivo quiere conectarse",
+      primerjajKodo: "En ese dispositivo, escribe el número que ves aquí",
+      potrdi: "Aprobar",
+      zavrni: "Rechazar",
+      odstrani: "Quitar",
+      povezanNaTv: "Puede enviar a este dispositivo",
+      nobeneNaprave: "Conecta tus dispositivos para trabajar más cómodo",
+      prizigam: "Activando …"
+    },
+    fr: {
+      tuOpis: "N\'importe quel appareil peut être le hub : un téléphone, un ordinateur ou un téléviseur. Active-le ici et les autres se connectent à cet appareil.",
+      tuOpisTv: "S\'il n\'y a ni ordinateur ni téléphone sous la main, ce téléviseur peut être le hub.",
+      vklopiLink: "Activer Safeer Link",
+      izklopiLink: "Désactiver Safeer Link",
+      tuNaslov: "Cet appareil est le hub",
+      tuNaslovTv: "Ce téléviseur est le hub",
+      tuPojasnilo: "Les appareils de ton réseau domestique se connectent à cet appareil. Une fois connectés, ils peuvent s\'envoyer des pages, du texte, des fichiers et leur écran.",
+      tuSredisce: "Le hub tourne ici",
+      povezana: "Connecté",
+      sePotrdi: "Appuie encore une fois pour lui retirer l\'accès",
+      cakaPrijava: "Un appareil veut se connecter",
+      primerjajKodo: "Sur cet appareil, saisis le nombre que tu vois ici",
+      potrdi: "Approuver",
+      zavrni: "Refuser",
+      odstrani: "Retirer",
+      povezanNaTv: "Peut envoyer vers cet appareil",
+      nobeneNaprave: "Connecte tes appareils pour te faciliter la vie",
+      prizigam: "Activation …"
+    },
+    it: {
+      tuOpis: "Qualsiasi dispositivo può essere l\'hub: un telefono, un computer o un televisore. Attivalo qui e gli altri si collegano a questo dispositivo.",
+      tuOpisTv: "Se non hai a portata di mano un computer o un telefono, l\'hub può essere questo televisore.",
+      vklopiLink: "Attiva Safeer Link",
+      izklopiLink: "Disattiva Safeer Link",
+      tuNaslov: "Questo dispositivo è l\'hub",
+      tuNaslovTv: "Questo televisore è l\'hub",
+      tuPojasnilo: "I dispositivi della tua rete domestica si collegano a questo dispositivo. Una volta collegati, possono inviarsi pagine, testi, file e lo schermo.",
+      tuSredisce: "L\'hub è in esecuzione qui",
+      povezana: "Collegato",
+      sePotrdi: "Premi di nuovo per revocarle l\'accesso",
+      cakaPrijava: "Un dispositivo vuole collegarsi",
+      primerjajKodo: "Su quel dispositivo digita il numero che vedi qui",
+      potrdi: "Approva",
+      zavrni: "Rifiuta",
+      odstrani: "Rimuovi",
+      povezanNaTv: "Può inviare a questo dispositivo",
+      nobeneNaprave: "Collega i tuoi dispositivi per lavorare più comodamente",
+      prizigam: "Attivazione …"
+    }
+  };
+  for (var _jezik in BESEDILA_HUB) {
+    if (!BESEDILA[_jezik]) BESEDILA[_jezik] = {};
+    for (var _kljuc in BESEDILA_HUB[_jezik]) BESEDILA[_jezik][_kljuc] = BESEDILA_HUB[_jezik][_kljuc];
+  }
+
   // ----------------------------------------------------------------
   // Stanje
   // ----------------------------------------------------------------
@@ -964,7 +1106,11 @@
     prejemnik: null,
     predvajanje: null,
     tezava: false,
-    preseljen: false
+    preseljen: false,
+    hubTece: false,
+    hubPovezanih: 0,
+    prijave: [],
+    hubNaprave: []
   };
 
   function besedilo(id, vsebina) {
@@ -1078,7 +1224,10 @@
     var pika = el("pika");
     var barva = "siva";
     var napis = t("niVklopljen");
-    if (stanje.tezava) {
+    if (stanje.hubTece) {
+      barva = "zelena";
+      napis = t("tuSredisce");
+    } else if (stanje.tezava) {
       barva = "rumena";
       napis = t("tezava");
     } else if (stanje.znan && stanje.seznanjen) {
@@ -1096,18 +1245,37 @@
   }
 
   function narisiZaslon() {
-    var brezHuba = !stanje.znan && !stanje.preseljen;
-    var caka = stanje.znan && !stanje.seznanjen && !stanje.preseljen;
+    // Sredisce tece tu. Naprava, ki gosti (telefon, racunalnik ali televizor), je hkrati
+    // navadna naprava: vidi ostale in jim posilja, zato ostane tudi obicajni pogled.
+    var tuSredisce = stanje.hubTece;
+    var samoSredisce = false;
+    var brezHuba = !tuSredisce && !stanje.znan && !stanje.preseljen;
+    var caka = !tuSredisce && stanje.znan && !stanje.seznanjen && !stanje.preseljen;
+    pokazi("zaslonHubTu", tuSredisce);
     pokazi("zaslonBrezHuba", brezHuba);
-    pokazi("zaslonPreseljen", stanje.preseljen);
+    pokazi("zaslonPreseljen", !tuSredisce && stanje.preseljen);
     pokazi("zaslonSeznanitev", caka);
-    pokazi("zaslonPovezan", !brezHuba && !caka && !stanje.preseljen);
-    pokazi("gumbPozabi", !brezHuba && !caka && !!(most && most.pozabiNapravo));
+    pokazi("zaslonPovezan", !samoSredisce && !brezHuba && !caka && !stanje.preseljen);
+    pokazi("gumbPozabi", !tuSredisce && !brezHuba && !caka && !!(most && most.pozabiNapravo));
+    pokazi("hubStikalo", podpiraHub);
+    var vklopi = el("gumbHubVklopi");
+    var izklopi = el("gumbHubIzklopi");
+    if (vklopi) vklopi.disabled = tuSredisce;
+    if (izklopi) izklopi.disabled = !tuSredisce;
+    besedilo("opombaHubVklop", tuSredisce ? "" : t(stanje.televizor ? "tuOpisTv" : "tuOpis"));
+    besedilo("naslovHubTu", t(stanje.televizor ? "tuNaslovTv" : "tuNaslov"));
     narisiStanje();
   }
 
   function zasloni() {
-    return stanje.naprave.filter(function (n) { return n.vloga === "receiver"; });
+    // Stran gre na vsako drugo napravo, ki jo zna odpreti: zaslon (televizor) vedno,
+    // telefon ali racunalnik pa, ce to javi med zmoznostmi.
+    return stanje.naprave.filter(function (n) {
+      if (n.id === stanje.idNaprave) return false;
+      if (n.vloga === "receiver") return true;
+      var z = n.zmoznosti || [];
+      return z.indexOf("url") >= 0;
+    });
   }
 
   function narisiNaprave() {
@@ -1159,6 +1327,7 @@
     return "telefon";
   }
 
+
   function narisiPrejemnike() {
     var seznam = el("seznamPrejemnikov");
     if (!seznam) return;
@@ -1166,13 +1335,14 @@
 
     var prejemniki = zasloni();
     // Smernica: gumb za posiljanje naj obstaja samo, ko je kam poslati.
-    pokazi("panelCast", prejemniki.length > 0 && !stanje.televizor);
+    pokazi("panelCast", prejemniki.length > 0);
     if (!prejemniki.length) return;
 
     besedilo("opombaCast", "");
     prejemniki.forEach(function (n) {
       var ime = prijaznoIme(n);
-      seznam.appendChild(vrstica("tv", ime, t("posljiNaZaslon"), t("poslji"), "zivo",
+      seznam.appendChild(vrstica(n.vloga === "receiver" ? "tv" : ikonaNapraveVSeznamu(n), ime,
+        t(n.vloga === "receiver" ? "posljiNaZaslon" : "posljiNaNapravo"), t("poslji"), "zivo",
         function () {
           stanje.prejemnik = n;
           besedilo("imePrejemnika", ime);
@@ -1276,10 +1446,186 @@
   function narisiVse() {
     narisiZaslon();
     narisiNaprave();
-    if (!stanje.televizor) {
-      narisiPrejemnike();
-      narisiTrenutnoStran();
-      narisiPredvajanje();
+    narisiPrejemnike();
+    narisiTrenutnoStran();
+    if (!stanje.televizor) narisiPredvajanje();
+  }
+
+  // ----------------------------------------------------------------
+  // Sredisce na tem televizorju
+  // ----------------------------------------------------------------
+
+  var podpiraHub = !!(most && most.hubStanje);
+  var hubUra = null;
+  var hubPodpis = "";
+  var hubPrejPrijav = 0;
+  var odvzemam = "";
+
+  /** Prebere stanje sredisca pri mostu. Na napravah brez te podpore ne naredi nicesar. */
+  function hubOsvezi() {
+    if (!podpiraHub) return;
+    try {
+      var s = JSON.parse(most.hubStanje() || "{}");
+      stanje.hubTece = !!s.tece;
+      stanje.hubPovezanih = s.naprav || 0;
+    } catch (e) {}
+    try {
+      stanje.prijave = JSON.parse(most.hubPrijave() || "[]");
+    } catch (e) {
+      stanje.prijave = [];
+    }
+    try {
+      stanje.hubNaprave = JSON.parse(most.hubSeznanjene() || "[]");
+    } catch (e) {
+      stanje.hubNaprave = [];
+    }
+    narisiHub();
+    narisiZaslon();
+    hubUraNastavi();
+  }
+
+  /** Medtem ko sredisce tece, stanje osvezujemo sami -- nova prijava se mora pokazati sama. */
+  function hubUraNastavi() {
+    if (stanje.hubTece && !hubUra) hubUra = setInterval(hubOsvezi, 4000);
+    if (!stanje.hubTece && hubUra) {
+      clearInterval(hubUra);
+      hubUra = null;
+    }
+  }
+
+  function narisiHub() {
+    // Seznama ne prerisujemo, ce se ni nic spremenilo: na daljincu bi vsako risanje
+    // odneslo fokus z gumba, ki ga ima uporabnik ravno pod prstom.
+    var podpis = JSON.stringify([stanje.prijave, stanje.hubNaprave, odvzemam]);
+    if (podpis === hubPodpis) return;
+    hubPodpis = podpis;
+
+    // Kje je bil fokus? Po izrisu ga vrnemo na isto mesto: brez tega drugi pritisk
+    // na daljincu pade v prazno, ker je element, ki ga je uporabnik gledal, nov.
+    var prejsnjiFokus = null;
+    try {
+      prejsnjiFokus = document.activeElement &&
+        document.activeElement.getAttribute && document.activeElement.getAttribute("data-fokus");
+    } catch (e) {}
+
+    var prijave = el("seznamPrijav");
+    if (prijave) {
+      prijave.innerHTML = "";
+      stanje.prijave.forEach(function (p) { prijave.appendChild(vrsticaPrijave(p)); });
+    }
+    pokazi("panelPrijave", stanje.prijave.length > 0);
+
+    var naprave = el("seznamHubNaprav");
+    if (naprave) {
+      naprave.innerHTML = "";
+      stanje.hubNaprave.forEach(function (n) {
+        // Dostop se odvzame v dveh korakih: en sam pritisk na daljincu je prehitro
+        // storjen, naprava pa se mora potem znova seznaniti.
+        var odvzemamTo = odvzemam === n.id;
+        var vrsticaNaprave = vrstica(
+          ikonaNaprave(n),
+          n.ime || t("zaslon"),
+          odvzemamTo ? t("sePotrdi") : t("povezanNaTv"),
+          odvzemamTo ? t("odstrani") : t("povezana"),
+          odvzemamTo ? "" : "zivo",
+          function () {
+            if (!odvzemamTo) {
+              odvzemam = n.id;
+              narisiHub();
+              return;
+            }
+            odvzemam = "";
+            if (most && most.hubPreklici) most.hubPreklici(n.id);
+          });
+        vrsticaNaprave.setAttribute("data-fokus", "naprava:" + n.id);
+        naprave.appendChild(vrsticaNaprave);
+      });
+    }
+    besedilo("opombaHub", stanje.hubNaprave.length ? "" : t("nobeneNaprave"));
+
+    // Fokus nazaj na isto mesto; ce ga ni vec, na cakajoco prijavo.
+    var nicNiFokusirano = !document.activeElement || document.activeElement === document.body;
+    var vrnjen = false;
+    if (prejsnjiFokus) {
+      var isti = document.querySelector('[data-fokus="' + prejsnjiFokus + '"]');
+      if (isti) {
+        try { isti.focus(); vrnjen = true; } catch (e) {}
+      }
+    }
+    // Nova prijava: fokus gre na Potrdi, da je dovolj en pritisk na V redu.
+    // Prav tako takrat, kadar fokus ni nikjer -- daljinec mora vedno imeti kam.
+    if (!vrnjen && stanje.prijave.length &&
+        (stanje.prijave.length > hubPrejPrijav || nicNiFokusirano)) {
+      setTimeout(fokusirajPotrditev, 80);
+    }
+    hubPrejPrijav = stanje.prijave.length;
+  }
+
+  /**
+   * Ikona pove, kaj se povezuje. Vrsto naprave uganemo iz imena, ki ga naprava pove o sebi --
+   * racunalnik naj bo racunalnik in ne telefon, sicer uporabnik ne ve, katera naprava je katera.
+   */
+  function ikonaNaprave(naprava) {
+    var opis = ((naprava && (naprava.ime || "")) + " " + (naprava && (naprava.id || ""))).toLowerCase();
+    if (/(televizor|tv|philips|android tv)/.test(opis)) return "tv";
+    if (/(racunaln|računaln|computer|namizn|desktop|laptop|prenosn|linux|windows|mac|pc\b)/.test(opis)) return "racunalnik";
+    if (/(tablic|tablet|ipad)/.test(opis)) return "telefon";
+    return "telefon";
+  }
+
+  function vrsticaPrijave(p) {
+    var li = document.createElement("li");
+    li.className = "prijava";
+
+    var telo = document.createElement("div");
+    telo.className = "telo";
+    var ime = document.createElement("div");
+    ime.className = "ime";
+    ime.textContent = (ikonaNaprave(p) + " " + (p.ime || t("zaslon"))).trim();
+    var pod = document.createElement("div");
+    pod.className = "pod";
+    // Navadno je koda navodilo: uporabnik jo prebere tu in vtipka na drugi napravi.
+    // Starejsa naprava kodo kaze pri sebi in caka na potrditev tukaj.
+    pod.textContent = p.potrebujePotrditev ? t("primerjajKodo") : t("prijavaCakaKodo");
+    telo.appendChild(ime);
+    telo.appendChild(pod);
+
+    var koda = document.createElement("div");
+    koda.className = "stevilke";
+    koda.textContent = p.koda || "------";
+
+    var tipke = document.createElement("div");
+    tipke.className = "tipke";
+    if (p.potrebujePotrditev) {
+      var potrdi = document.createElement("button");
+      potrdi.className = "glavni";
+      potrdi.setAttribute("data-potrdi", "1");
+      potrdi.setAttribute("data-fokus", "prijava:" + p.id + ":potrdi");
+      potrdi.textContent = t("potrdi");
+      potrdi.addEventListener("click", function () {
+        if (most && most.hubPotrdi) most.hubPotrdi(p.id);
+      });
+      tipke.appendChild(potrdi);
+    }
+    var zavrni = document.createElement("button");
+    zavrni.className = "drugotni tanek";
+    zavrni.setAttribute("data-fokus", "prijava:" + p.id + ":zavrni");
+    zavrni.textContent = t("zavrni");
+    zavrni.addEventListener("click", function () {
+      if (most && most.hubZavrni) most.hubZavrni(p.id);
+    });
+    tipke.appendChild(zavrni);
+
+    li.appendChild(telo);
+    li.appendChild(koda);
+    li.appendChild(tipke);
+    return li;
+  }
+
+  function fokusirajPotrditev() {
+    var gumb = document.querySelector("#seznamPrijav button[data-potrdi]");
+    if (gumb) {
+      try { gumb.focus(); } catch (e) {}
     }
   }
 
@@ -1309,6 +1655,18 @@
           besedilo("opombaSeznanitev", t("niNajden"));
           narisiStanje();
         }
+      } else if (vrsta === "hub-tu") {
+        stanje.hubTece = !!(podatki && podatki.tece);
+        stanje.hubPovezanih = (podatki && podatki.naprav) || 0;
+        hubPodpis = "";
+        hubOsvezi();
+      } else if (vrsta === "hub-prijave") {
+        stanje.prijave = podatki || [];
+        narisiHub();
+        narisiZaslon();
+      } else if (vrsta === "hub-seznanjene") {
+        stanje.hubNaprave = podatki || [];
+        narisiHub();
       } else if (vrsta === "preseljen") {
         stanje.preseljen = true;
         besedilo("noviNaslov", prijaznaHisa(podatki && podatki.naslov));
@@ -1369,7 +1727,7 @@
         stanje.naprave = podatki || [];
         if (deljenje.naprava && !stanje.naprave.some(function (n) { return n.id === deljenje.naprava.id; })) zapriDeljenje();
         narisiNaprave();
-        if (!stanje.televizor) narisiPrejemnike();
+        narisiPrejemnike();
       } else if (vrsta === "predvajanje") {
         stanje.predvajanje = podatki;
         narisiPredvajanje();
@@ -1390,6 +1748,11 @@
         } else {
           besedilo("opombaSync", t("syncUgasnjena"));
         }
+      } else if (vrsta === "stanje") {
+        // Most je zamenjal Hub (npr. vklop/izklop sredisca tu): znova preberemo stanje.
+        stanje.naprave = [];
+        stanje.povezan = false;
+        osveziStanje();
       } else if (vrsta === "povezava") {
         stanje.povezan = !!podatki;
         stanje.tezava = false;
@@ -1450,7 +1813,6 @@
     return sporocilo || t("tezava");
   }
 
-
   // ----------------------------------------------------------------
   // Deljenje z izbrano napravo: zaslon, datoteka, besedilo
   //
@@ -1459,7 +1821,13 @@
   // vprasanju in ga lahko kadar koli prekine.
   // ----------------------------------------------------------------
 
-  var znaDeliti = !!(most && most.posljiBesedilo && most.izberiDatoteko && most.zacniDeljenjeZaslona);
+  var znaDeliti = !!(most && most.posljiBesedilo);
+  // Katere vrste deljenja zna ta naprava: televizor poslje besedilo, ne pa datoteke ali zaslona.
+  var znaVrsto = {
+    besedilo: znaDeliti,
+    datoteka: !!(most && most.izberiDatoteko),
+    zaslon: !!(most && most.zacniDeljenjeZaslona)
+  };
   var deljenje = { naprava: null, vrsta: "" };
   var zaslonDeljenje = { tece: false, ime: "", cilj: "" };
 
@@ -1481,6 +1849,7 @@
     for (var i = 0; i < izbire.length; i++) {
       izbire[i].classList.remove("izbrana");
       izbire[i].disabled = zasedena;
+      izbire[i].hidden = !znaVrsto[izbire[i].getAttribute("data-vrsta")];
     }
     if (zasedena) besedilo("opombaDeljenje", t("zasedenaCakaj", { ime: naprava.zasedenaOdIme || naprava.zasedenaOd }));
     pokazi("panelDeljenje", true);
@@ -1644,6 +2013,7 @@
     if (p.vrsta === "besedilo") besedilo("opombaNaprave", t("prejetoBesedilo", { ime: od }));
     else if (p.vrsta === "datoteka") besedilo("opombaNaprave", t("prejetaDatoteka", { ime: p.ime || "", mapa: p.mapa || "" }));
     else if (p.vrsta === "zaslon" && p.dejanje === "start") besedilo("opombaNaprave", t("prejetZaslon", { ime: od }));
+    else if (p.vrsta === "stran") besedilo("opombaNaprave", t("prejetaStran", { ime: od }));
   }
 
   function pripraviDeljenje() {
@@ -1760,6 +2130,20 @@
 
     naKlik("gumbOsvezi", poveziSe);
 
+    naKlik("gumbHubVklopi", function () {
+      besedilo("opombaHubVklop", t("prizigam"));
+      if (most && most.hubVklopi) most.hubVklopi();
+    });
+
+    naKlik("gumbHubIzklopi", function () {
+      if (most && most.hubIzklopi) most.hubIzklopi();
+    });
+
+    naKlik("gumbHubOsvezi", function () {
+      hubPodpis = "";
+      hubOsvezi();
+    });
+
     naKlik("gumbPotrdiNaslov", function () {
       if (!most || !most.potrdiNovNaslov) return;
       besedilo("opombaPreselitev", t("preverjamNaslov"));
@@ -1798,14 +2182,42 @@
 
     narisiSync();
     pripraviDeljenje();
+    pazljivNaSmerneTipke();
     osveziStanje();
+    hubOsvezi();
     // Na daljincu prvi fokus odloca, kaj uporabnik potrdi: naj bo glavno dejanje,
     // ne krizec za zapiranje.
     setTimeout(fokusirajGlavno, 150);
   });
 
+  /**
+   * Zasilni izhod za daljinec. Ce fokus ni na nobenem gumbu (to se na televizorju zgodi,
+   * kadar se stran na novo izrise), prvi pritisk na smerno tipko ne premakne nicesar --
+   * zato ga porabimo za to, da fokus postavimo na glavno dejanje.
+   */
+  function pazljivNaSmerneTipke() {
+    document.addEventListener("keydown", function (e) {
+      var smerna = e.key === "ArrowUp" || e.key === "ArrowDown" ||
+                   e.key === "ArrowLeft" || e.key === "ArrowRight";
+      if (!smerna) return;
+      var kje = document.activeElement;
+      if (!kje || kje === document.body || kje === document.documentElement) {
+        e.preventDefault();
+        fokusirajGlavno();
+      }
+    }, true);
+  }
+
   function fokusirajGlavno() {
-    var kandidati = ["gumbPoisci", "gumbSeznani", "gumbOsvezi"];
+    // Ce kdo caka na potrditev, je to najpomembnejse na zaslonu.
+    var potrdi = document.querySelector("#seznamPrijav button[data-potrdi]");
+    if (potrdi) {
+      try { potrdi.focus(); } catch (err) {}
+      return;
+    }
+    var kandidati = ["gumbSeznani", "gumbPoisci", "gumbHubVklopi", "gumbHubIzklopi",
+                     "gumbOsvezi", "gumbHubOsvezi"];
+    // Onemogocen gumb ni cilj za daljinec.
     for (var i = 0; i < kandidati.length; i++) {
       var e = el(kandidati[i]);
       if (e && e.offsetParent !== null && !e.disabled) {

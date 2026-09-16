@@ -202,24 +202,39 @@ object HubDiscovery {
                     return
                 }
                 val naslov = "wss://$gostitelj:${info.port}$wsPot"
-                // Ce smo ze seznanjeni, oglasa z drugega naslova ne prevzamemo: zeton je
-                // dolgoziv poverilnik, oglas pa lahko odda kdorkoli v omrezju.
+                val odtisOglasa = lastnosti["fp"]?.toString(Charsets.UTF_8)?.lowercase().orEmpty()
+                // V hisi je lahko vec sredisc (televizor, telefon, racunalnik). Hub prepoznamo po
+                // odtisu potrdila, ne po naslovu: isti odtis na novem naslovu je isti Hub (nov IP),
+                // drug odtis je drug Hub - nanj preklopimo, z zetonom iz shrambe seznanitev ali z
+                // novo kodo. Oglas sam po sebi ne dobi nobenega zaupanja: to da sele odtis, ki ga
+                // preverimo na povezavi, in seznanitev.
                 val znani = knownHubUrl(app)
-                if (znani.isNotBlank() && jeSeznanjena(app) && !istiHub(znani, naslov)) {
-                    Log.w(TAG, "Oglas z drugega naslova kot potrjeni Hub; ne prevzemam ga.")
-                    return
-                }
+                val pripetiZdaj = if (jeSeznanjena(app)) HubTls.pripetiOdtis(app) else null
+                val drugNaslov = znani.isNotBlank() && jeSeznanjena(app) && !istiHub(znani, naslov)
+                val istiHubPoOdtisu = pripetiZdaj != null && odtisOglasa.isNotBlank() && odtisOglasa == pripetiZdaj.lowercase()
+                val preklop = drugNaslov && !istiHubPoOdtisu
                 // Zapis v mDNS ostane v omrezju, tudi ko Hub ze ne tece vec, in oglasi se
                 // ne preverjajo sami. Zato naslov preverimo, preden mu karkoli zaupamo.
-                val pripeti = if (jeSeznanjena(app)) HubTls.pripetiOdtis(app) else null
+                val pripeti = if (preklop) null else pripetiZdaj
                 preveriHub("https://$gostitelj:${info.port}", pripeti) { ziv ->
                     if (!ziv) {
                         Log.i(TAG, "Zapis za Hub obstaja, a to ni Safeer Hub: $gostitelj")
                         return@preveriHub
                     }
+                    val ur = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                    if (preklop) {
+                        Seznanitve.zapomniTrenutno(app)
+                        val znanZeton = Seznanitve.zeton(app, odtisOglasa)
+                        if (znanZeton != null) {
+                            Log.i(TAG, "Drug Hub, s katerim smo ze seznanjeni; prevzamem shranjeni zeton.")
+                            ur.putString("control_token", znanZeton).putString(HubTls.KEY_HUB_FP, odtisOglasa)
+                        } else {
+                            Log.i(TAG, "Drug Hub; potrebna je nova seznanitev s kodo.")
+                            ur.remove("control_token").remove(HubTls.KEY_HUB_FP)
+                        }
+                    }
                     Log.i(TAG, "Najden Safeer Hub: $naslov")
-                    app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                        .putString(KEY_HUB_URL, naslov)
+                    ur.putString(KEY_HUB_URL, naslov)
                         .putString(KEY_HUB_TICKET_PATH, ticketPot)
                         .putLong(KEY_HUB_SEEN, System.currentTimeMillis())
                         .apply()
