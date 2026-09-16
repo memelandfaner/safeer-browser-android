@@ -551,8 +551,14 @@ class MainActivity : android.app.Activity() {
         }
 
         wv.setDownloadListener { url, userAgent, contentDisposition, mimeType, _ ->
-            downloadHandler.startDownload(url, userAgent, contentDisposition, mimeType)
+            // PDF se ne prenese, ampak odpre v vgrajenem pregledovalniku (branje in urejanje).
+            if (PdfPregledovalnik.jePdf(url, mimeType, contentDisposition)) {
+                PdfPregledovalnik.odpri(this, wv, url, userAgent, contentDisposition, mimeType)
+            } else {
+                downloadHandler.startDownload(url, userAgent, contentDisposition, mimeType)
+            }
         }
+        wv.onPdfPrenos = { url, ua -> downloadHandler.startDownload(url, ua, null, "application/pdf") }
 
         wv.onFullscreenToggled = { customView, callback ->
             if (customView != null) {

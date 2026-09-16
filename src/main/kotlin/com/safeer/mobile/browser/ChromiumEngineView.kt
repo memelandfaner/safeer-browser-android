@@ -58,7 +58,7 @@ class ChromiumEngineView @JvmOverloads constructor(
     }
 
     private fun visibleUrl(url: String): String =
-        if (url == "safeer://offline") failedNavigationUrl ?: url else url
+        PdfPregledovalnik.javniNaslov(if (url == "safeer://offline") failedNavigationUrl ?: url else url)
 
     var isDarkMode: Boolean = true
 
@@ -76,6 +76,9 @@ class ChromiumEngineView @JvmOverloads constructor(
     var onAudioStateChanged: ((Boolean) -> Unit)? = null
 
     var onRendererGone: (() -> Unit)? = null
+
+    /** PDF pregledovalnik prosi za prenos izvirnika (url, userAgent) - opravi ga navaden prenos. */
+    var onPdfPrenos: ((String, String?) -> Unit)? = null
     @Volatile var hasEditedForm: Boolean = false
         private set
 
@@ -162,6 +165,8 @@ class ChromiumEngineView @JvmOverloads constructor(
         }
 
         addJavascriptInterface(SafeerWebAppInterface(context, this), "SafeerBridge")
+        // PDF.js pregledovalnik: shranjevanje in prenos; klici brez zetona dokumenta se zavrnejo.
+        addJavascriptInterface(PdfPregledovalnik.Most(context) { url, ua -> onPdfPrenos?.invoke(url, ua) }, "SafeerPdf")
 
         isFocusable = true
         isFocusableInTouchMode = true
@@ -656,6 +661,10 @@ class ChromiumEngineView @JvmOverloads constructor(
 
             override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
                 val url = request?.url?.toString() ?: return null
+                // Vgrajeni PDF pregledovalnik in dokument, ki ga bere (pdf.safeer.internal).
+                if (request.url?.host == PdfPregledovalnik.GOSTITELJ) {
+                    return PdfPregledovalnik.odgovor(context, url)
+                }
                 val isMainFrame = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     request.isForMainFrame
                 } else {
@@ -737,7 +746,7 @@ class ChromiumEngineView @JvmOverloads constructor(
                     android.util.Log.d("SafeerNav", "start $it")
                     onUrlChanged?.invoke(visibleUrl(it))
                     onSecurityChanged?.invoke(it.startsWith("https://", ignoreCase = true))
-                    view?.let { wv ->
+                    if (!PdfPregledovalnik.jePregledovalnik(it)) view?.let { wv ->
                         UserScriptManager.injectEarlyScript(wv, isDesktopMode)
                         installFormProtection(wv)
                     }
@@ -752,8 +761,8 @@ class ChromiumEngineView @JvmOverloads constructor(
                     onUrlChanged?.invoke(visibleUrl(it))
                     onSecurityChanged?.invoke(it.startsWith("https://", ignoreCase = true))
                     val pageTitle = title ?: ""
-                    if (it != "safeer://offline") onPageLoaded?.invoke(it, pageTitle)
-                    view?.let { wv ->
+                    if (it != "safeer://offline") onPageLoaded?.invoke(PdfPregledovalnik.javniNaslov(it), pageTitle)
+                    if (!PdfPregledovalnik.jePregledovalnik(it)) view?.let { wv ->
                         UserScriptManager.injectOnPageFinished(wv, isDarkMode, isDesktopMode)
                         installFormProtection(wv)
                     }
