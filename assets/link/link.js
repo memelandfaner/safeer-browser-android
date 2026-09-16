@@ -1879,12 +1879,26 @@
         window.scrollTo({ top: Math.max(0, vrh), behavior: "smooth" });
       } catch (e) {}
     }
+    // Daljinec: fokus takoj na prvi gumb plosce (levo/desno: Preimenuj, Odstrani, Zapri; dol: izbire),
+    // sicer bi ga smerne tipke odnesle na X v glavi. Ob zapiranju se vrne na vrstico naprave.
+    deljenje.fokusNazaj = document.activeElement;
+    if (stanje.televizor) {
+      setTimeout(function () {
+        var prvi = samoIme ? el("gumbPreimenuj") : (document.querySelector("#panelDeljenje .izbira:not([hidden])") || el("gumbPreimenuj"));
+        try { if (prvi) prvi.focus(); } catch (e) {}
+      }, 60);
+    }
   }
 
   function zapriDeljenje() {
     deljenje.naprava = null;
     deljenje.vrsta = "";
     pokazi("panelDeljenje", false);
+    var nazaj = deljenje.fokusNazaj;
+    deljenje.fokusNazaj = null;
+    if (stanje.televizor && nazaj && nazaj.focus && document.body.contains(nazaj)) {
+      try { nazaj.focus(); } catch (e) {}
+    }
   }
 
   function odpriPreimenovanje() {
