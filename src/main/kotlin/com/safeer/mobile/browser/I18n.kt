@@ -123,6 +123,8 @@ object I18n {
             "pair_code_title" to "Safeer Link: nova naprava",
             "pair_code_body" to "Naprava »{ime}« se želi povezati. Vtipkaj to kodo nanjo:",
             "pair_code_reject" to "Zavrni",
+            "pdf_saved" to "Shranjeno: {ime} ({mapa})",
+            "pdf_save_failed" to "PDF-ja ni bilo mogoče shraniti.",
             "share_copy" to "Kopiraj",
             "share_copied" to "Kopirano.",
             "share_file_notif_title" to "Safeer Link pošilja datoteko"
@@ -231,6 +233,8 @@ object I18n {
             "pair_code_title" to "Safeer Link: new device",
             "pair_code_body" to "Device “{ime}” wants to connect. Type this code on it:",
             "pair_code_reject" to "Reject",
+            "pdf_saved" to "Saved: {ime} ({mapa})",
+            "pdf_save_failed" to "The PDF could not be saved.",
             "share_copy" to "Copy",
             "share_copied" to "Copied.",
             "share_file_notif_title" to "Safeer Link is sending a file"
@@ -339,6 +343,8 @@ object I18n {
             "pair_code_title" to "Safeer Link: neues Gerät",
             "pair_code_body" to "Gerät „{ime}“ möchte sich verbinden. Gib diesen Code dort ein:",
             "pair_code_reject" to "Ablehnen",
+            "pdf_saved" to "Gespeichert: {ime} ({mapa})",
+            "pdf_save_failed" to "Die PDF-Datei konnte nicht gespeichert werden.",
             "share_copy" to "Kopieren",
             "share_copied" to "Kopiert.",
             "share_file_notif_title" to "Safeer Link sendet eine Datei"
@@ -447,6 +453,8 @@ object I18n {
             "pair_code_title" to "Safeer Link: nuevo dispositivo",
             "pair_code_body" to "El dispositivo «{ime}» quiere conectarse. Escribe este código en él:",
             "pair_code_reject" to "Rechazar",
+            "pdf_saved" to "Guardado: {ime} ({mapa})",
+            "pdf_save_failed" to "No se pudo guardar el PDF.",
             "share_copy" to "Copiar",
             "share_copied" to "Copiado.",
             "share_file_notif_title" to "Safeer Link está enviando un archivo"
@@ -555,6 +563,8 @@ object I18n {
             "pair_code_title" to "Safeer Link : nouvel appareil",
             "pair_code_body" to "L’appareil « {ime} » veut se connecter. Saisis ce code dessus :",
             "pair_code_reject" to "Refuser",
+            "pdf_saved" to "Enregistré : {ime} ({mapa})",
+            "pdf_save_failed" to "Le PDF n’a pas pu être enregistré.",
             "share_copy" to "Copier",
             "share_copied" to "Copié.",
             "share_file_notif_title" to "Safeer Link envoie un fichier"
@@ -663,6 +673,8 @@ object I18n {
             "pair_code_title" to "Safeer Link: nuovo dispositivo",
             "pair_code_body" to "Il dispositivo «{ime}» vuole collegarsi. Digita questo codice su di esso:",
             "pair_code_reject" to "Rifiuta",
+            "pdf_saved" to "Salvato: {ime} ({mapa})",
+            "pdf_save_failed" to "Impossibile salvare il PDF.",
             "share_copy" to "Copia",
             "share_copied" to "Copiato.",
             "share_file_notif_title" to "Safeer Link sta inviando un file"
