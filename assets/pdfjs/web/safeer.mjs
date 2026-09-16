@@ -26,44 +26,73 @@
   }
 
   // Televizor: smerne tipke premikajo dokument, ne fokusa po gumbih. Gor na vrhu dokumenta
-  // pripelje v orodno vrstico, dol iz orodne vrstice nazaj v dokument.
+  // pripelje v orodno vrstico, dol iz orodne vrstice nazaj v dokument, gor iz orodne vrstice
+  // preda fokus brskalniku (naslovna vrstica). Brskalnik na TV klice SafeerPdfTipka(smer)
+  // neposredno (tipke prestreze sam), sicer deluje prek keydown.
   try {
-    if (new URLSearchParams(location.search).get("tv") === "1") {
-      const vDokumentu = () => {
-        const c = document.getElementById("viewerContainer");
-        if (c) { c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); }
-      };
+    const tv = new URLSearchParams(location.search).get("tv") === "1";
+    const vsebnik = () => document.getElementById("viewerContainer");
+    const vDokumentu = () => {
+      const c = vsebnik();
+      if (c) { c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); }
+    };
+    const gumbiOrodne = () => Array.from(document.querySelectorAll("#toolbarContainer button, #toolbarContainer select, #toolbarContainer input"))
+      .filter((g) => !g.disabled && !g.hidden && g.offsetParent !== null);
+    let zadnjiGor = null;
+    window.SafeerPdfTipka = function (smer) {
+      const c = vsebnik();
+      if (!c) return false;
+      const t = document.activeElement;
+      const tag = ((t && t.tagName) || "").toLowerCase();
+      const vOrodni = t && t !== document.body && t !== c && !c.contains(t);
+      if (vOrodni) {
+        const g = gumbiOrodne();
+        const i = g.indexOf(t);
+        if (smer === "ArrowDown") { vDokumentu(); return true; }
+        if (smer === "ArrowLeft") { if (i > 0) g[i - 1].focus(); return true; }
+        if (smer === "ArrowRight") { if (i >= 0 && i < g.length - 1) g[i + 1].focus(); return true; }
+        if (smer === "ArrowUp") {
+          try { if (window.SafeerPdf && window.SafeerPdf.fokusVen) { window.SafeerPdf.fokusVen("gor"); return true; } } catch (e) {}
+          return false;
+        }
+        return false;
+      }
+      if (tag === "input" || tag === "textarea" || (t && t.isContentEditable)) return false;
+      const korak = Math.round(c.clientHeight * 0.8);
+      const app = window.PDFViewerApplication;
+      switch (smer) {
+        case "ArrowDown": c.scrollBy({ top: korak, behavior: "smooth" }); return true;
+        case "ArrowUp": {
+          // Na vrhu dokumenta ali na vrhu trenutne strani gre gor v orodno vrstico (levo/desno
+          // listata po straneh, zato je vrh strani vedno le nekaj pritiskov stran).
+          let naVrhu = c.scrollTop <= 0;
+          try {
+            const pv = app && app.pdfViewer && app.pdfViewer.getPageView(app.pdfViewer.currentPageNumber - 1);
+            const meja = -Math.max(24, Math.round(c.clientHeight * 0.08));
+            if (pv && pv.div) naVrhu = naVrhu || (pv.div.getBoundingClientRect().top - c.getBoundingClientRect().top) >= meja;
+          } catch (e) {}
+          // Ce se prejsnji "gor" ni premaknil (npr. rob dokumenta), gre v orodno vrstico.
+          if (zadnjiGor && zadnjiGor.top === c.scrollTop && Date.now() - zadnjiGor.cas < 4000) naVrhu = true;
+          zadnjiGor = { top: c.scrollTop, cas: Date.now() };
+          if (naVrhu) { zadnjiGor = null; const g = gumbiOrodne(); if (g.length) g[0].focus(); }
+          else c.scrollBy({ top: -korak, behavior: "smooth" });
+          return true;
+        }
+        case "ArrowRight": if (app && app.pdfViewer) app.pdfViewer.nextPage(); return true;
+        case "ArrowLeft": if (app && app.pdfViewer) app.pdfViewer.previousPage(); return true;
+      }
+      return false;
+    };
+    // Brskalnik postavi fokus v orodno vrstico ("orodna") ali v dokument ("dokument").
+    window.SafeerPdfFokus = function (kam) {
+      if (kam === "orodna") { const g = gumbiOrodne(); if (g.length) { g[0].focus(); return true; } }
+      vDokumentu();
+      return true;
+    };
+    if (tv) {
       document.addEventListener("keydown", (e) => {
-        const t = e.target;
-        const tag = ((t && t.tagName) || "").toLowerCase();
-        if (tag === "input" || tag === "select" || tag === "textarea" || (t && t.isContentEditable)) return;
-        const c = document.getElementById("viewerContainer");
-        if (!c) return;
-        const vOrodni = t && t !== document.body && t !== c && !c.contains(t);
-        if (vOrodni) {
-          if (e.key === "ArrowDown") { vDokumentu(); e.preventDefault(); e.stopPropagation(); }
-          return;
-        }
-        const korak = Math.round(c.clientHeight * 0.8);
-        const app = window.PDFViewerApplication;
-        switch (e.key) {
-          case "ArrowDown":
-            c.scrollBy({ top: korak, behavior: "smooth" }); break;
-          case "ArrowUp":
-            if (c.scrollTop <= 0) {
-              const g = document.querySelector("#zoomInButton, #toolbarViewer button");
-              if (g) g.focus();
-            } else c.scrollBy({ top: -korak, behavior: "smooth" });
-            break;
-          case "ArrowRight":
-            if (app && app.pdfViewer) app.pdfViewer.nextPage(); break;
-          case "ArrowLeft":
-            if (app && app.pdfViewer) app.pdfViewer.previousPage(); break;
-          default:
-            return;
-        }
-        e.preventDefault();
-        e.stopPropagation();
+        if (["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].indexOf(e.key) < 0) return;
+        if (window.SafeerPdfTipka(e.key)) { e.preventDefault(); e.stopPropagation(); }
       }, true);
       window.addEventListener("load", () => setTimeout(vDokumentu, 600));
     }
