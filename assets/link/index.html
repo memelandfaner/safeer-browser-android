@@ -13,7 +13,7 @@
 
 <header class="glava">
   <div class="znak">
-    <span class="logo">🔗</span>
+    <span class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1 M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg></span>
     <div>
       <h1>Safeer Link</h1>
       <p class="stanjeVrstica">
@@ -30,7 +30,7 @@
   <!-- Stanje 1: Huba ni -->
   <section class="zaslon" id="zaslonBrezHuba">
     <div class="kartica sredina">
-      <div class="velikaIkona">🏠</div>
+      <div class="velikaIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8 M5 10v11h5v-6h4v6h5V10"/></svg></div>
       <h2 data-t="brezHubaNaslov">Safeer Link še ni vklopljen</h2>
       <p class="pojasnilo" data-t="brezHubaOpis">
         Safeer Link pošlje odprto stran na televizor in poveže tvoje naprave doma —
@@ -49,7 +49,7 @@
   <!-- Stanje 2: Hub je, a nas še ne pozna -->
   <section class="zaslon" id="zaslonSeznanitev" hidden>
     <div class="kartica sredina">
-      <div class="velikaIkona">🔐</div>
+      <div class="velikaIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4"/></svg></div>
       <h2 data-t="povežiNaslov">Poveži to napravo</h2>
       <p class="pojasnilo">
         <span data-t="hubNajdenNa">Safeer Link je na naslovu</span>
@@ -61,6 +61,18 @@
         <div class="stevilke" id="kodaStevilke">------</div>
         <p class="opomba" data-t="kodaVelja">Koda velja 5 minut.</p>
       </div>
+
+      <!-- Nov postopek: kodo pokaze gostitelj, uporabnik jo prepise sem. -->
+      <div class="koda" id="vnosKodeBlok" hidden>
+        <p class="pojasnilo drobno" data-t="vnesiKodoOpis">
+          Na napravi, kjer teče Safeer Link, se je izpisala 6-mestna številka. Prepiši jo sem.
+        </p>
+        <input class="vnosStevilke" id="vnosKode" type="text" inputmode="numeric"
+               autocomplete="one-time-code" maxlength="6" placeholder="------"
+               aria-label="Koda" />
+        <button class="glavni" id="gumbVnesiKodo" data-t="povezi">Poveži</button>
+        <p class="opomba" data-t="kodaVelja">Koda velja 5 minut.</p>
+      </div>
       <button class="glavni" id="gumbSeznani" data-t="poveziSSafeerLink">Poveži s Safeer Link</button>
       <p class="opomba" id="opombaSeznanitev"></p>
     </div>
@@ -69,7 +81,7 @@
   <!-- Stanje 2b: Safeer Link je na novem naslovu (usmerjevalnik je podelil nov IP). -->
   <section class="zaslon" id="zaslonPreseljen" hidden>
     <div class="kartica sredina">
-      <div class="velikaIkona">🏡</div>
+      <div class="velikaIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8 M5 10v11h5v-6h4v6h5V10"/></svg></div>
       <h2 data-t="preseljenNaslov">Safeer Link je na novem naslovu</h2>
       <p class="pojasnilo">
         <span data-t="preseljenOpis">Doma se javlja z drugega naslova kot doslej — običajno zato, ker mu je usmerjevalnik podelil novega. Potrdi, da je to tvoj Safeer Link.</span>
@@ -82,6 +94,37 @@
 
   <!-- Stanje 3: povezani. En sam zaslon, brez zavihkov: najprej dejanje, nato stanje. -->
   <section class="zaslon" id="zaslonPovezan" hidden>
+
+    <!-- Deljenje zaslona tece: vidno na vrhu, dokler ga uporabnik ne prekine. -->
+    <div class="panel zaslonTece" id="panelZaslonTece" hidden>
+      <p class="oznaka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 1.5h11a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 20V4a2.5 2.5 0 0 1 2.5-2.5z M8 6h8v9H8z"/></svg> <span id="zaslonTeceBesedilo"></span></p>
+      <button class="drugotni" id="gumbPrekiniZaslon" data-t="prekiniZaslon">Prekini deljenje zaslona</button>
+    </div>
+
+    <!-- Deljenje z izbrano napravo: zaslon, datoteka ali besedilo, nato en gumb. -->
+    <div class="panel" id="panelDeljenje" hidden>
+      <div class="vrsticaGlave">
+        <h2 id="deljenjeNaslov">Deli z napravo</h2>
+        <span class="gumbiGlave">
+          <button class="drobniGumb" id="gumbPreimenuj" data-t="preimenuj">Preimenuj</button>
+          <button class="drobniGumb" id="gumbDeljenjeZapri" data-t="zapriDeljenje">Zapri</button>
+        </span>
+      </div>
+      <div class="preimenuj" id="preimenujBlok" hidden>
+        <input class="vnosImena" id="vnosImena" type="text" maxlength="64" />
+        <button class="drugotni tanek" id="gumbShraniIme" data-t="shraniIme">Shrani ime</button>
+      </div>
+      <p class="pojasnilo drobno" id="opisIzbire" data-t="izberiVsebino">Kaj želiš deliti s to napravo?</p>
+      <div class="izbire" id="izbireDeljenja">
+        <button class="izbira" data-vrsta="zaslon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 1.5h11a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 20V4a2.5 2.5 0 0 1 2.5-2.5z M8 6h8v9H8z"/></svg> <span data-t="deliZaslon">Zaslon</span></button>
+        <button class="izbira" data-vrsta="datoteka"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h6l2 2h10v11H3z"/></svg> <span data-t="deliDatoteka">Datoteka</span></button>
+        <button class="izbira" data-vrsta="besedilo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4z"/></svg> <span data-t="deliBesedilo">Besedilo</span></button>
+      </div>
+      <p class="pojasnilo drobno" id="deljenjeOpis"></p>
+      <textarea class="vnosBesedila" id="deljenjeBesedilo" rows="4" hidden></textarea>
+      <button class="glavni" id="gumbPosljiNaNapravo" hidden data-t="posljiNaNapravo">Pošlji na napravo</button>
+      <p class="opomba" id="opombaDeljenje"></p>
+    </div>
 
     <div class="panel" id="panelCast" hidden>
       <h2 data-t="posljiStran">Pošlji to stran</h2>
@@ -101,10 +144,10 @@
         <div class="crta"><div class="crtaNapolnjena" id="crtaNapolnjena"></div></div>
         <p class="cas"><span id="casPolozaj">0:00</span> / <span id="casTrajanje">0:00</span></p>
         <div class="tipke">
-          <button data-ukaz="nazaj" data-t="nazaj10">⏪ 10 s</button>
-          <button data-ukaz="pause" data-t="pavza">⏸ Pavza</button>
-          <button data-ukaz="play" data-t="predvajaj">▶ Predvajaj</button>
-          <button data-ukaz="naprej" data-t="naprej10">10 s ⏩</button>
+          <button data-ukaz="nazaj"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 19 2 12l9-7z M21 19l-9-7 9-7z"/></svg><span data-t="nazaj10">10 s</span></button>
+          <button data-ukaz="pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3v14H7z M14 5h3v14h-3z"/></svg><span data-t="pavza">Pavza</span></button>
+          <button data-ukaz="play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg><span data-t="predvajaj">Predvajaj</span></button>
+          <button data-ukaz="naprej"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5l9 7-9 7z M3 5l9 7-9 7z"/></svg><span data-t="naprej10">10 s</span></button>
         </div>
       </div>
     </div>
@@ -133,6 +176,19 @@
     </div>
 
   </section>
+
+  <!-- Vedno vidno, na dnu: kaj velja v javnih omrezjih in zakaj si kljub temu zasciten. -->
+  <footer class="opozoriloWifi">
+    <p class="wifiNaslov"><span class="wifiIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a15 15 0 0 1 20 0 M5.5 12.5a10 10 0 0 1 13 0 M9 16a5 5 0 0 1 6 0 M12 19.5v.1"/></svg></span>
+      <span data-t="javniWifiNaslov">V javnih omrežjih priporočamo, da je Safeer Link izklopljen</span>
+    </p>
+    <p class="wifiOpis" data-t="javniWifiOpis">
+      V kavarni, hotelu ali na letališču je v istem omrežju lahko kdorkoli. Če Safeer Link tam kljub temu
+      uporabljaš, ostaneš zaščiten: tuja naprava se ne more povezati sama. Naprava, ki gosti Safeer Link,
+      izpiše na svojem zaslonu 6-mestno številko, in dokler te številke ne vtipkaš na drugi napravi,
+      se ne poveže nič in se ne prenese nič.
+    </p>
+  </footer>
 
 </main>
 

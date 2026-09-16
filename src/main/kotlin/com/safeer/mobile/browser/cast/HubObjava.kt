@@ -70,6 +70,9 @@ object HubObjava {
             setAttribute("version", HubUsmerjevalnik.RAZLICICA_PROTOKOLA)
             setAttribute("role", "hub")
             setAttribute("name", ime)
+            // Hub govori samo TLS; odtis je informativen (zaupanje vzpostavi seznanitev).
+            setAttribute("tls", "1")
+            setAttribute("fp", try { HubTls.lastniOdtis() } catch (_: Throwable) { "" })
         }
 
         val novi = object : NsdManager.RegistrationListener {

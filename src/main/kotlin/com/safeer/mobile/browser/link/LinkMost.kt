@@ -28,7 +28,11 @@ class LinkMost(
     private val pogled: WebView,
     private val trenutnaStran: () -> Pair<String, String?>,
     private val zapriZaslon: () -> Unit,
-    private val odpriVBrskalniku: (String) -> Unit
+    private val odpriVBrskalniku: (String) -> Unit,
+    /** Odpre sistemski izbirnik datotek; izbrano vrne dejavnost prek posljiDatotekoUri. */
+    private val izberiDatoteko: ((String) -> Unit)? = null,
+    /** Vprasa za dovoljenje za zajem zaslona; dejavnost nato zazene DeljenjeZaslonaStoritev. */
+    private val zahtevajZajemZaslona: ((String, String) -> Unit)? = null
 ) {
 
     companion object {
@@ -48,6 +52,9 @@ class LinkMost(
     private fun hubUrl(): String = nastavitve().getString("hub_url", "") ?: ""
 
     private fun zeton(): String? = nastavitve().getString("control_token", null)
+
+    /** Odtis Hubovega potrdila, pripet ob seznanitvi. */
+    private fun odtisHuba(): String? = com.safeer.mobile.browser.cast.HubTls.pripetiOdtis(dejavnost)
 
     private fun potVstopnice(): String =
         nastavitve().getString("hub_ticket_path", "/cast/ticket") ?: "/cast/ticket"
@@ -122,6 +129,7 @@ class LinkMost(
                 .remove("hub_url")
                 .remove("hub_ticket_path")
                 .remove("hub_last_seen")
+                .remove(com.safeer.mobile.browser.cast.HubTls.KEY_HUB_FP)
                 .apply()
         } catch (e: Throwable) {
             android.util.Log.w(TAG, "Nastavitev ni bilo mogoce pocistiti: ${e.message}")
@@ -135,7 +143,9 @@ class LinkMost(
             JSONObject().apply {
                 put("hub", hubUrl())
                 put("znan", hubUrl().isNotBlank())
-                put("seznanjen", zeton() != null)
+                // Seznanjena je naprava, ki ima zeton IN odtis Hubovega potrdila; stara seznanitev
+                // brez odtisa (pred TLS) ne velja vec - stran ponudi novo.
+                put("seznanjen", zeton() != null && odtisHuba() != null)
                 put("naprava", "Safeer (" + android.os.Build.MODEL + ")")
                 put("id", ime())
                 put("videnZadnjic", nastavitve().getLong("hub_last_seen", 0L))
@@ -147,6 +157,12 @@ class LinkMost(
 
     private fun ime(): String =
         "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
+
+    private fun imeNaprave(): String = "Safeer (" + android.os.Build.MODEL + ")"
+
+    /** Naslov Huba za navadne zahteve HTTP (ws://x:y/cast/ws -> http://x:y). */
+    private fun hubHttp(): String = hubUrl().replace(Regex("^wss"), "https").replace(Regex("^ws"), "http")
+        .substringBefore("/cast/ws").substringBefore("/link/ws").substringBefore("/safeer/ws").trimEnd('/')
 
     // ------------------------------------------------------------------
     // Hub: iskanje in seznanitev
@@ -167,7 +183,13 @@ class LinkMost(
         }
     }
 
-    /** Zacne seznanitev: koda se pokaze v strani, potrdi pa se v Safeer Controlu. */
+    /**
+     * Zacne seznanitev.
+     *
+     * Pri novem Hubu kodo pokaze gostitelj, uporabnik pa jo vtipka tu; strani to povemo z
+     * odzivom "nacin". Pri starejsem Hubu ostane stari postopek: kodo pokazemo mi, potrdi
+     * se na gostitelju.
+     */
     @JavascriptInterface
     fun seznani() {
         val naslov = hubUrl()
@@ -178,12 +200,46 @@ class LinkMost(
         try {
             HubPairing.pair(
                 dejavnost, naslov, ime(), "Safeer (" + android.os.Build.MODEL + ")",
-                { koda -> odziv("koda", koda) },
+                { nacin, koda ->
+                    odziv("nacin", JSONObject().apply {
+                        put("nacin", nacin)
+                        put("koda", koda)
+                    })
+                },
                 { uspelo -> odziv("seznanitev", uspelo) }
             )
         } catch (e: Throwable) {
             napaka("seznanitev_ni_stekla", "Seznanitve ni bilo mogoce zaceti: ${e.message}")
         }
+    }
+
+    /** Uporabnik je vtipkal sestmestno kodo, ki jo pokaze gostitelj. */
+    @JavascriptInterface
+    fun potrdiKodo(koda: String) {
+        try {
+            HubPairing.potrdiKodo(dejavnost, koda, ime()) { uspelo, razlog ->
+                if (uspelo) {
+                    odziv("seznanitev", true)
+                } else {
+                    odziv("kodaNiSprejeta", JSONObject().apply {
+                        put("razlog", razlog ?: "napacna_koda")
+                    })
+                }
+            }
+        } catch (e: Throwable) {
+            napaka("seznanitev_ni_stekla", "Kode ni bilo mogoce poslati: ${e.message}")
+        }
+    }
+
+    /** Uporabnik je vnos kode opustil. */
+    @JavascriptInterface
+    fun prekiniSeznanitev() {
+        try {
+            HubPairing.prekini()
+        } catch (e: Throwable) {
+            android.util.Log.w(TAG, "Prekinitve ni bilo mogoce izvesti: ${e.message}")
+        }
+        odziv("seznanitevPrekinjena", true)
     }
 
     // ------------------------------------------------------------------
@@ -196,8 +252,13 @@ class LinkMost(
         odjemalec?.let { return it }
         val nov = CastSenderClient(
             naslov, zeton(), potVstopnice(),
-            sinhronizira = ZaznamkiSync.jeVklopljena(dejavnost)
+            hubOdtis = odtisHuba(),
+            senderId = ime(),
+            sinhronizira = ZaznamkiSync.jeVklopljena(dejavnost),
+            deviceName = imeNaprave(),
+            zmoznosti = listOf("url", "text", "file", "screen")
         )
+        nov.onShare = { sporocilo -> prejmiDeljenje(sporocilo) }
         nov.onSyncData = { kategorija, razlicica, _, vsebina ->
             if (kategorija == ZaznamkiSync.KATEGORIJA && ZaznamkiSync.jeVklopljena(dejavnost)) {
                 // Zdruzevanje odpre bazo, zato ne na glavni niti.
@@ -228,6 +289,8 @@ class LinkMost(
                     put("ime", n.name)
                     put("vloga", n.role)
                     put("zmoznosti", JSONArray(n.capabilities))
+                    put("zasedenaOd", n.busyBy)
+                    put("zasedenaOdIme", n.busyByName)
                 })
             }
             zadnjeNaprave = polje
@@ -334,6 +397,305 @@ class LinkMost(
         } catch (e: Throwable) {
             napaka("ukaz_ni_uspel", "Ukaz ni uspel: ${e.message}")
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Deljenje: besedilo, datoteka, zaslon
+    //
+    // Vsebina gre na Hub po HTTP (Hub jo posreduje cilju), zato posiljanje ne rabi odprte
+    // povezave WebSocket in tece naprej, tudi ce uporabnik zapre ta zaslon. Stran o
+    // poteku izve z odzivom "deljenje": {vrsta, stanje, cilj, ime, sporocilo, odstotek}.
+    // ------------------------------------------------------------------
+
+    private fun deljenje(vrsta: String, stanje: String, cilj: String, ime: String = "", sporocilo: String = "", odstotek: Int = -1,
+                         koda: String = "", zasedenaOd: String = "") {
+        odziv("deljenje", JSONObject().apply {
+            put("vrsta", vrsta)
+            put("stanje", stanje)
+            put("cilj", cilj)
+            put("ime", ime)
+            put("sporocilo", sporocilo)
+            put("koda", koda)
+            put("zasedenaOd", zasedenaOd)
+            if (odstotek >= 0) put("odstotek", odstotek)
+        })
+    }
+
+    /** Napaka Huba: besedilo (rezerva), stabilna koda in - ce je naprava zasedena - kdo z njo deli. */
+    private class NapakaHuba(val sporocilo: String, val koda: String, val zasedenaOd: String)
+
+    private fun napakaHuba(koda: Int, odgovor: String): NapakaHuba = try {
+        val o = JSONObject(odgovor)
+        NapakaHuba(
+            o.optString("napaka", "").ifBlank { o.optString("error", "") }.ifBlank { "Hub je odgovoril $koda" },
+            o.optString("koda", "").ifBlank { o.optString("error_code", "") },
+            o.optString("busy_by_name", "").ifBlank { o.optString("busy_by", "") }
+        )
+    } catch (_: Throwable) { NapakaHuba("Hub je odgovoril $koda", "", "") }
+
+    private fun httpJson(metoda: String, pot: String, telo: String): Pair<Int, String> {
+        val povezava = java.net.URL(hubHttp() + pot).openConnection() as java.net.HttpURLConnection
+        try {
+            com.safeer.mobile.browser.cast.HubTls.zavaruj(povezava, dejavnost)
+            povezava.requestMethod = metoda
+            povezava.connectTimeout = 5000
+            povezava.readTimeout = 10000
+            zeton()?.let { povezava.setRequestProperty("x-safeer-token", it) }
+            povezava.setRequestProperty("Content-Type", "application/json")
+            povezava.doOutput = true
+            povezava.outputStream.use { it.write(telo.toByteArray(Charsets.UTF_8)) }
+            val koda = povezava.responseCode
+            val tok = if (koda >= 400) povezava.errorStream else povezava.inputStream
+            return koda to (tok?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: "")
+        } finally {
+            povezava.disconnect()
+        }
+    }
+
+    /** Besedilo na izbrano napravo. */
+    @JavascriptInterface
+    fun posljiBesedilo(idNaprave: String, besedilo: String) {
+        val cisto = besedilo.trim()
+        if (cisto.isEmpty()) return
+        if (hubUrl().isBlank() || zeton() == null) {
+            napaka("hub_ni_znan", "Hub ni znan.")
+            return
+        }
+        deljenje("besedilo", "posiljam", idNaprave)
+        Thread {
+            try {
+                val telo = JSONObject().put("device_id", ime()).put("target", idNaprave).put("text", cisto).toString()
+                val (koda, odgovor) = httpJson("POST", "/cast/share/text", telo)
+                if (koda == 200) deljenje("besedilo", "poslano", idNaprave)
+                else napakaHuba(koda, odgovor).let { n -> deljenje("besedilo", "napaka", idNaprave, sporocilo = n.sporocilo, koda = n.koda, zasedenaOd = n.zasedenaOd) }
+            } catch (e: Throwable) {
+                deljenje("besedilo", "napaka", idNaprave, sporocilo = e.message ?: "posiljanje ni uspelo")
+            }
+        }.start()
+    }
+
+    /** Odpre izbirnik datotek; izbrana datoteka se poslje z posljiDatotekoUri. */
+    @JavascriptInterface
+    fun izberiDatoteko(idNaprave: String) {
+        val izbira = izberiDatoteko
+        if (izbira == null) {
+            napaka("ni_izbirnika", "Izbira datoteke tu ni na voljo.")
+            return
+        }
+        dejavnost.runOnUiThread { izbira(idNaprave) }
+    }
+
+    /**
+     * Poslje datoteko iz sistemskega izbirnika. Prenos tece v storitvi v ospredju
+     * (PrenosDatotekeStoritev), da prezivi preklop v drugo aplikacijo; sem pride le napredek.
+     */
+    fun posljiDatotekoUri(uri: android.net.Uri, idNaprave: String) {
+        if (hubUrl().isBlank() || zeton() == null) {
+            napaka("hub_ni_znan", "Hub ni znan.")
+            return
+        }
+        pripniNapredekPrenosa()
+        try {
+            PrenosDatotekeStoritev.poslji(dejavnost, uri, idNaprave, hubHttp(), zeton() ?: "", ime())
+            deljenje("datoteka", "posiljam", idNaprave, "", odstotek = 0)
+        } catch (e: Throwable) {
+            deljenje("datoteka", "napaka", idNaprave, "", e.message ?: "posiljanje ni uspelo")
+        }
+    }
+
+    private fun pripniNapredekPrenosa() {
+        PrenosDatotekeStoritev.naNapredek = { n ->
+            deljenje("datoteka", n.stanje, n.cilj, n.ime, n.sporocilo, n.odstotek, n.koda, n.zasedenaOd)
+        }
+    }
+
+    /** Zacne deljenje zaslona: dejavnost vprasa za dovoljenje in zazene storitev. */
+    @JavascriptInterface
+    fun zacniDeljenjeZaslona(idNaprave: String, imeNaprave: String) {
+        val zahteva = zahtevajZajemZaslona
+        if (zahteva == null) {
+            napaka("ni_zajema", "Deljenje zaslona tu ni na voljo.")
+            return
+        }
+        if (hubUrl().isBlank() || zeton() == null) {
+            napaka("hub_ni_znan", "Hub ni znan.")
+            return
+        }
+        DeljenjeZaslonaStoritev.naSpremembo = { javiZaslon() }
+        dejavnost.runOnUiThread { zahteva(idNaprave, imeNaprave) }
+    }
+
+    /** Dovoljenje je dano: zazene storitev, ki deli zaslon, dokler je uporabnik ne prekine. */
+    fun zajemDovoljen(resultCode: Int, data: android.content.Intent, idNaprave: String, imeNaprave: String) {
+        DeljenjeZaslonaStoritev.naSpremembo = { javiZaslon() }
+        DeljenjeZaslonaStoritev.zazeni(dejavnost, resultCode, data, idNaprave, imeNaprave, hubHttp(), zeton() ?: "", ime())
+        deljenje("zaslon", "zaganjam", idNaprave, imeNaprave)
+    }
+
+    fun zajemZavrnjen(idNaprave: String) {
+        deljenje("zaslon", "koncano", idNaprave, sporocilo = "dovoljenje ni bilo dano", koda = "dovoljenje_zavrnjeno")
+    }
+
+    @JavascriptInterface
+    fun koncajDeljenjeZaslona() {
+        // Stran je lahko nova (Link je bil vmes zaprt): poslusalca pripnemo znova, da izve za konec.
+        DeljenjeZaslonaStoritev.naSpremembo = { javiZaslon() }
+        DeljenjeZaslonaStoritev.ustavi(dejavnost)
+    }
+
+    /** Stanje deljenja zaslona za izris (tudi ce je bil zaslon Linka vmes zaprt). */
+    @JavascriptInterface
+    fun deljenjeZaslonaStanje(): String = JSONObject().apply {
+        DeljenjeZaslonaStoritev.naSpremembo = { javiZaslon() }
+        put("tece", DeljenjeZaslonaStoritev.tece)
+        put("cilj", DeljenjeZaslonaStoritev.cilj)
+        put("ime", DeljenjeZaslonaStoritev.imeCilja)
+        put("napaka", DeljenjeZaslonaStoritev.zadnjaNapaka)
+    }.toString()
+
+    private fun javiZaslon() {
+        val tece = DeljenjeZaslonaStoritev.tece
+        deljenje("zaslon", if (tece) "tece" else "koncano", DeljenjeZaslonaStoritev.cilj,
+            DeljenjeZaslonaStoritev.imeCilja, DeljenjeZaslonaStoritev.zadnjaNapaka,
+            koda = DeljenjeZaslonaStoritev.zadnjaKoda, zasedenaOd = DeljenjeZaslonaStoritev.zadnjaZasedenaOd)
+    }
+
+    /** Poimenuje napravo (tudi to) za vse naprave v hisi; ime hrani Hub. Prazno ime vrne prvotnega. */
+    @JavascriptInterface
+    fun preimenujNapravo(idNaprave: String, ime: String) {
+        if (hubUrl().isBlank() || zeton() == null) {
+            napaka("hub_ni_znan", "Hub ni znan.")
+            return
+        }
+        Thread {
+            try {
+                val telo = JSONObject().put("device_id", idNaprave).put("name", ime.trim()).toString()
+                val (koda, odgovor) = httpJson("POST", "/cast/devices/rename", telo)
+                if (koda == 200) {
+                    val novo = try { JSONObject(odgovor).optString("name", "") } catch (_: Throwable) { "" }
+                    odziv("preimenovano", JSONObject().put("id", idNaprave).put("ime", novo))
+                } else napaka("preimenovanje_ni_uspelo", napakaHuba(koda, odgovor).sporocilo)
+            } catch (e: Throwable) {
+                napaka("preimenovanje_ni_uspelo", "Preimenovanje ni uspelo: ${e.message}")
+            }
+        }.start()
+    }
+
+    /** Druga naprava nam je nekaj poslala: besedilo, datoteko ali zaslon. */
+    private fun prejmiDeljenje(sporocilo: JSONObject) {
+        try {
+            val tip = sporocilo.optString("type", "")
+            val od = sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") }
+            val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
+            when (tip) {
+                "share.text" -> {
+                    val besedilo = tovor.optString("text", "")
+                    odziv("prejeto", JSONObject().put("vrsta", "besedilo").put("od", od).put("besedilo", besedilo))
+                    pokaziBesedilo(od, besedilo)
+                }
+                "share.screen" -> {
+                    val dejanje = tovor.optString("action", "")
+                    if (dejanje == "start") {
+                        val pot = tovor.optString("path", "")
+                        val url = if (pot.startsWith("/")) hubHttp() + pot else tovor.optString("url", "")
+                        if (url.isNotBlank()) dejavnost.runOnUiThread { zapriZaslon(); odpriVBrskalniku(url) }
+                    }
+                    odziv("prejeto", JSONObject().put("vrsta", "zaslon").put("od", od).put("dejanje", dejanje))
+                }
+                "share.file" -> {
+                    val imeDat = tovor.optString("name", "datoteka")
+                    val pot = tovor.optString("path", "")
+                    val odtis = tovor.optString("sha256", "")
+                    val zaGostitelja = tovor.optBoolean("for_host", false)
+                    if (zaGostitelja || pot.isBlank()) {
+                        val mapa = com.safeer.mobile.browser.PrenosiMapa.opis(dejavnost)
+                        odziv("prejeto", JSONObject().put("vrsta", "datoteka").put("od", od).put("ime", imeDat).put("mapa", mapa))
+                        obvesti(com.safeer.mobile.browser.I18n.t(dejavnost, "share_received_file").replace("{ime}", imeDat) + " (" + mapa + ")")
+                    } else {
+                        prevzemiDatoteko(hubHttp() + pot, imeDat, od, odtis)
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.w(TAG, "Prejetega deljenja ni bilo mogoce obdelati: ${e.message}")
+        }
+    }
+
+    private fun obvesti(besedilo: String) {
+        dejavnost.runOnUiThread {
+            try { android.widget.Toast.makeText(dejavnost, besedilo, android.widget.Toast.LENGTH_LONG).show() } catch (_: Throwable) { }
+        }
+    }
+
+    private fun pokaziBesedilo(od: String, besedilo: String) {
+        dejavnost.runOnUiThread {
+            try {
+                val cisto = besedilo.trim()
+                val jePovezava = (cisto.startsWith("http://") || cisto.startsWith("https://")) && !cisto.contains(Regex("\\s"))
+                val okno = android.app.AlertDialog.Builder(dejavnost)
+                    .setTitle("💬 " + com.safeer.mobile.browser.I18n.t(dejavnost, "share_received_text").replace("{ime}", od))
+                    .setMessage(besedilo.take(4000))
+                    .setNegativeButton(android.R.string.ok, null)
+                    .setNeutralButton(com.safeer.mobile.browser.I18n.t(dejavnost, "share_copy")) { _, _ ->
+                        try {
+                            val odlozisce = dejavnost.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                            odlozisce.setPrimaryClip(android.content.ClipData.newPlainText("Safeer Link", besedilo))
+                            obvesti(com.safeer.mobile.browser.I18n.t(dejavnost, "share_copied"))
+                        } catch (_: Throwable) { }
+                    }
+                if (jePovezava) {
+                    okno.setPositiveButton(com.safeer.mobile.browser.I18n.t(dejavnost, "share_open_link")) { _, _ ->
+                        zapriZaslon(); odpriVBrskalniku(cisto)
+                    }
+                }
+                okno.show()
+            } catch (e: Throwable) {
+                obvesti("💬 $od: " + besedilo.take(200))
+            }
+        }
+    }
+
+    /** Datoteko, ki caka na Hubu, prenesemo v mapo prenosov; ime ostane, ob trku dobi stevilko. */
+    private fun prevzemiDatoteko(url: String, imeDat: String, od: String, pricakovanOdtis: String) {
+        Thread {
+            var zaBrisanje: java.io.File? = null
+            try {
+                val mapa = com.safeer.mobile.browser.cast.HubKrmilnik.mapaZaPrejete(dejavnost)
+                val cilj = com.safeer.mobile.browser.cast.HubTokovi.enolicnaPot(mapa, com.safeer.mobile.browser.cast.HubTokovi.varnoIme(imeDat))
+                zaBrisanje = cilj
+                val povezava = java.net.URL(url).openConnection() as java.net.HttpURLConnection
+                try {
+                    com.safeer.mobile.browser.cast.HubTls.zavaruj(povezava, dejavnost)
+                    povezava.connectTimeout = 5000
+                    povezava.readTimeout = 30000
+                    if (povezava.responseCode != 200) throw java.io.IOException("Hub je odgovoril ${povezava.responseCode}")
+                    val prstni = java.security.MessageDigest.getInstance("SHA-256")
+                    povezava.inputStream.use { vhod ->
+                        java.io.FileOutputStream(cilj).use { izhod ->
+                            val kos = ByteArray(64 * 1024)
+                            while (true) {
+                                val n = vhod.read(kos)
+                                if (n < 0) break
+                                izhod.write(kos, 0, n)
+                                prstni.update(kos, 0, n)
+                            }
+                        }
+                    }
+                    val odtis = prstni.digest().joinToString("") { String.format("%02x", it.toInt() and 0xFF) }
+                    val pricakovan = pricakovanOdtis.ifBlank { povezava.getHeaderField("x-safeer-sha256") ?: "" }
+                    if (pricakovan.isNotBlank() && pricakovan != odtis) throw java.io.IOException("prstni odtis se ne ujema")
+                } finally {
+                    povezava.disconnect()
+                }
+                val opisMape = com.safeer.mobile.browser.PrenosiMapa.opis(dejavnost)
+                odziv("prejeto", JSONObject().put("vrsta", "datoteka").put("od", od).put("ime", cilj.name).put("mapa", opisMape))
+                obvesti(com.safeer.mobile.browser.I18n.t(dejavnost, "share_received_file").replace("{ime}", cilj.name) + " (" + opisMape + ")")
+            } catch (e: Throwable) {
+                android.util.Log.w(TAG, "Datoteke $imeDat ni bilo mogoce prevzeti: ${e.message}")
+                try { zaBrisanje?.delete() } catch (_: Throwable) { }
+                obvesti(com.safeer.mobile.browser.I18n.t(dejavnost, "share_file_failed").replace("{ime}", imeDat))
+            }
+        }.start()
     }
 
     // ------------------------------------------------------------------
@@ -559,6 +921,8 @@ class LinkMost(
     fun pospravi() {
         try { odjemalec?.disconnect() } catch (_: Throwable) {}
         odjemalec = null
+        DeljenjeZaslonaStoritev.naSpremembo = null
+        PrenosDatotekeStoritev.naNapredek = null
         // Hub namenoma tece naprej, ce ga je uporabnik prizgal: telefon je takrat sredisce
         // za druge naprave tudi, ko ta zaslon ni odprt. Odklopimo samo poslusalca.
         try {

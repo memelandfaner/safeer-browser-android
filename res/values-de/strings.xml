@@ -75,4 +75,6 @@
     <string name="menu_popup_block">Pop-up-Fenster blockieren</string>
     <string name="toast_popup_block_on">Pop-up-Fenster werden blockiert</string>
     <string name="toast_popup_block_off">Pop-up-Fenster sind erlaubt</string>
+    <string name="menu_shield_active">Schutz aktiv</string>
+    <string name="menu_shield_active_count">Schutz aktiv · %1$d blockiert</string>
 </resources>

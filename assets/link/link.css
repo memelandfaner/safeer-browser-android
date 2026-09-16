@@ -2,14 +2,14 @@
    Barve so iste kot v Safeerju: temna podlaga, zelena poteza. */
 
 :root {
-  --ozadje: #0b1017;
-  --plosca: #131a24;
-  --ploscaSvetla: #1b2430;
-  --crta: #243040;
-  --besedilo: #e6edf6;
-  --medlo: #91a0b4;
-  --zelena: #10b981;
-  --zelenaTemna: #04231a;
+  --ozadje: #090d15;
+  --plosca: #111924;
+  --ploscaSvetla: #151e2a;
+  --crta: #29333d;
+  --besedilo: #f0f4f3;
+  --medlo: #b0bdc4;
+  --zelena: #54d6a5;
+  --zelenaTemna: #06231a;
   --rumena: #f5b642;
   --siva: #5c6b80;
   --rdeca: #f87171;
@@ -227,6 +227,28 @@ button.drugotni.tanek:hover { color: var(--besedilo); }
   border-radius: 12px;
 }
 
+/* ---------- vnos kode, ki jo pokaze gostitelj ---------- */
+
+.vnosStevilke {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, monospace;
+  font-size: 34px;
+  letter-spacing: .18em;
+  text-align: center;
+  padding: 14px 0;
+  margin: 4px 0 12px;
+  color: var(--besedilo);
+  background: var(--ploscaSvetla);
+  border: 1px solid var(--crta);
+  border-radius: 12px;
+}
+
+.vnosStevilke:focus {
+  outline: 3px solid var(--zelena);
+  outline-offset: 2px;
+}
+
 /* ---------- predvajalnik ---------- */
 
 .predvajalnik {
@@ -285,3 +307,111 @@ button:focus, .seznam li:focus {
 .drugotni:focus, .drobniGumb:focus, .tipke button:focus {
   background: var(--ploscaSvetla);
 }
+
+/* ---------- opozorilo za javna omrezja (vedno na dnu) ---------- */
+
+.opozoriloWifi {
+  margin: 18px 0 28px;
+  padding: 14px 16px;
+  border: 1px solid var(--crta);
+  border-left: 3px solid #f59e0b;
+  border-radius: 12px;
+  background: var(--ploscaSvetla);
+}
+
+.wifiNaslov {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--besedilo);
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.wifiIkona { flex: 0 0 auto; }
+
+.wifiOpis {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--medlo);
+}
+
+/* ---------- deljenje z napravo ---------- */
+
+.izbire {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0 6px;
+}
+.izbire .izbira {
+  flex: 1;
+  padding: 14px 6px;
+  font-size: 15px;
+  color: var(--besedilo);
+  background: var(--ploscaSvetla);
+  border: 1px solid var(--crta);
+  border-radius: 12px;
+}
+.izbire .izbira.izbrana {
+  border-color: var(--zelena);
+  box-shadow: 0 0 0 2px var(--zelena) inset;
+}
+.izbire .izbira:focus {
+  outline: 3px solid var(--zelena);
+  outline-offset: 2px;
+}
+.vnosBesedila {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 16px;
+  padding: 12px;
+  margin: 6px 0 10px;
+  color: var(--besedilo);
+  background: var(--ploscaSvetla);
+  border: 1px solid var(--crta);
+  border-radius: 12px;
+  resize: vertical;
+}
+.vnosBesedila:focus {
+  outline: 3px solid var(--zelena);
+  outline-offset: 2px;
+}
+.panel.zaslonTece {
+  border-left: 4px solid var(--zelena);
+  padding-left: 14px;
+}
+.panel.zaslonTece .oznaka {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.gumbiGlave { display: flex; gap: 8px; }
+.preimenuj { display: flex; gap: 8px; margin: 6px 0 10px; }
+.preimenuj .vnosImena {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 16px;
+  padding: 10px 12px;
+  color: var(--besedilo);
+  background: var(--ploscaSvetla);
+  border: 1px solid var(--crta);
+  border-radius: 12px;
+}
+.preimenuj .vnosImena:focus { outline: 3px solid var(--zelena); outline-offset: 2px; }
+.preimenuj button.drugotni { display: inline-block; width: auto; margin-top: 0; flex: 0 0 auto; padding: 11px 16px; white-space: nowrap; }
+.izbire .izbira[disabled] { opacity: .45; }
+.znacka.rumenaZnacka { color: #f59e0b; border-color: rgba(245, 158, 11, .5); }
+
+/* ---------- crtne ikone (namesto emojijev), iste kot na safeer.si ---------- */
+svg[aria-hidden] { display: inline-block; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; }
+.ikona svg { width: 22px; height: 22px; color: var(--zelena); vertical-align: middle; }
+.logo svg { width: 28px; height: 28px; color: var(--zelena); }
+.velikaIkona svg { width: 46px; height: 46px; color: var(--zelena); }
+.izbire .izbira svg { width: 18px; height: 18px; margin-right: 6px; }
+.tipke button svg { width: 16px; height: 16px; margin-right: 6px; }
+.panel.zaslonTece .oznaka svg { width: 18px; height: 18px; color: var(--zelena); }
+.wifiIkona svg { width: 18px; height: 18px; color: var(--rumena); }

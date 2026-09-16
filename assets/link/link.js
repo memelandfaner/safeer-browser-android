@@ -28,6 +28,16 @@
 
   var BESEDILA = {
     sl: {
+      poisciDrugega: "Poišči drug Safeer Link",
+      vnesiKodoOpis: "Na napravi, kjer teče Safeer Link, se je izpisala 6-mestna številka. Prepiši jo sem.",
+      povezi: "Poveži",
+      preverjamKodo: "Preverjam kodo …",
+      napNapacnaKoda: "Koda ni pravilna. Poskusi znova.",
+      napPrevecPoskusov: "Preveč poskusov. Začni znova — dobiš novo kodo.",
+      napPrijavaPotekla: "Koda je potekla. Začni znova.",
+      prijavaCakaKodo: "Na tej napravi vtipkaj številko, ki jo vidiš tukaj",
+      javniWifiNaslov: "V javnih omrežjih priporočamo, da je Safeer Link izklopljen",
+      javniWifiOpis: "V kavarni, hotelu ali na letališču je v istem omrežju lahko kdorkoli. Če Safeer Link tam kljub temu uporabljaš, ostaneš zaščiten: tuja naprava se ne more povezati sama. Naprava, ki gosti Safeer Link, izpiše na svojem zaslonu 6-mestno številko, in dokler te številke ne vtipkaš na drugi napravi, se ne poveže nič in se ne prenese nič.",
       napHubNiZnan: "Huba še ne poznam. Najprej ga poišči.",
       napIskanje: "Iskanja ni bilo mogoče zagnati.",
       napSeznanitev: "Seznanitve ni bilo mogoče začeti.",
@@ -71,10 +81,10 @@
       odprtoVBrskalniku: "Odprto v brskalniku",
       domacaStran: "Domača stran — pošiljanje ni mogoče",
       predvajaSeNa: "Predvaja se na",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pavza",
-      predvajaj: "▶ Predvajaj",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pavza",
+      predvajaj: "Predvajaj",
+      naprej10: "10 s",
       povezaneNaprave: "Povezane naprave",
       osvezi: "Osveži",
       povezujem: "Povezujem se …",
@@ -122,6 +132,16 @@
       preverjamNaslov: "Povezujem se na nov naslov …"
     },
     en: {
+      poisciDrugega: "Look for another Safeer Link",
+      vnesiKodoOpis: "A 6-digit number appeared on the device running Safeer Link. Type it here.",
+      povezi: "Connect",
+      preverjamKodo: "Checking the code …",
+      napNapacnaKoda: "That code is not right. Try again.",
+      napPrevecPoskusov: "Too many attempts. Start again — you will get a new code.",
+      napPrijavaPotekla: "The code has expired. Start again.",
+      prijavaCakaKodo: "Type the number you see here on that device",
+      javniWifiNaslov: "On public networks we recommend turning Safeer Link off",
+      javniWifiOpis: "In a cafe, hotel or airport anyone can be on the same network. If you still use Safeer Link there, you stay protected: a stranger's device cannot connect on its own. The device hosting Safeer Link shows a 6-digit number on its screen, and until you type that number on the other device, nothing connects and nothing is transferred.",
       napHubNiZnan: "The hub is not known yet. Find it first.",
       napIskanje: "The search could not be started.",
       napSeznanitev: "Pairing could not be started.",
@@ -165,10 +185,10 @@
       odprtoVBrskalniku: "Open in the browser",
       domacaStran: "Home page — cannot be sent",
       predvajaSeNa: "Playing on",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pause",
-      predvajaj: "▶ Play",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pause",
+      predvajaj: "Play",
+      naprej10: "10 s",
       povezaneNaprave: "Connected devices",
       osvezi: "Refresh",
       povezujem: "Connecting …",
@@ -216,6 +236,16 @@
       preverjamNaslov: "Connecting to the new address …"
     },
     de: {
+      poisciDrugega: "Anderen Safeer Link suchen",
+      vnesiKodoOpis: "Auf dem Gerät mit Safeer Link ist eine 6-stellige Zahl erschienen. Geben Sie sie hier ein.",
+      povezi: "Verbinden",
+      preverjamKodo: "Code wird geprüft …",
+      napNapacnaKoda: "Der Code stimmt nicht. Versuchen Sie es erneut.",
+      napPrevecPoskusov: "Zu viele Versuche. Beginnen Sie neu — Sie erhalten einen neuen Code.",
+      napPrijavaPotekla: "Der Code ist abgelaufen. Beginnen Sie neu.",
+      prijavaCakaKodo: "Geben Sie die hier angezeigte Zahl auf jenem Gerät ein",
+      javniWifiNaslov: "In öffentlichen Netzen empfehlen wir, Safeer Link auszuschalten",
+      javniWifiOpis: "Im Cafe, Hotel oder Flughafen kann jeder im selben Netz sein. Wenn Sie Safeer Link dort trotzdem nutzen, bleiben Sie geschützt: ein fremdes Gerät kann sich nicht von selbst verbinden. Das Gerät, auf dem Safeer Link läuft, zeigt eine 6-stellige Zahl an, und solange Sie diese Zahl nicht auf dem anderen Gerät eingeben, verbindet sich nichts und wird nichts übertragen.",
       napHubNiZnan: "Der Hub ist noch nicht bekannt. Suche ihn zuerst.",
       napIskanje: "Die Suche konnte nicht gestartet werden.",
       napSeznanitev: "Die Kopplung konnte nicht gestartet werden.",
@@ -259,10 +289,10 @@
       odprtoVBrskalniku: "Im Browser öffnen",
       domacaStran: "Startseite — kann nicht gesendet werden",
       predvajaSeNa: "Läuft auf",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pause",
-      predvajaj: "▶ Wiedergabe",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pause",
+      predvajaj: "Wiedergabe",
+      naprej10: "10 s",
       povezaneNaprave: "Verbundene Geräte",
       osvezi: "Aktualisieren",
       povezujem: "Verbinde …",
@@ -310,6 +340,16 @@
       preverjamNaslov: "Verbinde mit der neuen Adresse …"
     },
     es: {
+      poisciDrugega: "Buscar otro Safeer Link",
+      vnesiKodoOpis: "En el dispositivo con Safeer Link ha aparecido un número de 6 dígitos. Escríbalo aquí.",
+      povezi: "Conectar",
+      preverjamKodo: "Comprobando el código …",
+      napNapacnaKoda: "El código no es correcto. Inténtelo de nuevo.",
+      napPrevecPoskusov: "Demasiados intentos. Empiece de nuevo: obtendrá un código nuevo.",
+      napPrijavaPotekla: "El código ha caducado. Empiece de nuevo.",
+      prijavaCakaKodo: "Escriba en ese dispositivo el número que ve aquí",
+      javniWifiNaslov: "En redes públicas recomendamos apagar Safeer Link",
+      javniWifiOpis: "En una cafetería, un hotel o un aeropuerto cualquiera puede estar en la misma red. Si aun así usa Safeer Link allí, sigue protegido: un dispositivo ajeno no puede conectarse por su cuenta. El dispositivo que aloja Safeer Link muestra un número de 6 dígitos en su pantalla, y mientras no escriba ese número en el otro dispositivo, no se conecta nada ni se transfiere nada.",
       napHubNiZnan: "El hub todavía no se conoce. Búscalo primero.",
       napIskanje: "No se pudo iniciar la búsqueda.",
       napSeznanitev: "No se pudo iniciar el emparejamiento.",
@@ -353,10 +393,10 @@
       odprtoVBrskalniku: "Abrir en el navegador",
       domacaStran: "Página de inicio: no se puede enviar",
       predvajaSeNa: "Reproduciéndose en",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pausa",
-      predvajaj: "▶ Reproducir",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pausa",
+      predvajaj: "Reproducir",
+      naprej10: "10 s",
       povezaneNaprave: "Dispositivos conectados",
       osvezi: "Actualizar",
       povezujem: "Conectando …",
@@ -404,6 +444,16 @@
       preverjamNaslov: "Conectando con la nueva dirección …"
     },
     fr: {
+      poisciDrugega: "Chercher un autre Safeer Link",
+      vnesiKodoOpis: "Un nombre à 6 chiffres est apparu sur l'appareil où tourne Safeer Link. Saisissez-le ici.",
+      povezi: "Connecter",
+      preverjamKodo: "Vérification du code …",
+      napNapacnaKoda: "Ce code n'est pas correct. Réessayez.",
+      napPrevecPoskusov: "Trop de tentatives. Recommencez : vous obtiendrez un nouveau code.",
+      napPrijavaPotekla: "Le code a expiré. Recommencez.",
+      prijavaCakaKodo: "Saisissez sur cet appareil le nombre affiché ici",
+      javniWifiNaslov: "Sur les réseaux publics, nous conseillons de désactiver Safeer Link",
+      javniWifiOpis: "Dans un café, un hôtel ou un aéroport, n'importe qui peut être sur le même réseau. Si vous utilisez quand même Safeer Link, vous restez protégé : un appareil inconnu ne peut pas se connecter tout seul. L'appareil qui héberge Safeer Link affiche un nombre à 6 chiffres à l'écran, et tant que vous ne saisissez pas ce nombre sur l'autre appareil, rien ne se connecte et rien n'est transféré.",
       napHubNiZnan: "Le hub n\'est pas encore connu. Cherche-le d\'abord.",
       napIskanje: "La recherche n\'a pas pu démarrer.",
       napSeznanitev: "L\'association n\'a pas pu démarrer.",
@@ -447,10 +497,10 @@
       odprtoVBrskalniku: "Ouvrir dans le navigateur",
       domacaStran: "Page d\'accueil — ne peut pas être envoyée",
       predvajaSeNa: "Lecture sur",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pause",
-      predvajaj: "▶ Lecture",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pause",
+      predvajaj: "Lecture",
+      naprej10: "10 s",
       povezaneNaprave: "Appareils connectés",
       osvezi: "Actualiser",
       povezujem: "Connexion …",
@@ -498,6 +548,16 @@
       preverjamNaslov: "Connexion à la nouvelle adresse …"
     },
     it: {
+      poisciDrugega: "Cerca un altro Safeer Link",
+      vnesiKodoOpis: "Sul dispositivo con Safeer Link è comparso un numero di 6 cifre. Digitalo qui.",
+      povezi: "Collega",
+      preverjamKodo: "Verifico il codice …",
+      napNapacnaKoda: "Il codice non è corretto. Riprova.",
+      napPrevecPoskusov: "Troppi tentativi. Ricomincia: otterrai un nuovo codice.",
+      napPrijavaPotekla: "Il codice è scaduto. Ricomincia.",
+      prijavaCakaKodo: "Digita su quel dispositivo il numero che vedi qui",
+      javniWifiNaslov: "Sulle reti pubbliche consigliamo di spegnere Safeer Link",
+      javniWifiOpis: "Al bar, in hotel o in aeroporto chiunque può essere sulla stessa rete. Se usi comunque Safeer Link, resti protetto: un dispositivo estraneo non può collegarsi da solo. Il dispositivo che ospita Safeer Link mostra sullo schermo un numero di 6 cifre e, finché non digiti quel numero sull'altro dispositivo, non si collega nulla e non viene trasferito nulla.",
       napHubNiZnan: "L\'hub non è ancora noto. Cercalo prima.",
       napIskanje: "Non è stato possibile avviare la ricerca.",
       napSeznanitev: "Non è stato possibile avviare l\'associazione.",
@@ -541,10 +601,10 @@
       odprtoVBrskalniku: "Apri nel browser",
       domacaStran: "Pagina iniziale: non può essere inviata",
       predvajaSeNa: "In riproduzione su",
-      nazaj10: "⏪ 10 s",
-      pavza: "⏸ Pausa",
-      predvajaj: "▶ Riproduci",
-      naprej10: "10 s ⏩",
+      nazaj10: "10 s",
+      pavza: "Pausa",
+      predvajaj: "Riproduci",
+      naprej10: "10 s",
       povezaneNaprave: "Dispositivi collegati",
       osvezi: "Aggiorna",
       povezujem: "Connessione …",
@@ -616,8 +676,238 @@
     prijava_potekla: "napPrijavaPotekla",
     tv_je_zaslon: "napTvJeZaslon",
     tv_ne_upravlja: "napTvNeUpravlja",
-    sync_tv_ni_na_voljo: "napSyncTvNiNaVoljo"
+    sync_tv_ni_na_voljo: "napSyncTvNiNaVoljo",
+    preimenovanje_ni_uspelo: "napPreimenovanje"
   };
+
+  var BESEDILA_DELJENJE = {
+    sl: {
+      napDovoljenje: "Deljenje zaslona ni bilo dovoljeno.",
+      zasedenoKratko: "Zasedeno",
+      zasedenoDeli: "Zasedeno — deli {ime}",
+      napZasedena: "Z napravo trenutno deli {ime}. Počakaj, da konča.",
+      preimenuj: "Preimenuj",
+      shraniIme: "Shrani ime",
+      vnesiIme: "Novo ime naprave …",
+      preimenovano: "Ime je shranjeno.",
+      napPreimenovanje: "Imena ni bilo mogoče shraniti.",
+      napOdtis: "Datoteka ni prišla nepoškodovana. Poskusi znova.",
+      zasedenaCakaj: "Ta naprava je zasedena; deljenje bo mogoče, ko {ime} konča.",
+      deliZ: "Deli z: {ime}",
+      izberiVsebino: "Kaj želiš deliti s to napravo?",
+      deliZaslon: "Zaslon",
+      deliDatoteka: "Datoteka",
+      deliBesedilo: "Besedilo",
+      posljiNaNapravo: "Pošlji na napravo",
+      vnesiBesedilo: "Vpiši besedilo …",
+      zaslonOpis: "Na izbrani napravi se bo prikazoval zaslon te naprave, dokler deljenja ne prekineš. Sistem te bo najprej vprašal za dovoljenje.",
+      datotekaOpis: "Odprlo se bo okno, v katerem poiščeš datoteko na tej napravi. Prispela bo v mapo prenosov izbrane naprave.",
+      besediloOpis: "Besedilo se pokaže na izbrani napravi; povezava se da odpreti z enim dotikom.",
+      prekiniZaslon: "Prekini deljenje zaslona",
+      zaslonTeceNa: "Zaslon se prikazuje na {ime}",
+      zaslonZaganjam: "Začenjam deljenje zaslona …",
+      zaslonKoncano: "Deljenje zaslona je končano.",
+      posiljam: "Pošiljam …",
+      posiljamOdstotek: "Pošiljam {ime} … {n} %",
+      poslanoNapravi: "Poslano na {ime}.",
+      napDeljenje: "Ni uspelo: {napaka}",
+      prejetoBesedilo: "Prejeto sporočilo z naprave {ime}",
+      prejetaDatoteka: "Prejeta datoteka {ime} ({mapa})",
+      prejetZaslon: "{ime} deli zaslon s to napravo",
+      naprava: "Naprava",
+      deliDotik: "Dotakni se za deljenje",
+      zapriDeljenje: "Zapri"
+    },
+    en: {
+      napDovoljenje: "Screen sharing was not allowed.",
+      zasedenoKratko: "Busy",
+      zasedenoDeli: "Busy — {ime} is sharing",
+      napZasedena: "{ime} is currently sharing with this device. Wait until it finishes.",
+      preimenuj: "Rename",
+      shraniIme: "Save name",
+      vnesiIme: "New device name …",
+      preimenovano: "Name saved.",
+      napPreimenovanje: "The name could not be saved.",
+      napOdtis: "The file did not arrive intact. Try again.",
+      zasedenaCakaj: "This device is busy; sharing will be possible once {ime} finishes.",
+      deliZ: "Share with: {ime}",
+      izberiVsebino: "What do you want to share with this device?",
+      deliZaslon: "Screen",
+      deliDatoteka: "File",
+      deliBesedilo: "Text",
+      posljiNaNapravo: "Send to device",
+      vnesiBesedilo: "Type your text …",
+      zaslonOpis: "The selected device will show this device's screen until you stop sharing. The system will ask for permission first.",
+      datotekaOpis: "A window will open to pick a file on this device. It will arrive in the downloads folder of the selected device.",
+      besediloOpis: "The text is shown on the selected device; a link can be opened with one tap.",
+      prekiniZaslon: "Stop screen sharing",
+      zaslonTeceNa: "Screen is shown on {ime}",
+      zaslonZaganjam: "Starting screen sharing …",
+      zaslonKoncano: "Screen sharing has ended.",
+      posiljam: "Sending …",
+      posiljamOdstotek: "Sending {ime} … {n} %",
+      poslanoNapravi: "Sent to {ime}.",
+      napDeljenje: "Failed: {napaka}",
+      prejetoBesedilo: "Message received from {ime}",
+      prejetaDatoteka: "File received: {ime} ({mapa})",
+      prejetZaslon: "{ime} is sharing its screen with this device",
+      naprava: "Device",
+      deliDotik: "Tap to share",
+      zapriDeljenje: "Close"
+    },
+    de: {
+      napDovoljenje: "Die Bildschirmfreigabe wurde nicht erlaubt.",
+      zasedenoKratko: "Belegt",
+      zasedenoDeli: "Belegt — {ime} teilt",
+      napZasedena: "{ime} teilt gerade mit diesem Gerät. Warte, bis es fertig ist.",
+      preimenuj: "Umbenennen",
+      shraniIme: "Namen speichern",
+      vnesiIme: "Neuer Gerätename …",
+      preimenovano: "Name gespeichert.",
+      napPreimenovanje: "Der Name konnte nicht gespeichert werden.",
+      napOdtis: "Die Datei kam nicht unversehrt an. Versuche es erneut.",
+      zasedenaCakaj: "Dieses Gerät ist belegt; Teilen ist möglich, sobald {ime} fertig ist.",
+      deliZ: "Teilen mit: {ime}",
+      izberiVsebino: "Was möchtest du mit diesem Gerät teilen?",
+      deliZaslon: "Bildschirm",
+      deliDatoteka: "Datei",
+      deliBesedilo: "Text",
+      posljiNaNapravo: "An Gerät senden",
+      vnesiBesedilo: "Text eingeben …",
+      zaslonOpis: "Das gewählte Gerät zeigt den Bildschirm dieses Geräts, bis du die Freigabe beendest. Das System fragt zuerst um Erlaubnis.",
+      datotekaOpis: "Es öffnet sich ein Fenster, in dem du eine Datei auf diesem Gerät auswählst. Sie landet im Download-Ordner des gewählten Geräts.",
+      besediloOpis: "Der Text wird auf dem gewählten Gerät angezeigt; ein Link lässt sich mit einem Tipp öffnen.",
+      prekiniZaslon: "Bildschirmfreigabe beenden",
+      zaslonTeceNa: "Bildschirm wird auf {ime} angezeigt",
+      zaslonZaganjam: "Bildschirmfreigabe wird gestartet …",
+      zaslonKoncano: "Bildschirmfreigabe beendet.",
+      posiljam: "Sende …",
+      posiljamOdstotek: "Sende {ime} … {n} %",
+      poslanoNapravi: "An {ime} gesendet.",
+      napDeljenje: "Fehlgeschlagen: {napaka}",
+      prejetoBesedilo: "Nachricht von {ime} erhalten",
+      prejetaDatoteka: "Datei erhalten: {ime} ({mapa})",
+      prejetZaslon: "{ime} teilt den Bildschirm mit diesem Gerät",
+      naprava: "Gerät",
+      deliDotik: "Zum Teilen antippen",
+      zapriDeljenje: "Schließen"
+    },
+    es: {
+      napDovoljenje: "No se permitió compartir la pantalla.",
+      zasedenoKratko: "Ocupado",
+      zasedenoDeli: "Ocupado — {ime} está compartiendo",
+      napZasedena: "{ime} está compartiendo con este dispositivo. Espera a que termine.",
+      preimenuj: "Renombrar",
+      shraniIme: "Guardar nombre",
+      vnesiIme: "Nuevo nombre del dispositivo …",
+      preimenovano: "Nombre guardado.",
+      napPreimenovanje: "No se pudo guardar el nombre.",
+      napOdtis: "El archivo no llegó intacto. Inténtalo de nuevo.",
+      zasedenaCakaj: "Este dispositivo está ocupado; podrás compartir cuando {ime} termine.",
+      deliZ: "Compartir con: {ime}",
+      izberiVsebino: "¿Qué quieres compartir con este dispositivo?",
+      deliZaslon: "Pantalla",
+      deliDatoteka: "Archivo",
+      deliBesedilo: "Texto",
+      posljiNaNapravo: "Enviar al dispositivo",
+      vnesiBesedilo: "Escribe el texto …",
+      zaslonOpis: "El dispositivo elegido mostrará la pantalla de este dispositivo hasta que detengas la compartición. El sistema pedirá permiso primero.",
+      datotekaOpis: "Se abrirá una ventana para elegir un archivo de este dispositivo. Llegará a la carpeta de descargas del dispositivo elegido.",
+      besediloOpis: "El texto se muestra en el dispositivo elegido; un enlace se abre con un toque.",
+      prekiniZaslon: "Dejar de compartir pantalla",
+      zaslonTeceNa: "La pantalla se muestra en {ime}",
+      zaslonZaganjam: "Iniciando la compartición de pantalla …",
+      zaslonKoncano: "La pantalla compartida ha terminado.",
+      posiljam: "Enviando …",
+      posiljamOdstotek: "Enviando {ime} … {n} %",
+      poslanoNapravi: "Enviado a {ime}.",
+      napDeljenje: "No se pudo: {napaka}",
+      prejetoBesedilo: "Mensaje recibido de {ime}",
+      prejetaDatoteka: "Archivo recibido: {ime} ({mapa})",
+      prejetZaslon: "{ime} comparte su pantalla con este dispositivo",
+      naprava: "Dispositivo",
+      deliDotik: "Toca para compartir",
+      zapriDeljenje: "Cerrar"
+    },
+    fr: {
+      napDovoljenje: "Le partage d’écran n’a pas été autorisé.",
+      zasedenoKratko: "Occupé",
+      zasedenoDeli: "Occupé — {ime} partage",
+      napZasedena: "{ime} partage actuellement avec cet appareil. Attends qu’il ait fini.",
+      preimenuj: "Renommer",
+      shraniIme: "Enregistrer le nom",
+      vnesiIme: "Nouveau nom de l’appareil …",
+      preimenovano: "Nom enregistré.",
+      napPreimenovanje: "Le nom n’a pas pu être enregistré.",
+      napOdtis: "Le fichier n’est pas arrivé intact. Réessaie.",
+      zasedenaCakaj: "Cet appareil est occupé ; le partage sera possible quand {ime} aura fini.",
+      deliZ: "Partager avec : {ime}",
+      izberiVsebino: "Que veux-tu partager avec cet appareil ?",
+      deliZaslon: "Écran",
+      deliDatoteka: "Fichier",
+      deliBesedilo: "Texte",
+      posljiNaNapravo: "Envoyer à l’appareil",
+      vnesiBesedilo: "Saisis le texte …",
+      zaslonOpis: "L’appareil choisi affichera l’écran de cet appareil jusqu’à ce que tu arrêtes le partage. Le système demandera d’abord l’autorisation.",
+      datotekaOpis: "Une fenêtre s’ouvrira pour choisir un fichier sur cet appareil. Il arrivera dans le dossier de téléchargements de l’appareil choisi.",
+      besediloOpis: "Le texte s’affiche sur l’appareil choisi ; un lien s’ouvre d’une pression.",
+      prekiniZaslon: "Arrêter le partage d’écran",
+      zaslonTeceNa: "L’écran est affiché sur {ime}",
+      zaslonZaganjam: "Démarrage du partage d’écran …",
+      zaslonKoncano: "Le partage d’écran est terminé.",
+      posiljam: "Envoi …",
+      posiljamOdstotek: "Envoi de {ime} … {n} %",
+      poslanoNapravi: "Envoyé à {ime}.",
+      napDeljenje: "Échec : {napaka}",
+      prejetoBesedilo: "Message reçu de {ime}",
+      prejetaDatoteka: "Fichier reçu : {ime} ({mapa})",
+      prejetZaslon: "{ime} partage son écran avec cet appareil",
+      naprava: "Appareil",
+      deliDotik: "Toucher pour partager",
+      zapriDeljenje: "Fermer"
+    },
+    it: {
+      napDovoljenje: "La condivisione dello schermo non è stata consentita.",
+      zasedenoKratko: "Occupato",
+      zasedenoDeli: "Occupato — {ime} sta condividendo",
+      napZasedena: "{ime} sta condividendo con questo dispositivo. Aspetta che finisca.",
+      preimenuj: "Rinomina",
+      shraniIme: "Salva nome",
+      vnesiIme: "Nuovo nome del dispositivo …",
+      preimenovano: "Nome salvato.",
+      napPreimenovanje: "Impossibile salvare il nome.",
+      napOdtis: "Il file non è arrivato integro. Riprova.",
+      zasedenaCakaj: "Questo dispositivo è occupato; potrai condividere quando {ime} avrà finito.",
+      deliZ: "Condividi con: {ime}",
+      izberiVsebino: "Cosa vuoi condividere con questo dispositivo?",
+      deliZaslon: "Schermo",
+      deliDatoteka: "File",
+      deliBesedilo: "Testo",
+      posljiNaNapravo: "Invia al dispositivo",
+      vnesiBesedilo: "Scrivi il testo …",
+      zaslonOpis: "Il dispositivo scelto mostrerà lo schermo di questo dispositivo finché non interrompi la condivisione. Il sistema chiederà prima il permesso.",
+      datotekaOpis: "Si aprirà una finestra per scegliere un file su questo dispositivo. Arriverà nella cartella dei download del dispositivo scelto.",
+      besediloOpis: "Il testo viene mostrato sul dispositivo scelto; un link si apre con un tocco.",
+      prekiniZaslon: "Interrompi condivisione schermo",
+      zaslonTeceNa: "Lo schermo è mostrato su {ime}",
+      zaslonZaganjam: "Avvio della condivisione dello schermo …",
+      zaslonKoncano: "La condivisione dello schermo è terminata.",
+      posiljam: "Invio …",
+      posiljamOdstotek: "Invio di {ime} … {n} %",
+      poslanoNapravi: "Inviato a {ime}.",
+      napDeljenje: "Non riuscito: {napaka}",
+      prejetoBesedilo: "Messaggio ricevuto da {ime}",
+      prejetaDatoteka: "File ricevuto: {ime} ({mapa})",
+      prejetZaslon: "{ime} condivide lo schermo con questo dispositivo",
+      naprava: "Dispositivo",
+      deliDotik: "Tocca per condividere",
+      zapriDeljenje: "Chiudi"
+    }
+  };
+  for (var _jd in BESEDILA_DELJENJE) {
+    if (!BESEDILA[_jd]) BESEDILA[_jd] = {};
+    for (var _kd in BESEDILA_DELJENJE[_jd]) BESEDILA[_jd][_kd] = BESEDILA_DELJENJE[_jd][_kd];
+  }
 
   var jezik = (function () {
     var oznaka = "";
@@ -669,6 +959,7 @@
     televizor: false,
     hub: "",
     imeNaprave: "",
+    idNaprave: "",
     naprave: [],
     prejemnik: null,
     predvajanje: null,
@@ -714,16 +1005,41 @@
     return naprava.vloga === "receiver" ? t("televizor") : t("zaslon");
   }
 
-  function vrstica(ikonaZnak, ime, pod, znackaBesedilo, barva, obKliku) {
+  // Crtne ikone (iste kot na safeer.si) namesto emojijev: na vsaki napravi so videti enako.
+  var IKONE = {
+    tv: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 4h20v13H2z M8 21h8 M12 17v4\"/></svg>",
+    racunalnik: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M1 3h22v14H1z M8 21h8 M12 17v4\"/></svg>",
+    telefon: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6.5 1.5h11a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 20V4a2.5 2.5 0 0 1 2.5-2.5z M10.5 18.5h3\"/></svg>",
+    hisa: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 11 12 3l9 8 M5 10v11h5v-6h4v6h5V10\"/></svg>",
+    zvezda: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3l2.8 5.6 6.2.9-4.5 4.4 1.1 6.1L12 17.1 6.4 20l1.1-6.1L3 9.5l6.2-.9z\"/></svg>",
+    nastavitve: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z M12 2.5V5 M12 19v2.5 M2.5 12H5 M19 12h2.5 M5.3 5.3 7 7 M17 17l1.7 1.7 M5.3 18.7 7 17 M17 7l1.7-1.7\"/></svg>",
+    scit: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6z M8.5 12l2.5 2.5 4.5-5\"/></svg>",
+    povezava: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1 M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1\"/></svg>",
+    kljucavnica: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4\"/></svg>",
+    zaslon: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6.5 1.5h11a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 20V4a2.5 2.5 0 0 1 2.5-2.5z M8 6h8v9H8z\"/></svg>",
+    mapa: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M3 6h6l2 2h10v11H3z\"/></svg>",
+    sporocilo: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v12H9l-5 4z\"/></svg>",
+    wifi: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M2 9a15 15 0 0 1 20 0 M5.5 12.5a10 10 0 0 1 13 0 M9 16a5 5 0 0 1 6 0 M12 19.5v.1\"/></svg>",
+    nazaj: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M11 19 2 12l9-7z M21 19l-9-7 9-7z\"/></svg>",
+    pavza: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M7 5h3v14H7z M14 5h3v14h-3z\"/></svg>",
+    predvajaj: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 4l14 8-14 8z\"/></svg>",
+    naprej: "<svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M13 5l9 7-9 7z M3 5l9 7-9 7z\"/></svg>"
+  };
+  function ikonaZnak(kljuc) {
+    var e = document.createElement("span");
+    e.className = "ikona";
+    if (IKONE[kljuc]) e.innerHTML = IKONE[kljuc]; else e.textContent = kljuc;
+    return e;
+  }
+
+  function vrstica(ikonaKljuc, ime, pod, znackaBesedilo, barva, obKliku) {
     var li = document.createElement("li");
     if (obKliku) {
       li.className = "klikljiv";
       li.tabIndex = 0;
     }
 
-    var ikona = document.createElement("span");
-    ikona.className = "ikona";
-    ikona.textContent = ikonaZnak;
+    var ikona = ikonaZnak(ikonaKljuc);
 
     var telo = document.createElement("div");
     telo.className = "telo";
@@ -801,26 +1117,46 @@
 
     // Hub javlja samo zaslone, zato to napravo in Safeer Link narisemo sama --
     // uporabnik mora vedno videti, kje je, tudi kadar televizorja se ni.
+    var jaz = null;
+    for (var k = 0; k < stanje.naprave.length; k++) if (stanje.naprave[k].id === stanje.idNaprave) jaz = stanje.naprave[k];
     seznam.appendChild(vrstica(
-      stanje.televizor ? "📺" : "💻",
-      stanje.imeNaprave || t("taNaprava"),
+      stanje.televizor ? "tv" : "racunalnik",
+      (jaz && jaz.ime) || stanje.imeNaprave || t("taNaprava"),
       stanje.povezan ? t("povezanaZLinkom") : t("povezujem"),
       t("taNaprava"),
       stanje.povezan ? "zivo" : "",
-      null
+      (znaDeliti && jaz) ? function () { odpriDeljenje(jaz, true); } : null
     ));
     if (stanje.hub) {
       seznam.appendChild(vrstica(
-        "🏠", "Safeer Link", prijaznaHisa(stanje.hub), t("domace"), "zivo", null));
+        "hisa", "Safeer Link", prijaznaHisa(stanje.hub), t("domace"), "zivo", null));
     }
 
-    zasloni().forEach(function (n) {
-      seznam.appendChild(vrstica("📺", prijaznoIme(n), t("zaslon"),
-                                 t("povezan"), "zivo", null));
+    // Vse naprave, ki jih Hub pozna, razen te: vsaka je lahko cilj deljenja.
+    var druge = stanje.naprave.filter(function (n) { return n.id !== stanje.idNaprave; });
+    druge.forEach(function (n) {
+      var jeZaslon = n.vloga === "receiver";
+      var deljivo = znaDeliti;
+      var zasedena = !!n.zasedenaOd && n.zasedenaOd !== stanje.idNaprave;
+      var pod = zasedena ? t("zasedenoDeli", { ime: n.zasedenaOdIme || n.zasedenaOd })
+        : (deljivo ? t("deliDotik") : (jeZaslon ? t("zaslon") : t("naprava")));
+      seznam.appendChild(vrstica(
+        jeZaslon ? "tv" : ikonaNapraveVSeznamu(n),
+        prijaznoIme(n),
+        pod,
+        zasedena ? t("zasedenoKratko") : t("povezan"), zasedena ? "rumenaZnacka" : "zivo",
+        deljivo ? function () { odpriDeljenje(n); } : null));
     });
 
     besedilo("opombaNaprave",
-             (zasloni().length || stanje.televizor) ? "" : t("brezZaslonov"));
+             (druge.length || stanje.televizor) ? "" : t("brezZaslonov"));
+  }
+
+  function ikonaNapraveVSeznamu(naprava) {
+    var opis = ((naprava && (naprava.ime || "")) + " " + (naprava && (naprava.id || ""))).toLowerCase();
+    if (/(televizor|tv|philips|android tv)/.test(opis)) return "tv";
+    if (/(racunaln|računaln|computer|namizn|desktop|laptop|prenosn|linux|windows|mac|pc\b)/.test(opis)) return "racunalnik";
+    return "telefon";
   }
 
   function narisiPrejemnike() {
@@ -836,7 +1172,7 @@
     besedilo("opombaCast", "");
     prejemniki.forEach(function (n) {
       var ime = prijaznoIme(n);
-      seznam.appendChild(vrstica("📺", ime, t("posljiNaZaslon"), t("poslji"), "zivo",
+      seznam.appendChild(vrstica("tv", ime, t("posljiNaZaslon"), t("poslji"), "zivo",
         function () {
           stanje.prejemnik = n;
           besedilo("imePrejemnika", ime);
@@ -907,7 +1243,7 @@
                : (syncPotrjujem ? t("syncPotrdi") : t("syncIzklopljena"));
 
     seznam.appendChild(vrstica(
-      "⭐", t("zaznamki"), pod, znacka,
+      "zvezda", t("zaznamki"), pod, znacka,
       zaznamki.vklopljena ? "zivo" : (syncPotrjujem ? "opozorilo" : ""),
       zaznamki.nadvoljo ? function () {
         if (!most) return;
@@ -930,8 +1266,8 @@
     ));
 
     [
-      { ikona: "⚙️", ime: t("nastavitve"), pod: t("nastavitveOpis") },
-      { ikona: "🛡️", ime: t("filtri"), pod: t("filtriOpis") }
+      { ikona: "nastavitve", ime: t("nastavitve"), pod: t("nastavitveOpis") },
+      { ikona: "scit", ime: t("filtri"), pod: t("filtriOpis") }
     ].forEach(function (v) {
       seznam.appendChild(vrstica(v.ikona, v.ime, v.pod, t("kmalu"), "", null));
     });
@@ -951,6 +1287,9 @@
   // Odzivi mostu
   // ----------------------------------------------------------------
 
+  /** Ali je iskanje sprozil gumb za povezavo; takrat gremo naprej brez novega klika. */
+  var povezujemPoIskanju = false;
+
   window.safeerLinkOdziv = function (vrsta, podatki) {
     try {
       if (vrsta === "hub") {
@@ -960,8 +1299,14 @@
           stanje.preseljen = false;
           besedilo("naslovHuba", prijaznaHisa(podatki.naslov));
           osveziStanje();
+          if (povezujemPoIskanju) {
+            povezujemPoIskanju = false;
+            if (most) most.seznani();
+          }
         } else {
+          povezujemPoIskanju = false;
           besedilo("opombaIskanje", t("niNajden"));
+          besedilo("opombaSeznanitev", t("niNajden"));
           narisiStanje();
         }
       } else if (vrsta === "preseljen") {
@@ -974,6 +1319,39 @@
         besedilo("opombaSeznanitev", t("cakamNaPotrditev"));
         var g = el("gumbSeznani");
         if (g) g.disabled = true;
+      } else if (vrsta === "nacin") {
+        // Nov Hub: kodo pokaze gostitelj, uporabnik jo prepise sem.
+        // Starejsi Hub: kodo pokazemo mi, potrdi se na gostitelju.
+        var gs = el("gumbSeznani");
+        if (gs) gs.disabled = true;
+        if (podatki && podatki.nacin === "koda_na_gostitelju") {
+          // Gumb umaknemo: zdaj je na vrsti vnos kode, ne se en klik na isto stvar.
+          pokazi("gumbSeznani", false);
+          pokazi("kodaBlok", false);
+          pokazi("vnosKodeBlok", true);
+          besedilo("opombaSeznanitev", "");
+          var vnos = el("vnosKode");
+          if (vnos) { vnos.value = ""; try { vnos.focus(); } catch (e) {} }
+        } else {
+          pokazi("vnosKodeBlok", false);
+          pokazi("kodaBlok", true);
+          besedilo("kodaStevilke", String((podatki && podatki.koda) || "------"));
+          besedilo("opombaSeznanitev", t("cakamNaPotrditev"));
+        }
+      } else if (vrsta === "kodaNiSprejeta") {
+        var razlog = (podatki && podatki.razlog) || "napacna_koda";
+        var kljucNapake = razlog === "prevec_poskusov" ? "napPrevecPoskusov"
+          : (razlog === "prijava_ne_obstaja" ? "napPrijavaPotekla" : "napNapacnaKoda");
+        besedilo("opombaSeznanitev", t(kljucNapake));
+        if (razlog === "prevec_poskusov" || razlog === "prijava_ne_obstaja") {
+          pokazi("vnosKodeBlok", false);
+          pokazi("gumbSeznani", true);
+          var gz = el("gumbSeznani");
+          if (gz) gz.disabled = false;
+        } else {
+          var v2 = el("vnosKode");
+          if (v2) { v2.value = ""; try { v2.focus(); } catch (e) {} }
+        }
       } else if (vrsta === "seznanitev") {
         var gumb = el("gumbSeznani");
         if (gumb) gumb.disabled = false;
@@ -983,10 +1361,13 @@
           poveziSe();
         } else {
           pokazi("kodaBlok", false);
+          pokazi("vnosKodeBlok", false);
+          pokazi("gumbSeznani", true);
           besedilo("opombaSeznanitev", t("niPotrjeno"));
         }
       } else if (vrsta === "naprave") {
         stanje.naprave = podatki || [];
+        if (deljenje.naprava && !stanje.naprave.some(function (n) { return n.id === deljenje.naprava.id; })) zapriDeljenje();
         narisiNaprave();
         if (!stanje.televizor) narisiPrejemnike();
       } else if (vrsta === "predvajanje") {
@@ -1014,6 +1395,12 @@
         stanje.tezava = false;
         narisiNaprave();
         narisiStanje();
+      } else if (vrsta === "deljenje") {
+        naDeljenje(podatki);
+      } else if (vrsta === "prejeto") {
+        naPrejeto(podatki);
+      } else if (vrsta === "preimenovano") {
+        naPreimenovano(podatki);
       } else if (vrsta === "napaka") {
         // Tehnicnega besedila uporabniku ne kazemo: povemo, kaj to pomeni zanj.
         stanje.tezava = true;
@@ -1063,6 +1450,223 @@
     return sporocilo || t("tezava");
   }
 
+
+  // ----------------------------------------------------------------
+  // Deljenje z izbrano napravo: zaslon, datoteka, besedilo
+  //
+  // Uporabnik se dotakne naprave, izbere, kaj deli, in dobi en gumb "Poslji na napravo".
+  // Besedilo vpise tu; datoteko poisce v sistemskem oknu; zaslon dovoli v sistemskem
+  // vprasanju in ga lahko kadar koli prekine.
+  // ----------------------------------------------------------------
+
+  var znaDeliti = !!(most && most.posljiBesedilo && most.izberiDatoteko && most.zacniDeljenjeZaslona);
+  var deljenje = { naprava: null, vrsta: "" };
+  var zaslonDeljenje = { tece: false, ime: "", cilj: "" };
+
+  function odpriDeljenje(naprava, samoIme) {
+    if (!znaDeliti) return;
+    deljenje.naprava = naprava;
+    deljenje.vrsta = "";
+    deljenje.samoIme = !!samoIme;
+    besedilo("deljenjeNaslov", samoIme ? prijaznoIme(naprava) : t("deliZ", { ime: prijaznoIme(naprava) }));
+    besedilo("opombaDeljenje", "");
+    besedilo("deljenjeOpis", "");
+    pokazi("deljenjeBesedilo", false);
+    pokazi("gumbPosljiNaNapravo", false);
+    pokazi("preimenujBlok", false);
+    pokazi("izbireDeljenja", !samoIme);
+    pokazi("opisIzbire", !samoIme);
+    var izbire = document.querySelectorAll("#panelDeljenje .izbira");
+    var zasedena = !samoIme && !!naprava.zasedenaOd && naprava.zasedenaOd !== stanje.idNaprave;
+    for (var i = 0; i < izbire.length; i++) {
+      izbire[i].classList.remove("izbrana");
+      izbire[i].disabled = zasedena;
+    }
+    if (zasedena) besedilo("opombaDeljenje", t("zasedenaCakaj", { ime: naprava.zasedenaOdIme || naprava.zasedenaOd }));
+    pokazi("panelDeljenje", true);
+    // Glava strani je pripeta na vrh; plosco potisnemo tik pod njo, da je naslov "Deli z" viden.
+    var p = el("panelDeljenje");
+    var glava = document.querySelector("header.glava");
+    if (p) {
+      try {
+        var vrh = p.getBoundingClientRect().top + (window.pageYOffset || 0) - ((glava ? glava.offsetHeight : 0) + 8);
+        window.scrollTo({ top: Math.max(0, vrh), behavior: "smooth" });
+      } catch (e) {}
+    }
+  }
+
+  function zapriDeljenje() {
+    deljenje.naprava = null;
+    deljenje.vrsta = "";
+    pokazi("panelDeljenje", false);
+  }
+
+  function odpriPreimenovanje() {
+    var n = deljenje.naprava;
+    if (!n) return;
+    pokazi("preimenujBlok", true);
+    var v = el("vnosImena");
+    if (v) {
+      v.value = prijaznoIme(n);
+      v.setAttribute("placeholder", t("vnesiIme"));
+      try { v.focus(); v.select(); } catch (e) {}
+    }
+  }
+
+  function shraniIme() {
+    var n = deljenje.naprava;
+    if (!n || !most || !most.preimenujNapravo) return;
+    var v = el("vnosImena");
+    var ime = v ? String(v.value || "").trim() : "";
+    besedilo("opombaDeljenje", t("posiljam"));
+    most.preimenujNapravo(n.id, ime);
+  }
+
+  /** Odziv mostu "preimenovano": {id, ime}. Ime pride nazaj tudi v novem seznamu naprav. */
+  function naPreimenovano(p) {
+    pokazi("preimenujBlok", false);
+    besedilo("opombaDeljenje", t("preimenovano"));
+    if (p && deljenje.naprava && deljenje.naprava.id === p.id) {
+      deljenje.naprava.ime = p.ime || deljenje.naprava.ime;
+      besedilo("deljenjeNaslov", deljenje.samoIme ? prijaznoIme(deljenje.naprava) : t("deliZ", { ime: prijaznoIme(deljenje.naprava) }));
+    }
+  }
+
+  function izberiVrsto(vrsta) {
+    deljenje.vrsta = vrsta;
+    var izbire = document.querySelectorAll("#panelDeljenje .izbira");
+    for (var i = 0; i < izbire.length; i++) {
+      izbire[i].classList.toggle("izbrana", izbire[i].getAttribute("data-vrsta") === vrsta);
+    }
+    besedilo("deljenjeOpis", vrsta === "zaslon" ? t("zaslonOpis") : (vrsta === "datoteka" ? t("datotekaOpis") : t("besediloOpis")));
+    pokazi("deljenjeBesedilo", vrsta === "besedilo");
+    pokazi("gumbPosljiNaNapravo", true);
+    besedilo("opombaDeljenje", "");
+    if (vrsta === "besedilo") {
+      var v = el("deljenjeBesedilo");
+      if (v) { try { v.focus(); } catch (e) {} }
+    }
+  }
+
+  function posljiNaNapravo() {
+    var n = deljenje.naprava;
+    if (!most || !n || !deljenje.vrsta) return;
+    var ime = prijaznoIme(n);
+    if (deljenje.vrsta === "besedilo") {
+      var v = el("deljenjeBesedilo");
+      var vsebina = v ? String(v.value || "").trim() : "";
+      if (!vsebina) { try { v.focus(); } catch (e) {} return; }
+      besedilo("opombaDeljenje", t("posiljam"));
+      most.posljiBesedilo(n.id, vsebina);
+    } else if (deljenje.vrsta === "datoteka") {
+      besedilo("opombaDeljenje", "");
+      most.izberiDatoteko(n.id);
+    } else if (deljenje.vrsta === "zaslon") {
+      besedilo("opombaDeljenje", t("zaslonZaganjam"));
+      most.zacniDeljenjeZaslona(n.id, ime);
+    }
+  }
+
+  function narisiZaslonDeljenje() {
+    pokazi("panelZaslonTece", zaslonDeljenje.tece);
+    if (zaslonDeljenje.tece) {
+      besedilo("zaslonTeceBesedilo", t("zaslonTeceNa", { ime: zaslonDeljenje.ime || zaslonDeljenje.cilj || t("naprava") }));
+    }
+  }
+
+  function osveziZaslonDeljenje() {
+    if (!most || !most.deljenjeZaslonaStanje) return;
+    try {
+      var s = JSON.parse(most.deljenjeZaslonaStanje() || "{}");
+      zaslonDeljenje.tece = !!s.tece;
+      zaslonDeljenje.ime = s.ime || "";
+      zaslonDeljenje.cilj = s.cilj || "";
+    } catch (e) {}
+    narisiZaslonDeljenje();
+  }
+
+  /** Odziv mostu "deljenje": {vrsta, stanje, cilj, ime, sporocilo, odstotek}. */
+  function naDeljenje(p) {
+    if (!p) return;
+    var imeCilja = "";
+    var n = deljenje.naprava;
+    if (n && n.id === p.cilj) imeCilja = prijaznoIme(n);
+    if (!imeCilja) {
+      for (var i = 0; i < stanje.naprave.length; i++) {
+        if (stanje.naprave[i].id === p.cilj) { imeCilja = prijaznoIme(stanje.naprave[i]); break; }
+      }
+    }
+    if (!imeCilja) imeCilja = p.ime || p.cilj || t("naprava");
+
+    if (p.vrsta === "zaslon") {
+      if (p.stanje === "tece") {
+        zaslonDeljenje.tece = true;
+        zaslonDeljenje.ime = p.ime || imeCilja;
+        zaslonDeljenje.cilj = p.cilj;
+        besedilo("opombaDeljenje", t("zaslonTeceNa", { ime: zaslonDeljenje.ime }));
+      } else if (p.stanje === "zaganjam") {
+        besedilo("opombaDeljenje", t("zaslonZaganjam"));
+      } else {
+        zaslonDeljenje.tece = false;
+        besedilo("opombaDeljenje", (p.sporocilo || p.koda) ? napakaDeljenja(p) : t("zaslonKoncano"));
+      }
+      narisiZaslonDeljenje();
+      return;
+    }
+    if (p.stanje === "posiljam") {
+      besedilo("opombaDeljenje", (p.vrsta === "datoteka" && typeof p.odstotek === "number")
+        ? t("posiljamOdstotek", { ime: p.ime || "", n: p.odstotek })
+        : t("posiljam"));
+    } else if (p.stanje === "poslano") {
+      besedilo("opombaDeljenje", t("poslanoNapravi", { ime: imeCilja }));
+      if (p.vrsta === "besedilo") {
+        var v = el("deljenjeBesedilo");
+        if (v) v.value = "";
+      }
+    } else if (p.stanje === "napaka") {
+      besedilo("opombaDeljenje", napakaDeljenja(p));
+    }
+  }
+
+  /** Napaka deljenja v jeziku uporabnika: koda ima prednost pred besedilom Huba. */
+  function napakaDeljenja(p) {
+    if (p.koda === "naprava_zasedena") return t("napZasedena", { ime: p.zasedenaOd || t("naprava") });
+    if (p.koda === "napacen_odtis") return t("napOdtis");
+    if (p.koda === "dovoljenje_zavrnjeno") return t("napDovoljenje");
+    if (p.koda === "naprava_ni_povezana") return t("niDosegljiv", { ime: t("naprava") });
+    return t("napDeljenje", { napaka: clovesko(p.sporocilo || "") });
+  }
+
+  /** Odziv mostu "prejeto": kaj nam je poslala druga naprava. */
+  function naPrejeto(p) {
+    if (!p) return;
+    var od = p.od || t("naprava");
+    if (p.vrsta === "besedilo") besedilo("opombaNaprave", t("prejetoBesedilo", { ime: od }));
+    else if (p.vrsta === "datoteka") besedilo("opombaNaprave", t("prejetaDatoteka", { ime: p.ime || "", mapa: p.mapa || "" }));
+    else if (p.vrsta === "zaslon" && p.dejanje === "start") besedilo("opombaNaprave", t("prejetZaslon", { ime: od }));
+  }
+
+  function pripraviDeljenje() {
+    naKlik("gumbDeljenjeZapri", zapriDeljenje);
+    naKlik("gumbPosljiNaNapravo", posljiNaNapravo);
+    naKlik("gumbPreimenuj", odpriPreimenovanje);
+    naKlik("gumbShraniIme", shraniIme);
+    var vnosImena = el("vnosImena");
+    if (vnosImena) vnosImena.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); shraniIme(); } });
+    naKlik("gumbPrekiniZaslon", function () {
+      if (most && most.koncajDeljenjeZaslona) most.koncajDeljenjeZaslona();
+    });
+    var izbire = document.querySelectorAll("#panelDeljenje .izbira");
+    for (var i = 0; i < izbire.length; i++) {
+      (function (gumb) {
+        gumb.addEventListener("click", function () { izberiVrsto(gumb.getAttribute("data-vrsta")); });
+      })(izbire[i]);
+    }
+    var v = el("deljenjeBesedilo");
+    if (v) v.setAttribute("placeholder", t("vnesiBesedilo"));
+    osveziZaslonDeljenje();
+  }
+
   // ----------------------------------------------------------------
   // Dejanja
   // ----------------------------------------------------------------
@@ -1083,6 +1687,7 @@
     stanje.seznanjen = !!s.seznanjen;
     stanje.hub = s.hub || "";
     stanje.imeNaprave = s.naprava || "";
+    stanje.idNaprave = s.id || "";
     besedilo("naslovHuba", prijaznaHisa(s.hub));
     narisiVse();
     if (stanje.znan && stanje.seznanjen) poveziSe();
@@ -1123,9 +1728,35 @@
     });
 
     naKlik("gumbSeznani", function () {
-      besedilo("opombaSeznanitev", "");
-      if (most) most.seznani();
+      // Ena poteza, en gumb: najprej preverimo, da je Safeer Link res tam
+      // (racunalnik je lahko ugasnjen, naslov drugacen), in takoj nadaljujemo
+      // do kode. Uporabniku ni treba vedeti, da sta to dva koraka.
+      besedilo("opombaSeznanitev", t("iscem"));
+      povezujemPoIskanju = true;
+      if (most) most.poisciHub();
     });
+
+    naKlik("gumbVnesiKodo", function () {
+      var vnos = el("vnosKode");
+      var koda = vnos ? String(vnos.value || "").replace(/\D/g, "") : "";
+      if (koda.length < 6) {
+        besedilo("opombaSeznanitev", t("napNapacnaKoda"));
+        return;
+      }
+      besedilo("opombaSeznanitev", t("preverjamKodo"));
+      if (most && most.potrdiKodo) most.potrdiKodo(koda);
+    });
+
+    var vnosKode = el("vnosKode");
+    if (vnosKode) {
+      vnosKode.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          var g = el("gumbVnesiKodo");
+          if (g) g.click();
+        }
+      });
+    }
 
     naKlik("gumbOsvezi", poveziSe);
 
@@ -1166,6 +1797,7 @@
     }
 
     narisiSync();
+    pripraviDeljenje();
     osveziStanje();
     // Na daljincu prvi fokus odloca, kaj uporabnik potrdi: naj bo glavno dejanje,
     // ne krizec za zapiranje.

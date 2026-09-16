@@ -75,4 +75,6 @@
     <string name="menu_popup_block">Prepreči pojavna okna</string>
     <string name="toast_popup_block_on">Pojavna okna so preprečena</string>
     <string name="toast_popup_block_off">Pojavna okna so dovoljena</string>
+    <string name="menu_shield_active">Ščit aktiven</string>
+    <string name="menu_shield_active_count">Ščit aktiven · %1$d blokiranih</string>
 </resources>

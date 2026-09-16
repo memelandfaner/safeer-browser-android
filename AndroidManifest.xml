@@ -24,6 +24,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <!-- Safeer Link: telefon lahko gosti povezavo za druge naprave v hisi -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Safeer Link: deljenje zaslona te naprave na drugo napravo v hisi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <!-- Safeer Link: posiljanje datoteke tece naprej, tudi ko uporabnik preklopi drugam -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="true" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -95,6 +99,18 @@
             android:name="com.safeer.mobile.browser.cast.HubStoritev"
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
+
+        <!-- Safeer Link: deljenje zaslona (MediaProjection); tece, dokler ga uporabnik ne prekine -->
+        <service
+            android:name="com.safeer.mobile.browser.link.DeljenjeZaslonaStoritev"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <!-- Safeer Link: posiljanje datoteke na drugo napravo (v ospredju, z napredkom) -->
+        <service
+            android:name="com.safeer.mobile.browser.link.PrenosDatotekeStoritev"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <provider
             android:name="com.safeer.mobile.browser.MobileFileProvider"

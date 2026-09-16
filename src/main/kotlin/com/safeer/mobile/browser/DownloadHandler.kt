@@ -28,7 +28,16 @@ class DownloadHandler(private val context: Context) {
                 setDescription("Prenašam datoteko...")
                 setTitle(filename)
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
+                // Mapa, ki jo je izbral uporabnik v nastavitvah. Ce je ni mogoce uporabiti
+                // (npr. je sistem ne dovoli), se prenos vseeno zgodi - v mapo Prenosi.
+                try {
+                    setDestinationInExternalPublicDir(
+                        PrenosiMapa.sistemskoIme(PreferencesManager.getDownloadDir(context)),
+                        PrenosiMapa.relativnaPot(context, filename)
+                    )
+                } catch (_: Throwable) {
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
+                }
                 allowScanningByMediaScanner()
             }
 
