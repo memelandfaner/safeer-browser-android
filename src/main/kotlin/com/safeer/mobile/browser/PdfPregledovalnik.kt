@@ -64,7 +64,13 @@ object PdfPregledovalnik {
     }
 
     /** Lokalni dokument (iz upravitelja datotek, prenosov, e-poste): content:// ali file://. */
-    fun jeLokalni(url: String?): Boolean = url != null && (url.startsWith("content://") || url.startsWith("file://"))
+    fun jeLokalni(url: String?): Boolean {
+        if (url == null) return false
+        if (url.startsWith("content://")) return true
+        // Samo PDF z diska; nase strani iz assets (domaca stran, Link) so tudi file:// in NISO dokumenti.
+        if (!url.startsWith("file://") || url.startsWith("file:///android_asset/")) return false
+        return url.substringBefore('?').substringBefore('#').lowercase().endsWith(".pdf")
+    }
 
     /**
      * Odpre PDF z naprave (namera VIEW z application/pdf). Vsebino beremo prek ContentResolverja
