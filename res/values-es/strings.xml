@@ -66,6 +66,11 @@
     <string name="tab_reload_after_crash">La página se cerró inesperadamente. Volver a cargar</string>
     <!-- Safeer Link: obvestilo storitve, ki gosti povezavo z drugimi napravami -->
     <string name="hub_obvestilo_naslov">Safeer Link</string>
+    <string name="link_sprejem_naslov">Safeer Link</string>
+    <string name="link_sprejem_besedilo">Listo para recibir de tus otros dispositivos</string>
+    <string name="link_sprejem_povezan">Conectado a tu Safeer Link doméstico</string>
+    <string name="link_prejeto_naslov">Recibido por Safeer Link</string>
+    <string name="link_prejeto_besedilo">Páginas, mensajes, archivos y pantallas de tus otros dispositivos</string>
     <string name="hub_obvestilo_koda">El dispositivo «%1$s» quiere conectarse – código: %2$s</string>
     <string name="hub_obvestilo_besedilo">Este teléfono puede recibir páginas, archivos y música de tus otros dispositivos.</string>
     <!-- Vratar pred pojavnimi okni: nic se ne odpre, cesar uporabnik ni zahteval -->
