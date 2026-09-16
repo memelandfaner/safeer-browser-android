@@ -265,12 +265,37 @@ class HubUsmerjevalnik(
     private fun naloziZetone() {
         val zapis = shramba?.beri(KLJUC_ZETONOV) ?: return
         val pogled = JsonLahki.objekt(zapis) ?: return
+        var podvojenih = 0
         for (zeton in pogled.kljuci()) {
             if (zetoni.size >= NAJVEC_SEZNANJENIH) break
             val naprava = pogled.objekt(zeton) ?: continue
             val id = naprava.niz("device_id") ?: continue
-            zetoni[zeton] = SeznanjenaNaprava(id, naprava.nizAli("name", id), naprava.stevilo("paired_at") ?: 0.0)
+            val nova = SeznanjenaNaprava(id, naprava.nizAli("name", id), naprava.stevilo("paired_at") ?: 0.0)
+            // Stare shrambe imajo isto napravo veckrat (vsaka ponovna seznanitev je dodala zeton);
+            // obdrzimo najnovejso seznanitev.
+            val obstojeca = zetoni.entries.firstOrNull { it.value.deviceId == id }
+            if (obstojeca != null) {
+                podvojenih++
+                if (obstojeca.value.seznanjenaOb >= nova.seznanjenaOb) continue
+                zetoni.remove(obstojeca.key)
+            }
+            zetoni[zeton] = nova
         }
+        if (podvojenih > 0) shraniZetone()
+    }
+
+    /** Seznam je poln, razen ce se ista naprava le znova seznanja (njen stari vnos bo zamenjan). */
+    private fun jePolno(deviceId: String): Boolean =
+        zetoni.size >= NAJVEC_SEZNANJENIH && zetoni.values.none { it.deviceId == deviceId }
+
+    /**
+     * Ponovna seznanitev iste naprave zamenja prejsnjo: stari zeton je naprava ze zavrgla,
+     * v seznamu pa bi jo uporabnik sicer videl dvakrat.
+     */
+    private fun vpisiZeton(zeton: String, naprava: SeznanjenaNaprava) {
+        val stari = zetoni.filterValues { it.deviceId == naprava.deviceId }.keys.toList()
+        for (kljuc in stari) zetoni.remove(kljuc)
+        zetoni[zeton] = naprava
     }
 
     private fun shraniZetone() {
@@ -374,14 +399,14 @@ class HubUsmerjevalnik(
     fun potrdiPrijavo(pairId: String): Boolean = synchronized(kljucnica) {
         pocistiPrijave()
         val prijava = prijave[pairId] ?: return false
-        if (zetoni.size >= NAJVEC_SEZNANJENIH) {
+        if (jePolno(prijava.deviceId)) {
             // Raje povemo, da ne gre, kot da bi seznam rasel v nedogled.
             return false
         }
         prijava.potrjena = true
         prijava.nastala = ura()
         prijava.zeton = "saf_tv_" + nakljucni(24)
-        zetoni[prijava.zeton!!] = SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0)
+        vpisiZeton(prijava.zeton!!, SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0))
         shraniZetone()
         naSpremembePrijav?.invoke()
         return true
@@ -416,11 +441,11 @@ class HubUsmerjevalnik(
             naSpremembePrijav?.invoke()
             return IzidKode(null, "napacna_koda")
         }
-        if (zetoni.size >= NAJVEC_SEZNANJENIH) {
+        if (jePolno(prijava.deviceId)) {
             return IzidKode(null, "preveč_naprav")
         }
         val zeton = "saf_tv_" + nakljucni(24)
-        zetoni[zeton] = SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0)
+        vpisiZeton(zeton, SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0))
         shraniZetone()
         prijave.remove(pairId)
         naSpremembePrijav?.invoke()
@@ -477,9 +502,9 @@ class HubUsmerjevalnik(
             naSpremembePrijav?.invoke()
             return IzidKode(null, "napacna_koda")
         }
-        if (zetoni.size >= NAJVEC_SEZNANJENIH) return IzidKode(null, "preveč_naprav")
+        if (jePolno(prijava.deviceId)) return IzidKode(null, "preveč_naprav")
         val zeton = "saf_tv_" + nakljucni(24)
-        zetoni[zeton] = SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0)
+        vpisiZeton(zeton, SeznanjenaNaprava(prijava.deviceId, prijava.ime, ura() / 1000.0))
         shraniZetone()
         prijave.remove(pairId)
         naSpremembePrijav?.invoke()

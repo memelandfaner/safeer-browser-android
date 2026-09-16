@@ -36,8 +36,23 @@
       const c = vsebnik();
       if (c) { c.setAttribute("tabindex", "-1"); c.focus({ preventScroll: true }); }
     };
-    const gumbiOrodne = () => Array.from(document.querySelectorAll("#toolbarContainer button, #toolbarContainer select, #toolbarContainer input"))
+    const vidni = (koren, izbira) => Array.from(koren.querySelectorAll(izbira))
       .filter((g) => !g.disabled && !g.hidden && g.offsetParent !== null);
+    // Glavna orodna vrstica brez odprtih podoken (meni, iskanje).
+    const gumbiOrodne = () => vidni(document, "#toolbarContainer button, #toolbarContainer select, #toolbarContainer input")
+      .filter((g) => !g.closest("#secondaryToolbar, #findbar, .editorParamsToolbar"));
+    if (tv) {
+      // Na televizorju ni urejanja (oznacevanje, besedilo, risanje, slika, podpis): z daljincem
+      // se ne da risati, gumbi bi le zavajali. Ostane: stranska vrstica, iskanje, strani,
+      // povecava, Shrani, meni.
+      try {
+        const st = document.createElement("style");
+        st.textContent = "#editorModeButtons, #editorModeSeparator { display: none !important; }" +
+          // Fokus z daljincem mora biti vedno viden (PDF.js ga kaze le pri :focus-visible).
+          "#toolbarContainer :focus { outline: 3px solid #4da3ff !important; outline-offset: 1px; border-radius: 4px; }";
+        document.head.appendChild(st);
+      } catch (e) {}
+    }
     let zadnjiGor = null;
     window.SafeerPdfTipka = function (smer) {
       const c = vsebnik();
@@ -46,6 +61,35 @@
       const tag = ((t && t.tagName) || "").toLowerCase();
       const vOrodni = t && t !== document.body && t !== c && !c.contains(t);
       if (vOrodni) {
+        // Odprt meni (>>): gor/dol po vnosih, levo/desno ga zapreta in vrneta na gumb menija.
+        const meni = t.closest("#secondaryToolbar");
+        if (meni) {
+          const m = vidni(meni, "button, input, select");
+          const j = m.indexOf(t);
+          if (smer === "ArrowDown") { if (j >= 0 && j < m.length - 1) m[j + 1].focus(); return true; }
+          if (smer === "ArrowUp") { if (j > 0) m[j - 1].focus(); return true; }
+          const preklop = document.getElementById("secondaryToolbarToggleButton");
+          if (preklop) { preklop.click(); preklop.focus(); }
+          return true;
+        }
+        // Odprto iskanje: levo/desno po poljih, gor ga zapre (nazaj na gumb iskanja), dol v dokument.
+        const iskanje = t.closest("#findbar");
+        if (iskanje) {
+          const m = vidni(iskanje, "button, input, select");
+          const j = m.indexOf(t);
+          if (smer === "ArrowLeft") { if (j > 0) m[j - 1].focus(); return true; }
+          if (smer === "ArrowRight") { if (j >= 0 && j < m.length - 1) m[j + 1].focus(); return true; }
+          if (smer === "ArrowDown") { vDokumentu(); return true; }
+          const gumb = document.getElementById("viewFindButton");
+          if (gumb) { gumb.click(); gumb.focus(); }
+          return true;
+        }
+        // Dol na gumbu menija, ko je meni odprt, gre v meni (PDF.js fokusa ne premakne sam).
+        const sek = document.getElementById("secondaryToolbar");
+        if (smer === "ArrowDown" && t.id === "secondaryToolbarToggleButton" && sek && !sek.classList.contains("hidden")) {
+          const m = vidni(sek, "button, input, select");
+          if (m.length) { m[0].focus(); return true; }
+        }
         const g = gumbiOrodne();
         const i = g.indexOf(t);
         if (smer === "ArrowDown") { vDokumentu(); return true; }
@@ -89,6 +133,14 @@
       vDokumentu();
       return true;
     };
+    // Tipkovnica na zaslonu: Enter v iskanju isce naprej (ne skoci v naslednje polje),
+    // v polju strani potrdi.
+    document.addEventListener("DOMContentLoaded", () => {
+      try {
+        const f = document.getElementById("findInput"); if (f) f.enterKeyHint = "search";
+        const p = document.getElementById("pageNumber"); if (p) p.enterKeyHint = "done";
+      } catch (e) {}
+    });
     if (tv) {
       document.addEventListener("keydown", (e) => {
         if (["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight"].indexOf(e.key) < 0) return;
