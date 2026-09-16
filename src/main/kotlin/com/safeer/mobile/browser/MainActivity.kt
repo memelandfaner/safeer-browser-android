@@ -1245,7 +1245,8 @@ class MainActivity : android.app.Activity() {
             // Naslov strani preberemo tu, na glavni niti. Most ga bo vprasal z druge
             // niti, kjer WebView svojih metod ne da brati (url bi bil null).
             val zavihek = tabManager.getActiveTab()
-            val naslovStrani = zavihek?.loadedWebView?.url ?: zavihek?.url ?: ""
+            // Odprt PDF ima notranji naslov pregledovalnika; drugim napravam posljemo izvornega.
+            val naslovStrani = PdfPregledovalnik.javniNaslov(zavihek?.loadedWebView?.url ?: zavihek?.url ?: "")
             val imeStrani = zavihek?.loadedWebView?.title ?: zavihek?.title
 
             val most = com.safeer.mobile.browser.link.LinkMost(
