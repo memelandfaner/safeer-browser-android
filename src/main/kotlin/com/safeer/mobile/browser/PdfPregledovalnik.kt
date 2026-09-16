@@ -63,6 +63,36 @@ object PdfPregledovalnik {
         webView.post { webView.loadUrl(naslov) }
     }
 
+    /** Lokalni dokument (iz upravitelja datotek, prenosov, e-poste): content:// ali file://. */
+    fun jeLokalni(url: String?): Boolean = url != null && (url.startsWith("content://") || url.startsWith("file://"))
+
+    /**
+     * Odpre PDF z naprave (namera VIEW z application/pdf). Vsebino beremo prek ContentResolverja
+     * z dovoljenjem, ki ga je dala namera; WebView sam do content:// ne sme (allowContentAccess=false).
+     */
+    fun odpriLokalno(context: Context, webView: WebView, uri: Uri, mimeType: String?) {
+        var ime = ""
+        try {
+            if (uri.scheme == "content") {
+                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                    if (c.moveToFirst()) ime = c.getString(0) ?: ""
+                }
+            }
+        } catch (_: Throwable) { }
+        if (ime.isBlank()) ime = uri.lastPathSegment?.substringAfterLast('/') ?: ""
+        ime = varnoIme(ime.ifBlank { "dokument.pdf" })
+        val id = nakljucni(12)
+        val zeton = nakljucni(24)
+        synchronized(dokumenti) {
+            while (dokumenti.size >= NAJVEC_DOKUMENTOV) dokumenti.remove(dokumenti.keys.first())
+            dokumenti[id] = Dokument(id, uri.toString(), ime, zeton, null)
+        }
+        val jezik = jezik(context)
+        val naslov = "$OSNOVA/pdfjs/web/viewer.html?file=" + Uri.encode("/doc/$id/$ime") +
+            "&lang=" + Uri.encode(jezik) + "&z=" + zeton
+        webView.post { webView.loadUrl(naslov) }
+    }
+
     /** Ali je naslov nas pregledovalnik. */
     fun jePregledovalnik(url: String?): Boolean = url != null && url.startsWith("$OSNOVA/")
 
@@ -83,7 +113,7 @@ object PdfPregledovalnik {
         val pot = u.path ?: "/"
         return when {
             pot.startsWith("/pdfjs/") -> izAssets(context, pot.removePrefix("/pdfjs/"))
-            pot.startsWith("/doc/") -> dokument(pot.removePrefix("/doc/").substringBefore('/'))
+            pot.startsWith("/doc/") -> dokument(context, pot.removePrefix("/doc/").substringBefore('/'))
             else -> napaka(404, "Ni najdeno")
         }
     }
@@ -99,8 +129,19 @@ object PdfPregledovalnik {
         }
     }
 
-    private fun dokument(id: String): WebResourceResponse {
+    private fun dokument(context: Context, id: String): WebResourceResponse {
         val d = synchronized(dokumenti) { dokumenti[id] } ?: return napaka(404, "Dokumenta ni vec")
+        if (jeLokalni(d.url)) {
+            return try {
+                val tok = context.contentResolver.openInputStream(Uri.parse(d.url)) ?: return napaka(404, "Datoteke ni")
+                val g = glave().toMutableMap()
+                g["Accept-Ranges"] = "none"
+                WebResourceResponse("application/pdf", null, 200, "OK", g, tok)
+            } catch (e: Throwable) {
+                android.util.Log.w(TAG, "Lokalnega PDF-ja ni bilo mogoce odpreti: ${e.message}")
+                napaka(403, "Dostop do datoteke ni dovoljen")
+            }
+        }
         return try {
             val povezava = URL(d.url).openConnection() as HttpURLConnection
             povezava.instanceFollowRedirects = true

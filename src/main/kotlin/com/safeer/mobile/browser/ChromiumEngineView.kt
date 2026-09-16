@@ -277,6 +277,11 @@ class ChromiumEngineView @JvmOverloads constructor(
 
     override fun loadUrl(url: String) {
         failedNavigationUrl = null
+        if (PdfPregledovalnik.jeLokalni(url)) {
+            // PDF z naprave: ne nalaga ga WebView (content:// mu ni dovoljen), ampak nas pregledovalnik.
+            PdfPregledovalnik.odpriLokalno(context, this, Uri.parse(url), null)
+            return
+        }
         val sanitized = UrlSanitizer.sanitize(url)
         if (sanitized.startsWith("http://", ignoreCase = true) || sanitized.startsWith("https://", ignoreCase = true)) {
             super.loadUrl(sanitized, PRIVACY_HEADERS)
@@ -287,6 +292,11 @@ class ChromiumEngineView @JvmOverloads constructor(
 
     override fun loadUrl(url: String, additionalHttpHeaders: Map<String, String>) {
         failedNavigationUrl = null
+        if (PdfPregledovalnik.jeLokalni(url)) {
+            // PDF z naprave: ne nalaga ga WebView (content:// mu ni dovoljen), ampak nas pregledovalnik.
+            PdfPregledovalnik.odpriLokalno(context, this, Uri.parse(url), null)
+            return
+        }
         val sanitized = UrlSanitizer.sanitize(url)
         val combined = additionalHttpHeaders.toMutableMap()
         if (!combined.containsKey("Sec-GPC")) combined["Sec-GPC"] = "1"
