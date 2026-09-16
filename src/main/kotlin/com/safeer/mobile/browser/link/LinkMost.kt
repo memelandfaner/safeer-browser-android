@@ -135,6 +135,7 @@ class LinkMost(
         } catch (e: Throwable) {
             android.util.Log.w(TAG, "Nastavitev ni bilo mogoce pocistiti: ${e.message}")
         }
+        try { LinkSprejemnik.ustavi(dejavnost) } catch (_: Throwable) {}
         odziv("pozabljeno", true)
     }
 
@@ -251,6 +252,8 @@ class LinkMost(
         val naslov = hubUrl()
         if (naslov.isBlank()) return null
         odjemalec?.let { return it }
+        // Stran ima svojo povezavo z istim id-jem naprave: sprejem v ozadju medtem pocaka.
+        LinkSprejemnik.premor()
         val nov = CastSenderClient(
             naslov, zeton(), potVstopnice(),
             hubOdtis = odtisHuba(),
@@ -975,6 +978,8 @@ class LinkMost(
     fun pospravi() {
         try { odjemalec?.disconnect() } catch (_: Throwable) {}
         odjemalec = null
+        // Stran se zapira: sprejem v ozadju spet prevzame povezavo (ce je telefon seznanjen).
+        try { LinkSprejemnik.nadaljuj(dejavnost) } catch (_: Throwable) {}
         DeljenjeZaslonaStoritev.naSpremembo = null
         PrenosDatotekeStoritev.naNapredek = null
         // Hub namenoma tece naprej, ce ga je uporabnik prizgal: telefon je takrat sredisce

@@ -100,6 +100,12 @@
             android:exported="false"
             android:foregroundServiceType="connectedDevice" />
 
+        <!-- Safeer Link: sprejem v ozadju (stran, besedilo, datoteka, zaslon z drugih naprav), dokler je telefon seznanjen -->
+        <service
+            android:name="com.safeer.mobile.browser.link.LinkSprejemnik"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
         <!-- Safeer Link: deljenje zaslona (MediaProjection); tece, dokler ga uporabnik ne prekine -->
         <service
             android:name="com.safeer.mobile.browser.link.DeljenjeZaslonaStoritev"

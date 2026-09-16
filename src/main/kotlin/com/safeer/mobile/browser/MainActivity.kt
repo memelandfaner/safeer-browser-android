@@ -307,6 +307,8 @@ class MainActivity : android.app.Activity() {
         super.onPause()
         inForeground = false
         com.safeer.mobile.browser.cast.HubKrmilnik.naPrijavoZaZaslon = null
+        com.safeer.mobile.browser.link.LinkSprejemnik.naStran = null
+        com.safeer.mobile.browser.link.LinkSprejemnik.naBesedilo = null
         val playing = tabManager.getPlayingTab()
         if (playing != null) {
             // 🎵 Sound keeps playing: the WebView stays "visible" (ChromiumEngineView) and a foreground service with
@@ -322,6 +324,12 @@ class MainActivity : android.app.Activity() {
         inForeground = true
         com.safeer.mobile.browser.cast.HubKrmilnik.naPrijavoZaZaslon = { runOnUiThread { pokaziKodoZaSeznanitev() } }
         pokaziKodoZaSeznanitev()
+        // Sprejem prek Safeer Linka, ko je brskalnik v ospredju: stran v zavihek, besedilo v okno.
+        com.safeer.mobile.browser.link.LinkSprejemnik.naStran = { url -> runOnUiThread { openUrlInBrowser(url) } }
+        com.safeer.mobile.browser.link.LinkSprejemnik.naBesedilo = { od, b -> runOnUiThread { pokaziPrejetoBesedilo(od, b) } }
+        // Ce je uporabnik Safeer Link pustil prizgan oz. je telefon seznanjen, naj to velja tudi po ponovnem zagonu.
+        com.safeer.mobile.browser.cast.HubStoritev.zagotovi(this)
+        com.safeer.mobile.browser.link.LinkSprejemnik.zagotovi(this)
         MediaPlaybackService.stop(this)
         tabManager.getActiveTab()?.loadedWebView?.onResume()
     }
@@ -1081,6 +1089,31 @@ class MainActivity : android.app.Activity() {
 
     // ---- Safeer Link: koda za seznanitev, ko stran Linka ni odprta ----
     private var kodaOkno: AlertDialog? = null
+
+    /** Besedilo z druge naprave, prejeto v ozadju, ko je brskalnik v ospredju: okno kot na strani Linka. */
+    private fun pokaziPrejetoBesedilo(od: String, besedilo: String) {
+        try {
+            val cisto = besedilo.trim()
+            val jePovezava = (cisto.startsWith("http://") || cisto.startsWith("https://")) && !cisto.contains(Regex("\\s"))
+            val okno = AlertDialog.Builder(this)
+                .setTitle("💬 " + I18n.t(this, "share_received_text").replace("{ime}", od))
+                .setMessage(besedilo.take(4000))
+                .setNegativeButton(android.R.string.ok, null)
+                .setNeutralButton(I18n.t(this, "share_copy")) { _, _ ->
+                    try {
+                        val odlozisce = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        odlozisce.setPrimaryClip(android.content.ClipData.newPlainText("Safeer Link", besedilo))
+                        Toast.makeText(this, I18n.t(this, "share_copied"), Toast.LENGTH_SHORT).show()
+                    } catch (_: Throwable) { }
+                }
+            if (jePovezava) {
+                okno.setPositiveButton(I18n.t(this, "share_open_link")) { _, _ -> openUrlInBrowser(cisto) }
+            }
+            okno.show()
+        } catch (e: Exception) {
+            try { Toast.makeText(this, "💬 $od: " + besedilo.take(200), Toast.LENGTH_LONG).show() } catch (_: Exception) { }
+        }
+    }
 
     /**
      * Druga naprava se zeli povezati na Hub tega telefona: kodo pokazemo takoj, tudi ce
