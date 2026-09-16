@@ -1312,12 +1312,14 @@
     seznam.appendChild(vrstica(
       stanje.televizor ? "tv" : "racunalnik",
       (jaz && jaz.ime) || stanje.imeNaprave || t("taNaprava"),
-      stanje.povezan ? t("povezanaZLinkom") : t("povezujem"),
+      stanje.hubTece ? t("tuSredisce") : (stanje.povezan ? t("povezanaZLinkom") : t("povezujem")),
       t("taNaprava"),
       stanje.povezan ? "zivo" : "",
       (znaDeliti && jaz) ? function () { odpriDeljenje(jaz, true); } : null
     ));
-    if (stanje.hub) {
+    // Vrstica "Safeer Link na naslovu ..." ima smisel le na napravi, ki se povezuje drugam;
+    // ce Safeer Link tece tu, bi kazala 127.0.0.1 in podvajala glavo strani.
+    if (stanje.hub && !stanje.hubTece) {
       seznam.appendChild(vrstica(
         "hisa", "Safeer Link", prijaznaHisa(stanje.hub), t("domace"), "zivo", null));
     }
@@ -1541,6 +1543,9 @@
     if (naprave) {
       naprave.innerHTML = "";
       stanje.hubNaprave.forEach(function (n) {
+        // Naprava, ki gosti, ima svoj zeton (posiljanje nase), a v seznamu "kdo sme posiljati
+        // na to napravo" nima kaj iskati - uporabnik bi videl sam sebe.
+        if (n.id === stanje.idNaprave) return;
         // Klik odpre plosco z imenom naprave: Preimenuj (krajevno ime) in Odstrani (dostop se
         // odvzame v dveh korakih: en sam pritisk na daljincu je prehitro storjen).
         var vrsticaNaprave = vrstica(
@@ -1554,7 +1559,8 @@
         naprave.appendChild(vrsticaNaprave);
       });
     }
-    besedilo("opombaHub", stanje.hubNaprave.length ? "" : t("nobeneNaprave"));
+    var drugihVHubu = stanje.hubNaprave.filter(function (n) { return n.id !== stanje.idNaprave; }).length;
+    besedilo("opombaHub", drugihVHubu ? "" : t("nobeneNaprave"));
 
     // Fokus nazaj na isto mesto; ce ga ni vec, na cakajoco prijavo.
     var nicNiFokusirano = !document.activeElement || document.activeElement === document.body;
