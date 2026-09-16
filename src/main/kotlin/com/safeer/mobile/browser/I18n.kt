@@ -118,6 +118,9 @@ object I18n {
             "share_received_file" to "Prejeta datoteka: {ime}",
             "share_file_failed" to "Datoteke {ime} ni bilo mogoče prevzeti.",
             "share_open_link" to "Odpri povezavo",
+            "pair_code_title" to "Safeer Link: nova naprava",
+            "pair_code_body" to "Naprava »{ime}« se želi povezati. Vtipkaj to kodo nanjo:",
+            "pair_code_reject" to "Zavrni",
             "share_copy" to "Kopiraj",
             "share_copied" to "Kopirano.",
             "share_file_notif_title" to "Safeer Link pošilja datoteko"
@@ -221,6 +224,9 @@ object I18n {
             "share_received_file" to "File received: {ime}",
             "share_file_failed" to "The file {ime} could not be fetched.",
             "share_open_link" to "Open link",
+            "pair_code_title" to "Safeer Link: new device",
+            "pair_code_body" to "Device “{ime}” wants to connect. Type this code on it:",
+            "pair_code_reject" to "Reject",
             "share_copy" to "Copy",
             "share_copied" to "Copied.",
             "share_file_notif_title" to "Safeer Link is sending a file"
@@ -324,6 +330,9 @@ object I18n {
             "share_received_file" to "Datei empfangen: {ime}",
             "share_file_failed" to "Die Datei {ime} konnte nicht abgeholt werden.",
             "share_open_link" to "Link öffnen",
+            "pair_code_title" to "Safeer Link: neues Gerät",
+            "pair_code_body" to "Gerät „{ime}“ möchte sich verbinden. Gib diesen Code dort ein:",
+            "pair_code_reject" to "Ablehnen",
             "share_copy" to "Kopieren",
             "share_copied" to "Kopiert.",
             "share_file_notif_title" to "Safeer Link sendet eine Datei"
@@ -427,6 +436,9 @@ object I18n {
             "share_received_file" to "Archivo recibido: {ime}",
             "share_file_failed" to "No se pudo obtener el archivo {ime}.",
             "share_open_link" to "Abrir enlace",
+            "pair_code_title" to "Safeer Link: nuevo dispositivo",
+            "pair_code_body" to "El dispositivo «{ime}» quiere conectarse. Escribe este código en él:",
+            "pair_code_reject" to "Rechazar",
             "share_copy" to "Copiar",
             "share_copied" to "Copiado.",
             "share_file_notif_title" to "Safeer Link está enviando un archivo"
@@ -530,6 +542,9 @@ object I18n {
             "share_received_file" to "Fichier reçu : {ime}",
             "share_file_failed" to "Le fichier {ime} n’a pas pu être récupéré.",
             "share_open_link" to "Ouvrir le lien",
+            "pair_code_title" to "Safeer Link : nouvel appareil",
+            "pair_code_body" to "L’appareil « {ime} » veut se connecter. Saisis ce code dessus :",
+            "pair_code_reject" to "Refuser",
             "share_copy" to "Copier",
             "share_copied" to "Copié.",
             "share_file_notif_title" to "Safeer Link envoie un fichier"
@@ -633,6 +648,9 @@ object I18n {
             "share_received_file" to "File ricevuto: {ime}",
             "share_file_failed" to "Impossibile recuperare il file {ime}.",
             "share_open_link" to "Apri link",
+            "pair_code_title" to "Safeer Link: nuovo dispositivo",
+            "pair_code_body" to "Il dispositivo «{ime}» vuole collegarsi. Digita questo codice su di esso:",
+            "pair_code_reject" to "Rifiuta",
             "share_copy" to "Copia",
             "share_copied" to "Copiato.",
             "share_file_notif_title" to "Safeer Link sta inviando un file"

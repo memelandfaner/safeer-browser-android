@@ -682,8 +682,12 @@ class HubUsmerjevalnik(
 
         if (tip in CAST_POSREDOVANJE) {
             val cilj = sporocilo.niz("target")
+            // Stran (cast.url) sme na vsako napravo, ki jo zna odpreti - tudi na telefon ali
+            // racunalnik, ko jo poslje televizor. Predvajanje in nadzor ostaneta za zaslone.
             val prejemnik = synchronized(kljucnica) {
-                naprave[cilj]?.takeIf { it.vloga == "receiver" }?.povezava
+                naprave[cilj]?.takeIf {
+                    it.vloga == "receiver" || (tip == "cast.url" && it.zmoznosti.contains("url"))
+                }?.takeIf { it.povezava !== od }?.povezava
             } ?: return potrditev(id, "rejected", "Ciljna naprava '${cilj ?: ""}' ni povezana ali ne obstaja.", koda = "naprava_ni_povezana")
             return if (posljiVarno(prejemnik, surovo)) potrditev(id, "accepted")
             else potrditev(id, "error", "Napaka pri posredovanju prejemniku.", koda = "posredovanje_ni_uspelo")

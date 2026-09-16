@@ -87,6 +87,10 @@ class HubStoritev : Service() {
         } catch (e: Throwable) {
             Log.w(TAG, "Obvestila ni bilo mogoce prikazati: ${e.message}")
         }
+        // Nova prijava: kodo pokazemo tudi v obvestilu, ce brskalnik ni v ospredju.
+        HubKrmilnik.naPrijavoZaObvestilo = {
+            try { getSystemService(NotificationManager::class.java)?.notify(OBVESTILO, obvestilo()) } catch (_: Throwable) { }
+        }
         if (!HubKrmilnik.tece() && !HubKrmilnik.zazeni(applicationContext, zapomni = false)) {
             Log.w(TAG, "Huba ni bilo mogoce zagnati; storitev koncujem.")
             ustaviOspredje()
@@ -97,6 +101,7 @@ class HubStoritev : Service() {
     }
 
     override fun onDestroy() {
+        HubKrmilnik.naPrijavoZaObvestilo = null
         HubKrmilnik.ustavi(applicationContext, zapomni = false)
         super.onDestroy()
     }
@@ -123,6 +128,12 @@ class HubStoritev : Service() {
         upravitelj.createNotificationChannel(kanal)
     }
 
+    private fun besediloObvestila(): String {
+        val p = try { HubKrmilnik.usmerjevalnik?.cakajocePrijave()?.lastOrNull() } catch (_: Throwable) { null }
+        return if (p != null) getString(R.string.hub_obvestilo_koda, p.ime, p.pin)
+        else getString(R.string.hub_obvestilo_besedilo)
+    }
+
     private fun obvestilo(): Notification {
         val gradnik = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(this, KANAL)
@@ -131,7 +142,7 @@ class HubStoritev : Service() {
         }
         return gradnik
             .setContentTitle(getString(R.string.hub_obvestilo_naslov))
-            .setContentText(getString(R.string.hub_obvestilo_besedilo))
+            .setContentText(besediloObvestila())
             .setSmallIcon(android.R.drawable.stat_sys_upload)
             .setOngoing(true)
             .build()

@@ -227,28 +227,6 @@ button.drugotni.tanek:hover { color: var(--besedilo); }
   border-radius: 12px;
 }
 
-/* ---------- vnos kode, ki jo pokaze gostitelj ---------- */
-
-.vnosStevilke {
-  width: 100%;
-  box-sizing: border-box;
-  font-family: ui-monospace, monospace;
-  font-size: 34px;
-  letter-spacing: .18em;
-  text-align: center;
-  padding: 14px 0;
-  margin: 4px 0 12px;
-  color: var(--besedilo);
-  background: var(--ploscaSvetla);
-  border: 1px solid var(--crta);
-  border-radius: 12px;
-}
-
-.vnosStevilke:focus {
-  outline: 3px solid var(--zelena);
-  outline-offset: 2px;
-}
-
 /* ---------- predvajalnik ---------- */
 
 .predvajalnik {
@@ -308,24 +286,63 @@ button:focus, .seznam li:focus {
   background: var(--ploscaSvetla);
 }
 
+
+/* Cakajoca prijava: ime naprave, koda in dve tipki. Koda je velika, ker jo uporabnik
+   primerja s tisto na telefonu -- to je edini korak, ki mora biti bran z dveh metrov. */
+.seznam li.prijava {
+  display: block;
+  padding: 16px 18px;
+}
+.seznam li.prijava .stevilke {
+  margin: 10px 0 12px;
+}
+.seznam li.prijava .tipke {
+  display: flex;
+  gap: 10px;
+}
+.seznam li.prijava .tipke button {
+  flex: 1;
+}
+.tuSredisce {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+
+/* Vklop in izklop stojita drug ob drugem: obe moznosti sta vidni hkrati, da ni treba
+   iskati, kje se stvar ugasne. */
+.stikaloVrstica {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.stikaloVrstica button.glavni,
+.stikaloVrstica button.drugotni {
+  flex: 1;
+  margin-top: 0;
+}
+.stikaloVrstica button[disabled] {
+  opacity: .45;
+}
+
 /* ---------- opozorilo za javna omrezja (vedno na dnu) ---------- */
 
 .opozoriloWifi {
   margin: 18px 0 28px;
-  padding: 14px 16px;
+  padding: 16px 18px;
   border: 1px solid var(--crta);
-  border-left: 3px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
   border-radius: 12px;
   background: var(--ploscaSvetla);
 }
 
 .wifiNaslov {
-  margin: 0 0 6px;
-  font-size: 14px;
+  margin: 0 0 8px;
   font-weight: 600;
   color: var(--besedilo);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: flex-start;
 }
 
@@ -333,9 +350,30 @@ button:focus, .seznam li:focus {
 
 .wifiOpis {
   margin: 0;
-  font-size: 12.5px;
   line-height: 1.5;
   color: var(--medlo);
+}
+
+/* ---------- vnos kode, ki jo pokaze gostitelj ---------- */
+
+.vnosStevilke {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: ui-monospace, monospace;
+  font-size: 34px;
+  letter-spacing: .18em;
+  text-align: center;
+  padding: 14px 0;
+  margin: 4px 0 12px;
+  color: var(--besedilo);
+  background: var(--ploscaSvetla);
+  border: 1px solid var(--crta);
+  border-radius: 12px;
+}
+
+.vnosStevilke:focus {
+  outline: 3px solid var(--zelena);
+  outline-offset: 2px;
 }
 
 /* ---------- deljenje z napravo ---------- */

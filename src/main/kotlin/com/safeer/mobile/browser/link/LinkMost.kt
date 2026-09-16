@@ -130,6 +130,7 @@ class LinkMost(
                 .remove("hub_ticket_path")
                 .remove("hub_last_seen")
                 .remove(com.safeer.mobile.browser.cast.HubTls.KEY_HUB_FP)
+                .remove("seznanitve")
                 .apply()
         } catch (e: Throwable) {
             android.util.Log.w(TAG, "Nastavitev ni bilo mogoce pocistiti: ${e.message}")
@@ -306,9 +307,41 @@ class LinkMost(
                 put("trajanje", s.duration)
             })
         }
-        nov.onConnectedStateChanged = { povezan -> odziv("povezava", povezan) }
+        nov.onConnectedStateChanged = { povezan ->
+            odziv("povezava", povezan)
+            if (!povezan) poisciDrugoSredisce()
+        }
         odjemalec = nov
         return nov
+    }
+
+    private var zadnjeIskanjeSredisca = 0L
+
+    /**
+     * Povezave s sredisce ni. Sredisce je morda ugasnilo (televizor) ali dobilo nov naslov;
+     * cez nekaj sekund pogledamo, ali se Safeer Link javlja kje drugje. Ce je bila ta naprava
+     * z njim ze seznanjena, se poveze brez nove kode (HubDiscovery preklopi in vrne zeton).
+     */
+    private fun poisciDrugoSredisce() {
+        val zdaj = System.currentTimeMillis()
+        if (zdaj - zadnjeIskanjeSredisca < 30_000L) return
+        zadnjeIskanjeSredisca = zdaj
+        val prej = hubUrl()
+        val prejOdtis = odtisHuba() ?: ""
+        pogled.postDelayed({
+            val o = odjemalec
+            if (o != null && o.jePovezan()) return@postDelayed
+            try {
+                HubDiscovery.discover(dejavnost) { naslov ->
+                    if (naslov != null && (naslov != prej || (odtisHuba() ?: "") != prejOdtis)) {
+                        android.util.Log.i(TAG, "Sredisce se je preselilo: $prej -> $naslov")
+                        prevezi()
+                    }
+                }
+            } catch (e: Throwable) {
+                android.util.Log.w(TAG, "Iskanja drugega sredisca ni bilo mogoce zagnati: ${e.message}")
+            }
+        }, 6_000L)
     }
 
     /** Povezi se s Hubom in vrni seznam naprav. */
@@ -588,6 +621,14 @@ class LinkMost(
             val od = sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") }
             val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
             when (tip) {
+                "cast.url" -> {
+                    // Stran s televizorja (ali druge naprave): odpremo jo v brskalniku.
+                    val url = tovor.optString("url", "").trim()
+                    if (url.startsWith("http://") || url.startsWith("https://")) {
+                        odziv("prejeto", JSONObject().put("vrsta", "stran").put("od", od).put("url", url).put("naslov", tovor.optString("title", "")))
+                        dejavnost.runOnUiThread { zapriZaslon(); odpriVBrskalniku(url) }
+                    }
+                }
                 "share.text" -> {
                     val besedilo = tovor.optString("text", "")
                     odziv("prejeto", JSONObject().put("vrsta", "besedilo").put("od", od).put("besedilo", besedilo))
@@ -826,6 +867,9 @@ class LinkMost(
             pripniPoslusalce()
             if (!uspelo) napaka("hub_ni_zagnan", "Huba ni bilo mogoce zagnati.")
             odziv("hub-tu", JSONObject(hubStanje()))
+            // Gostitelj je hkrati naprava: povezemo se na lastni Hub (nastavitve je prepisal
+            // HubKrmilnik), da stran vidi ostale naprave in lahko posilja.
+            if (uspelo) prevezi()
         } catch (e: Throwable) {
             napaka("hub_ni_zagnan", "Huba ni bilo mogoce zagnati: ${e.message}")
         }
@@ -836,6 +880,8 @@ class LinkMost(
         try {
             com.safeer.mobile.browser.cast.HubStoritev.izklopi(dejavnost)
             odziv("hub-tu", JSONObject(hubStanje()))
+            // Nazaj na prejsnji Hub (ce je bil), sicer na "ni seznanjen".
+            prevezi()
         } catch (e: Throwable) {
             napaka("hub_ni_ustavljen", "Huba ni bilo mogoce ustaviti: ${e.message}")
         }
@@ -908,10 +954,18 @@ class LinkMost(
         odziv("hub-seznanjene", JSONArray(hubSeznanjene()))
     }
 
+    /** Zapre trenutno povezavo in odpre novo po (spremenjenih) nastavitvah Huba. */
+    private fun prevezi() {
+        try { odjemalec?.disconnect() } catch (_: Throwable) {}
+        odjemalec = null
+        // Stran ob odzivu "stanje" znova prebere stanje() in se sama poveze (poveziSe).
+        odziv("stanje", JSONObject(stanje()))
+    }
+
     /** Usmerjevalnik javi spremembe strani, da se nova prijava pokaze takoj. */
     private fun pripniPoslusalce() {
         val u = com.safeer.mobile.browser.cast.HubKrmilnik.usmerjevalnik ?: return
-        u.naSpremembePrijav = { odziv("hub-prijave", JSONArray(hubPrijave())) }
+        com.safeer.mobile.browser.cast.HubKrmilnik.naSpremembePrijav = { odziv("hub-prijave", JSONArray(hubPrijave())) }
         u.naSpremembeNaprav = {
             odziv("hub-tu", JSONObject(com.safeer.mobile.browser.cast.HubKrmilnik.stanjeJson(dejavnost)))
         }
@@ -927,7 +981,7 @@ class LinkMost(
         // za druge naprave tudi, ko ta zaslon ni odprt. Odklopimo samo poslusalca.
         try {
             val u = com.safeer.mobile.browser.cast.HubKrmilnik.usmerjevalnik
-            u?.naSpremembePrijav = null
+            com.safeer.mobile.browser.cast.HubKrmilnik.naSpremembePrijav = null
             u?.naSpremembeNaprav = null
         } catch (e: Throwable) {
             android.util.Log.w(TAG, "Poslusalcev ni bilo mogoce odkljuciti: ${e.message}")

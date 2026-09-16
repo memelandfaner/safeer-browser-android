@@ -66,6 +66,7 @@
     <string name="tab_reload_after_crash">La page s’est fermée de manière inattendue. Recharger</string>
     <!-- Safeer Link: obvestilo storitve, ki gosti povezavo z drugimi napravami -->
     <string name="hub_obvestilo_naslov">Safeer Link</string>
+    <string name="hub_obvestilo_koda">L\'appareil « %1$s » veut se connecter – code : %2$s</string>
     <string name="hub_obvestilo_besedilo">Ce téléphone peut recevoir des pages, des fichiers et de la musique depuis vos autres appareils.</string>
     <!-- Vratar pred pojavnimi okni: nic se ne odpre, cesar uporabnik ni zahteval -->
     <string name="popup_vprasanje">Nouvelle fenêtre bloquée : %1$s</string>

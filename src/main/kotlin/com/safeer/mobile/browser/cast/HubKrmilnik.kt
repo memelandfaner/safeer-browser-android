@@ -32,6 +32,21 @@ object HubKrmilnik {
     var usmerjevalnik: HubUsmerjevalnik? = null
         private set
 
+    /** Stran Safeer Linka (ce je odprta) izve za nove ali potrjene prijave. */
+    @Volatile
+    var naSpremembePrijav: (() -> Unit)? = null
+
+    /**
+     * Zaslon (MainActivity) pokaze kodo za seznanitev tudi takrat, ko stran Linka ni odprta -
+     * naprava, ki se povezuje, kodo potrebuje TAKOJ, uporabnik pa je morda sredi filma.
+     */
+    @Volatile
+    var naPrijavoZaZaslon: (() -> Unit)? = null
+
+    /** Storitev v ozadju osvezi obvestilo s kodo (telefon, ko brskalnik ni v ospredju). */
+    @Volatile
+    var naPrijavoZaObvestilo: (() -> Unit)? = null
+
     @Volatile
     var tokovi: HubTokovi? = null
         private set
@@ -76,6 +91,11 @@ object HubKrmilnik {
             return false
         }
         u.lastniOdtis = HubTls.lastniOdtis()
+        u.naSpremembePrijav = {
+            try { naSpremembePrijav?.invoke() } catch (_: Throwable) { }
+            try { naPrijavoZaZaslon?.invoke() } catch (_: Throwable) { }
+            try { naPrijavoZaObvestilo?.invoke() } catch (_: Throwable) { }
+        }
         // Vsebina (zaslon, datoteke) gre mimo usmerjevalnika, po loceni zahtevi HTTP;
         // usmerjevalnik le pove ciljni napravi, kje jo dobi.
         val t = HubTokovi(
@@ -108,8 +128,69 @@ object HubKrmilnik {
             }
         }
         if (zapomni) zapomniZeljo(app, true)
+        // Telefon, ki gosti, je hkrati navadna naprava: prikljuci se na lastni Hub, da ga
+        // druge naprave vidijo in mu lahko posljejo, on pa njim. Brez tega bi bil samo posrednik.
+        poveziLastnoNapravo(app, u, s.vrata)
         Log.i(TAG, "Safeer Hub na telefonu tece na ${naslov()}")
         return true
+    }
+
+    private const val LASTNI_NASLOV_PREDPONA = "wss://127.0.0.1:"
+    private const val KLJUC_PREJSNJI_HUB = "prejsnji_hub_url"
+    private const val KLJUC_PREJSNJI_ZETON = "prejsnji_control_token"
+    private const val KLJUC_PREJSNJI_ODTIS = "prejsnji_hub_fp"
+    private const val KLJUC_PREJSNJA_VSTOPNICA = "prejsnji_hub_ticket_path"
+
+    /**
+     * Telefon se prijavi lastnemu Hubu z zetonom, ki ga Hub izda sam sebi. Prejsnjo seznanitev
+     * (npr. s televizorjem) shranimo in jo ob izklopu Huba vrnemo - uporabnik se ne sme znova
+     * seznanjati samo zato, ker je vmes gostil.
+     */
+    private fun poveziLastnoNapravo(app: Context, u: HubUsmerjevalnik, vrata: Int) {
+        try {
+            val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val trenutni = prefs.getString("hub_url", "") ?: ""
+            val ur = prefs.edit()
+            if (trenutni.isNotBlank() && !trenutni.startsWith(LASTNI_NASLOV_PREDPONA)) {
+                ur.putString(KLJUC_PREJSNJI_HUB, trenutni)
+                    .putString(KLJUC_PREJSNJI_ZETON, prefs.getString("control_token", "") ?: "")
+                    .putString(KLJUC_PREJSNJI_ODTIS, prefs.getString(HubTls.KEY_HUB_FP, "") ?: "")
+                    .putString(KLJUC_PREJSNJA_VSTOPNICA, prefs.getString("hub_ticket_path", "") ?: "")
+            }
+            val zeton = u.zagotoviLastniZeton(lastniId(), imeHuba())
+            ur.putString("hub_url", LASTNI_NASLOV_PREDPONA + vrata + "/cast/ws")
+                .putString("control_token", zeton)
+                .putString("hub_ticket_path", "/cast/ticket")
+                // Lastnemu Hubu zaupamo po istem pravilu kot vsakemu drugemu: po odtisu.
+                .putString(HubTls.KEY_HUB_FP, HubTls.lastniOdtis())
+                .apply()
+            Log.i(TAG, "Telefon je prijavljen na lastni Hub kot naprava.")
+        } catch (e: Throwable) {
+            Log.w(TAG, "Lastne naprave ni bilo mogoce prijaviti: ${e.message}")
+        }
+    }
+
+    /** Ob izklopu Huba vrnemo prejsnjo seznanitev (ce je bila) ali pocistimo, kar je kazalo nase. */
+    private fun odklopiLastnoNapravo(app: Context) {
+        try {
+            val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            val naslov = prefs.getString("hub_url", "") ?: ""
+            if (!naslov.startsWith(LASTNI_NASLOV_PREDPONA)) return
+            val prejsnji = prefs.getString(KLJUC_PREJSNJI_HUB, "") ?: ""
+            val ur = prefs.edit().remove("hub_url").remove("control_token").remove("hub_ticket_path").remove(HubTls.KEY_HUB_FP)
+            if (prejsnji.isNotBlank()) {
+                ur.putString("hub_url", prejsnji)
+                val z = prefs.getString(KLJUC_PREJSNJI_ZETON, "") ?: ""
+                val o = prefs.getString(KLJUC_PREJSNJI_ODTIS, "") ?: ""
+                val v = prefs.getString(KLJUC_PREJSNJA_VSTOPNICA, "") ?: ""
+                if (z.isNotBlank()) ur.putString("control_token", z)
+                if (o.isNotBlank()) ur.putString(HubTls.KEY_HUB_FP, o)
+                if (v.isNotBlank()) ur.putString("hub_ticket_path", v)
+            }
+            ur.remove(KLJUC_PREJSNJI_HUB).remove(KLJUC_PREJSNJI_ZETON).remove(KLJUC_PREJSNJI_ODTIS).remove(KLJUC_PREJSNJA_VSTOPNICA).apply()
+        } catch (e: Throwable) {
+            Log.w(TAG, "Lastne naprave ni bilo mogoce odklopiti: ${e.message}")
+        }
     }
 
     /** Ugasne Hub. `zapomni` naj bo true samo, kadar je tako odlocil uporabnik. */
@@ -121,6 +202,7 @@ object HubKrmilnik {
         usmerjevalnik = null
         tokovi = null
         if (zapomni && context != null) zapomniZeljo(context.applicationContext, false)
+        if (context != null) odklopiLastnoNapravo(context.applicationContext)
         Log.i(TAG, "Safeer Hub ustavljen.")
     }
 

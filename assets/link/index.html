@@ -27,15 +27,47 @@
 
 <main>
 
+  <!-- Vklop in izklop sta skupaj in na vrhu: kdor odpre Safeer Link, najprej odloca o tem. -->
+  <div id="hubStikalo" hidden>
+    <div class="stikaloVrstica">
+      <button class="glavni" id="gumbHubVklopi" data-t="vklopiLink">Vklopi Safeer Link</button>
+      <button class="drugotni" id="gumbHubIzklopi" data-t="izklopiLink">Izklopi Safeer Link</button>
+    </div>
+    <p class="opomba" id="opombaHubVklop"></p>
+  </div>
+
+  <!-- Stanje 4: sredisce tece v tem brskalniku (na televizorju, telefonu ali racunalniku). -->
+  <section class="zaslon" id="zaslonHubTu" hidden>
+
+    <div class="panel" id="panelPrijave" hidden>
+      <h2 data-t="cakaPrijava">Naprava se želi povezati</h2>
+      <ul class="seznam" id="seznamPrijav"></ul>
+    </div>
+
+    <div class="panel">
+      <div class="vrsticaGlave">
+        <h2 id="naslovHubTu">Ta naprava je središče</h2>
+        <button class="drobniGumb" id="gumbHubOsvezi" data-t="osvezi">Osveži</button>
+      </div>
+      <p class="pojasnilo" data-t="tuPojasnilo">
+        Naprave v domačem omrežju se povezujejo na to napravo. Ko se povežejo, si lahko med
+        seboj pošiljajo strani, besedila, datoteke in zaslon.
+      </p>
+      <ul class="seznam" id="seznamHubNaprav"></ul>
+      <p class="opomba" id="opombaHub"></p>
+    </div>
+
+  </section>
+
   <!-- Stanje 1: Huba ni -->
   <section class="zaslon" id="zaslonBrezHuba">
     <div class="kartica sredina">
       <div class="velikaIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8 M5 10v11h5v-6h4v6h5V10"/></svg></div>
       <h2 data-t="brezHubaNaslov">Safeer Link še ni vklopljen</h2>
       <p class="pojasnilo" data-t="brezHubaOpis">
-        Safeer Link pošlje odprto stran na televizor in poveže tvoje naprave doma —
-        brez oblaka in brez računa. Za to mora ena naprava v hiši prevzeti vlogo
-        središča; ostale se povežejo nanjo.
+        Safeer Link poveže tvoje naprave doma — telefon, računalnik in televizor. Z ene na
+        drugo pošlješ stran, besedilo, datoteko ali zaslon, brez oblaka in brez računa.
+        Ena naprava je središče (lahko tudi ta), ostale se povežejo nanjo.
       </p>
       <p class="pojasnilo drobno" data-t="brezHubaPomirilo">
         Brskalnik deluje povsem normalno tudi brez njega. Ničesar ne izgubiš, če to okno zapreš.
@@ -56,12 +88,6 @@
         <span class="poudarek" id="naslovHuba"></span>.
         <span data-t="zakajPotrditi">Da ti sme pošiljati in sinhronizirati, ga moraš enkrat potrditi.</span>
       </p>
-      <div class="koda" id="kodaBlok" hidden>
-        <p class="pojasnilo drobno" data-t="potrdiKodo">Kodo potrdi na napravi, kjer teče Safeer Link:</p>
-        <div class="stevilke" id="kodaStevilke">------</div>
-        <p class="opomba" data-t="kodaVelja">Koda velja 5 minut.</p>
-      </div>
-
       <!-- Nov postopek: kodo pokaze gostitelj, uporabnik jo prepise sem. -->
       <div class="koda" id="vnosKodeBlok" hidden>
         <p class="pojasnilo drobno" data-t="vnesiKodoOpis">
@@ -71,6 +97,12 @@
                autocomplete="one-time-code" maxlength="6" placeholder="------"
                aria-label="Koda" />
         <button class="glavni" id="gumbVnesiKodo" data-t="povezi">Poveži</button>
+        <p class="opomba" data-t="kodaVelja">Koda velja 5 minut.</p>
+      </div>
+
+      <div class="koda" id="kodaBlok" hidden>
+        <p class="pojasnilo drobno" data-t="potrdiKodo">Kodo potrdi na napravi, kjer teče Safeer Link:</p>
+        <div class="stevilke" id="kodaStevilke">------</div>
         <p class="opomba" data-t="kodaVelja">Koda velja 5 minut.</p>
       </div>
       <button class="glavni" id="gumbSeznani" data-t="poveziSSafeerLink">Poveži s Safeer Link</button>
@@ -177,7 +209,7 @@
 
   </section>
 
-  <!-- Vedno vidno, na dnu: kaj velja v javnih omrezjih in zakaj si kljub temu zasciten. -->
+  <!-- Vedno vidno, na dnu: kaj velja v javnih omrezjih in zakaj si kljub temu zascite. -->
   <footer class="opozoriloWifi">
     <p class="wifiNaslov"><span class="wifiIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a15 15 0 0 1 20 0 M5.5 12.5a10 10 0 0 1 13 0 M9 16a5 5 0 0 1 6 0 M12 19.5v.1"/></svg></span>
       <span data-t="javniWifiNaslov">V javnih omrežjih priporočamo, da je Safeer Link izklopljen</span>

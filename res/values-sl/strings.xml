@@ -66,6 +66,7 @@
     <string name="tab_reload_after_crash">Stran se je nepričakovano zaprla. Naloži znova</string>
     <!-- Safeer Link: obvestilo storitve, ki gosti povezavo z drugimi napravami -->
     <string name="hub_obvestilo_naslov">Safeer Link</string>
+    <string name="hub_obvestilo_koda">Naprava »%1$s« se želi povezati – koda: %2$s</string>
     <string name="hub_obvestilo_besedilo">Ta telefon lahko sprejema strani, datoteke in glasbo z drugih tvojih naprav.</string>
     <!-- Vratar pred pojavnimi okni: nic se ne odpre, cesar uporabnik ni zahteval -->
     <string name="popup_vprasanje">Preprečeno novo okno: %1$s</string>
