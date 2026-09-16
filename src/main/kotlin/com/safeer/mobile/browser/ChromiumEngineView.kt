@@ -783,6 +783,12 @@ class ChromiumEngineView @JvmOverloads constructor(
             }
 
             override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                // Safeer Link: stran z lastnega Huba ima samopodpisano potrdilo, katerega odtis je
+                // pripet ob seznanitvi. Sprejmemo samo natanko ta odtis na natanko tem naslovu.
+                if (com.safeer.mobile.browser.cast.HubTls.jeZaupanjaVredenHub(context, error)) {
+                    handler?.proceed()
+                    return
+                }
                 onSecurityChanged?.invoke(false)
                 handler?.cancel()
 

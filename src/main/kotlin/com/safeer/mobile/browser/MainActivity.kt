@@ -28,6 +28,8 @@ class MainActivity : android.app.Activity() {
         private const val REQ_CODE_GEO_PERMISSIONS = 1002
         private const val REQ_CODE_NOTIFICATION = 1003
         private const val REQ_CODE_DEFAULT_BROWSER = 1004
+        private const val REQ_CODE_LINK_DATOTEKA = 1005
+        private const val REQ_CODE_LINK_ZASLON = 1006
     }
 
     private var keyboardWasVisible = false
@@ -241,6 +243,29 @@ class MainActivity : android.app.Activity() {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQ_CODE_DEFAULT_BROWSER) {
             Toast.makeText(this, if (isDefaultBrowser()) R.string.default_browser_active else R.string.default_browser_unchanged, Toast.LENGTH_LONG).show()
+        }
+        if (requestCode == REQ_CODE_LINK_DATOTEKA) {
+            // Datoteka za drugo napravo prek Safeer Linka: posljemo jo, ce je uporabnik katero izbral.
+            val uri = data?.data
+            val cilj = linkDatotekaCilj
+            linkDatotekaCilj = ""
+            if (resultCode == RESULT_OK && uri != null && cilj.isNotBlank()) {
+                try {
+                    contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                } catch (_: Exception) { }
+                linkMost?.posljiDatotekoUri(uri, cilj)
+            }
+        }
+        if (requestCode == REQ_CODE_LINK_ZASLON) {
+            val cilj = linkZaslonCilj
+            val ime = linkZaslonIme
+            linkZaslonCilj = ""
+            linkZaslonIme = ""
+            if (resultCode == RESULT_OK && data != null && cilj.isNotBlank()) {
+                linkMost?.zajemDovoljen(resultCode, data, cilj, ime)
+            } else {
+                linkMost?.zajemZavrnjen(cilj)
+            }
         }
     }
 
@@ -555,9 +580,7 @@ class MainActivity : android.app.Activity() {
                 } else {
                     // Nobenega zavihka: okno dobi zacasen skrit pogled samo zato, da izvemo
                     // naslov, nato ga vratar unici. Stevec zavihkov se ne premakne.
-                    PopUpVratar.prestrezi(this, mainRoot, resultMsg) { naslov ->
-                        tabManager.createTab(this, naslov, true)
-                    }
+                    PopUpVratar.prestrezi(this, resultMsg)
                 }
             }
         }
@@ -935,15 +958,10 @@ class MainActivity : android.app.Activity() {
     // Safeer Cast — pošiljanje trenutne strani na televizor v domačem omrežju
     // ------------------------------------------------------------------
 
-    private var castClient: com.safeer.mobile.browser.cast.CastSenderClient? = null
-
     /** Naslov vozlišča; shranjen, da ga ni treba vnašati vsakič. */
     /** Naslov vozlišča, če ga je uporabnik nastavil. Privzetega ni -- Hub je nadgradnja. */
     private fun castHubUrl(): String =
         getSharedPreferences("safeer_cast_prefs", MODE_PRIVATE).getString("hub_url", "") ?: ""
-
-    /** Ali ima ta telefon sploh Safeer Hub. Brez njega casting ostane skrit. */
-    private fun hasCastHub(): Boolean = castHubUrl().isNotBlank()
 
     private fun saveCastHubUrl(url: String) {
         getSharedPreferences("safeer_cast_prefs", MODE_PRIVATE).edit().putString("hub_url", url).apply()
@@ -959,76 +977,12 @@ class MainActivity : android.app.Activity() {
             .getString("hub_ticket_path", "/cast/ticket") ?: "/cast/ticket"
 
     private fun saveCastToken(token: String) {
-        getSharedPreferences("safeer_cast_prefs", MODE_PRIVATE).edit()
-            .putString("control_token", token.trim()).apply()
-    }
-
-    /**
-     * Pošlje trenutni naslov na televizor: poveže se na vozlišče, počaka na seznam
-     * prejemnikov in ponudi izbiro. Ob enem samem televizorju pošlje kar nanj.
-     */
-    private fun castCurrentPageToTv() {
-        val tab = tabManager.getActiveTab()
-        val url = tab?.loadedWebView?.url ?: tab?.url ?: ""
-        if (url.isBlank() || url.startsWith("file:///android_asset/")) {
-            Toast.makeText(this, getString(R.string.cast_none_found), Toast.LENGTH_SHORT).show()
-            return
-        }
-        val naslov = tab?.loadedWebView?.title ?: tab?.title
-
-        Toast.makeText(this, getString(R.string.cast_searching), Toast.LENGTH_SHORT).show()
-
-        castClient?.disconnect()
-        val client = com.safeer.mobile.browser.cast.CastSenderClient(castHubUrl(), castToken(), castTicketPath())
-        castClient = client
-
-        var odgovorjeno = false
-        client.onDevicesChanged = { naprave ->
-            if (!odgovorjeno) {
-                odgovorjeno = true
-                runOnUiThread { showCastTargets(naprave, url, naslov) }
-            }
-        }
-        client.connect()
-
-        // Če v petih sekundah ni odgovora, vozlišča ni; ponudimo vnos naslova.
-        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-            if (!odgovorjeno) {
-                odgovorjeno = true
-                runOnUiThread { askForCastHub() }
-            }
-        }, 5000)
-    }
-
-    private fun showCastTargets(
-        naprave: List<com.safeer.mobile.browser.cast.CastSenderClient.Device>,
-        url: String,
-        naslov: String?
-    ) {
-        val prejemniki = naprave.filter { it.role == "receiver" }
-        if (prejemniki.isEmpty()) {
-            Toast.makeText(this, getString(R.string.cast_none_found), Toast.LENGTH_LONG).show()
-            return
-        }
-        if (prejemniki.size == 1) {
-            posljiNaTv(prejemniki[0], url, naslov)
-            return
-        }
-        val imena = prejemniki.map { it.name }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.cast_choose))
-            .setItems(imena) { _, izbrani -> posljiNaTv(prejemniki[izbrani], url, naslov) }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
-    private fun posljiNaTv(
-        naprava: com.safeer.mobile.browser.cast.CastSenderClient.Device,
-        url: String,
-        naslov: String?
-    ) {
-        castClient?.sendUrl(naprava.id, url, naslov)
-        Toast.makeText(this, getString(R.string.cast_sent) + " " + naprava.name, Toast.LENGTH_SHORT).show()
+        // Prazen vnos pomeni "zetona ni", ne "zeton je prazen niz": s praznim nizom bi stran
+        // Safeer Linka mislila, da je naprava ze seznanjena, in bi se zaman povezovala.
+        val ocisceno = token.trim()
+        val urejanje = getSharedPreferences("safeer_cast_prefs", MODE_PRIVATE).edit()
+        if (ocisceno.isEmpty()) urejanje.remove("control_token") else urejanje.putString("control_token", ocisceno)
+        urejanje.apply()
     }
 
     /** Brez odgovora vozlišča: naj uporabnik vnese njegov naslov (IP je viden v Safeer Cast). */
@@ -1055,15 +1009,18 @@ class MainActivity : android.app.Activity() {
                 val noviNaslov = naslov.text.toString().trim()
                 if (noviNaslov.isNotBlank()) saveCastHubUrl(noviNaslov)
                 saveCastToken(zeton.text.toString())
-                if (noviNaslov.isNotBlank()) castCurrentPageToTv()
+                if (noviNaslov.isNotBlank()) odpriSafeerLink()
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
     /**
-     * Seznanitev s Safeer Hubom: koda se pokaze tu, potrdi pa se v Safeer Controlu.
-     * Ce ne uspe, ostane vse, kot je bilo -- brskalnik deluje naprej.
+     * Seznanitev s Safeer Hubom iz menija (zasilna pot; obicajno tece prek zaslona Safeer Link).
+     *
+     * Pri novem Hubu kodo pokaze gostitelj, tu jo uporabnik vtipka. Pri starejsem Hubu ostane
+     * stari postopek: kodo pokazemo tu, potrdi se v Safeer Controlu. Ce ne uspe, ostane vse,
+     * kot je bilo -- brskalnik deluje naprej.
      */
     private fun seznaniSHubom() {
         var okno: AlertDialog? = null
@@ -1071,17 +1028,44 @@ class MainActivity : android.app.Activity() {
             this, castHubUrl(),
             "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase(),
             "Safeer (" + android.os.Build.MODEL + ")",
-            { koda ->
-                okno = AlertDialog.Builder(this)
-                    .setTitle("Povezava s Safeer Hubom")
-                    .setMessage("V Safeer Controlu potrdi kodo:\n\n" + koda)
-                    .setNegativeButton(android.R.string.cancel, null)
-                    .show()
+            { nacin, koda ->
+                okno?.dismiss()
+                okno = if (nacin == com.safeer.mobile.browser.cast.HubPairing.NACIN_KODA_NA_GOSTITELJU) {
+                    val vnos = EditText(this).apply {
+                        inputType = android.text.InputType.TYPE_CLASS_NUMBER
+                        hint = "------"
+                        setPadding(48, 32, 48, 32)
+                    }
+                    AlertDialog.Builder(this)
+                        .setTitle(I18n.t(this, "pair_title"))
+                        .setMessage(I18n.t(this, "pair_enter_code"))
+                        .setView(vnos)
+                        .setPositiveButton(I18n.t(this, "pair_connect")) { _, _ ->
+                            com.safeer.mobile.browser.cast.HubPairing.potrdiKodo(
+                                this, vnos.text.toString(),
+                                "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
+                            ) { uspelo, _ ->
+                                if (!uspelo) {
+                                    Toast.makeText(this, I18n.t(this, "pair_wrong_code"), Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                        .setNegativeButton(android.R.string.cancel) { _, _ ->
+                            com.safeer.mobile.browser.cast.HubPairing.prekini()
+                        }
+                        .show()
+                } else {
+                    AlertDialog.Builder(this)
+                        .setTitle(I18n.t(this, "pair_title"))
+                        .setMessage(I18n.t(this, "pair_confirm_code") + "\n\n" + koda)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .show()
+                }
             },
             { uspelo ->
                 okno?.dismiss()
                 if (uspelo) {
-                    Toast.makeText(this, "Telefon je povezan s Safeer Hubom.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, I18n.t(this, "pair_connected"), Toast.LENGTH_SHORT).show()
                 }
             })
     }
@@ -1092,6 +1076,52 @@ class MainActivity : android.app.Activity() {
 
     private var linkOkno: Dialog? = null
     private var linkMost: com.safeer.mobile.browser.link.LinkMost? = null
+    private var linkDatotekaCilj: String = ""
+    private var linkZaslonCilj: String = ""
+    private var linkZaslonIme: String = ""
+
+    /** Sistemski izbirnik datotek za posiljanje prek Safeer Linka; izbira se vrne v onActivityResult. */
+    private fun izberiDatotekoZaLink(cilj: String) {
+        linkDatotekaCilj = cilj
+        try {
+            val namera = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivityForResult(namera, REQ_CODE_LINK_DATOTEKA)
+        } catch (e: Exception) {
+            linkDatotekaCilj = ""
+            Toast.makeText(this, getString(R.string.link_open_failed), Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    /** Sistemsko vprasanje za zajem zaslona; odgovor pride v onActivityResult. */
+    private fun zahtevajZajemZaslona(cilj: String, ime: String) {
+        linkZaslonCilj = cilj
+        linkZaslonIme = ime
+        try {
+            val upravitelj = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as android.media.projection.MediaProjectionManager
+            // Od Androida 14 lahko vprasamo samo za cel zaslon: uporabnik dobi eno vprasanje,
+            // ne izbire med aplikacijami, ki bi ga zmedla.
+            // (Prek odseva, ker je android.jar v orodjih starejsi od API 34.)
+            val namera = try {
+                if (android.os.Build.VERSION.SDK_INT >= 34) {
+                    val razredNastavitve = Class.forName("android.media.projection.MediaProjectionConfig")
+                    val nastavitev = razredNastavitve.getMethod("createConfigForDefaultDisplay").invoke(null)
+                    upravitelj.javaClass.getMethod("createScreenCaptureIntent", razredNastavitve)
+                        .invoke(upravitelj, nastavitev) as Intent
+                } else upravitelj.createScreenCaptureIntent()
+            } catch (_: Throwable) {
+                upravitelj.createScreenCaptureIntent()
+            }
+            startActivityForResult(namera, REQ_CODE_LINK_ZASLON)
+        } catch (e: Exception) {
+            linkZaslonCilj = ""
+            linkZaslonIme = ""
+            linkMost?.zajemZavrnjen(cilj)
+        }
+    }
 
     /**
      * Odpre Safeer Link v svojem pogledu.
@@ -1125,7 +1155,9 @@ class MainActivity : android.app.Activity() {
                 pogled,
                 { Pair(naslovStrani, imeStrani) },
                 { okno.dismiss() },
-                { naslov -> openUrlInBrowser(naslov) }
+                { naslov -> openUrlInBrowser(naslov) },
+                { cilj -> izberiDatotekoZaLink(cilj) },
+                { cilj, ime -> zahtevajZajemZaslona(cilj, ime) }
             )
             linkMost = most
             pogled.addJavascriptInterface(most, "SafeerLink")
@@ -1186,11 +1218,11 @@ class MainActivity : android.app.Activity() {
         val activeTab = tabManager.getActiveTab()
         val wv = activeTab?.webView
 
-        val menuBtnBack = dialog.findViewById<Button>(R.id.menuBtnBack)
-        val menuBtnForward = dialog.findViewById<Button>(R.id.menuBtnForward)
-        val menuBtnReload = dialog.findViewById<Button>(R.id.menuBtnReload)
-        val menuBtnStar = dialog.findViewById<Button>(R.id.menuBtnStar)
-        val menuBtnShare = dialog.findViewById<Button>(R.id.menuBtnShare)
+        val menuBtnBack = dialog.findViewById<ImageButton>(R.id.menuBtnBack)
+        val menuBtnForward = dialog.findViewById<ImageButton>(R.id.menuBtnForward)
+        val menuBtnReload = dialog.findViewById<ImageButton>(R.id.menuBtnReload)
+        val menuBtnStar = dialog.findViewById<ImageButton>(R.id.menuBtnStar)
+        val menuBtnShare = dialog.findViewById<ImageButton>(R.id.menuBtnShare)
 
         menuBtnBack.setOnClickListener {
             if (wv?.canGoBack() == true) wv.goBack()
@@ -1204,7 +1236,10 @@ class MainActivity : android.app.Activity() {
 
         menuBtnBack.isEnabled = wv?.canGoBack() == true
         menuBtnForward.isEnabled = wv?.canGoForward() == true
-        menuBtnReload.text = if (wv != null && wv.progress < 100) "✕" else "↻"
+        // Ikona brez besedila: onemogocen gumb pokazemo zbledelo, da je jasno, da nima kam.
+        menuBtnBack.alpha = if (menuBtnBack.isEnabled) 1f else 0.35f
+        menuBtnForward.alpha = if (menuBtnForward.isEnabled) 1f else 0.35f
+        menuBtnReload.setImageResource(if (wv != null && wv.progress < 100) R.drawable.ic_m_close else R.drawable.ic_m_reload)
         menuBtnReload.setOnClickListener {
             if (wv != null && wv.progress < 100) wv.stopLoading() else wv?.reload()
             dialog.dismiss()
@@ -1212,7 +1247,7 @@ class MainActivity : android.app.Activity() {
 
         val curUrl = activeTab?.url ?: ""
         val isBm = repository.isBookmarked(curUrl)
-        menuBtnStar.text = if (isBm) "⭐" else "☆"
+        menuBtnStar.setImageResource(if (isBm) R.drawable.ic_m_star_filled else R.drawable.ic_m_star)
         menuBtnStar.setOnClickListener {
             if (isBm) {
                 repository.removeBookmark(curUrl)
@@ -1253,32 +1288,12 @@ class MainActivity : android.app.Activity() {
             showKeyboard()
         }
 
-        // Safeer Link je nadgradnja: brez Huba ga ne omenjamo.
+        // Safeer Link je vedno na voljo: brez sredisca stran sama pove, kako ga vklopis,
+        // brskalnik pa dela naprej kot doslej.
         val vrsticaLink = dialog.findViewById<LinearLayout>(R.id.rowMenuSafeerLink)
-        vrsticaLink.visibility = if (hasCastHub()) View.VISIBLE else View.GONE
         vrsticaLink.setOnClickListener {
             dialog.dismiss()
             odpriSafeerLink()
-        }
-
-        // Brez Safeer Huba casting sploh ne obstaja: vrstice ne pokazemo.
-        val vrsticaCast = dialog.findViewById<LinearLayout>(R.id.rowMenuCastToTv)
-        vrsticaCast.visibility = if (hasCastHub()) View.VISIBLE else View.GONE
-        if (!hasCastHub()) {
-            // Huba se ne poznamo: poiscemo ga v ozadju. Ce se oglasi, medtem ko je meni odprt,
-            // se vrstica pokaze; ce ga ni, uporabnik o njem ne izve nicesar.
-            com.safeer.mobile.browser.cast.HubDiscovery.discover(this) { naslov ->
-                if (naslov != null && dialog.isShowing) {
-                    vrsticaCast.visibility = View.VISIBLE
-                    vrsticaLink.visibility = View.VISIBLE
-                }
-            }
-        }
-        // Seznanitve NE sprozimo ob odprtju menija -- to je uporabnikova izbira.
-        // Kodo za seznanitev pokaze Safeer Link, ko uporabnik pritisne "Poveži".
-        vrsticaCast.setOnClickListener {
-            dialog.dismiss()
-            castCurrentPageToTv()
         }
 
         dialog.findViewById<LinearLayout>(R.id.rowMenuBookmarks).setOnClickListener {
@@ -1317,6 +1332,10 @@ class MainActivity : android.app.Activity() {
             dialog.dismiss()
         }
 
+        // Stanje scita: zeleno, s stevilom groženj, ki jih je ta zagon ze ustavil.
+        val ustavljenih = ThreatBlockEngine.totalBlockedThreats.get()
+        dialog.findViewById<TextView>(R.id.tvThreatCountBadge).text =
+            if (ustavljenih > 0) getString(R.string.menu_shield_active_count, ustavljenih) else getString(R.string.menu_shield_active)
         // Threat Shield Status Dialog
         dialog.findViewById<LinearLayout>(R.id.rowMenuThreatStats).setOnClickListener {
             dialog.dismiss()
@@ -1798,6 +1817,76 @@ class MainActivity : android.app.Activity() {
             setBackgroundColor(Color.parseColor("#334155"))
         })
 
+        // 2.3. Mapa za prenose (velja tudi za datoteke, prejete prek Safeer Linka)
+        val tvPrenosiTitle = TextView(this).apply {
+            text = I18n.t(this@MainActivity, "downloads_title")
+            textSize = 15f
+            setTextColor(Color.parseColor("#00d2ff"))
+            setTypeface(null, android.graphics.Typeface.BOLD)
+            setPadding(0, 0, 0, 8)
+        }
+        view.addView(tvPrenosiTitle)
+
+        val tvPrenosiDesc = TextView(this).apply {
+            text = I18n.t(this@MainActivity, "downloads_desc")
+            textSize = 12f
+            setTextColor(Color.parseColor("#94a3b8"))
+            setPadding(0, 0, 0, 12)
+        }
+        view.addView(tvPrenosiDesc)
+
+        val prenosiKeys = arrayOf(
+            PrenosiMapa.PRENOSI,
+            PrenosiMapa.DOKUMENTI,
+            PrenosiMapa.SLIKE,
+            PrenosiMapa.GLASBA,
+            PrenosiMapa.FILMI
+        )
+        val prenosiNames = arrayOf(
+            I18n.t(this, "dir_downloads"),
+            I18n.t(this, "dir_documents"),
+            I18n.t(this, "dir_pictures"),
+            I18n.t(this, "dir_music"),
+            I18n.t(this, "dir_movies")
+        )
+        val trenutnaPrenosiMapa = PreferencesManager.getDownloadDir(this)
+        val selectedPrenosiIdx = prenosiKeys.indexOf(trenutnaPrenosiMapa).let { if (it >= 0) it else 0 }
+
+        val tvPrenosiCurrent = TextView(this).apply {
+            text = I18n.t(this@MainActivity, "downloads_current").format(PrenosiMapa.opis(this@MainActivity))
+            textSize = 12f
+            setTextColor(Color.parseColor("#22c55e"))
+            setPadding(0, 8, 0, 0)
+        }
+
+        val cbPrenosiPodmapa = CheckBox(this).apply {
+            text = I18n.t(this@MainActivity, "downloads_subfolder")
+            isChecked = PreferencesManager.getDownloadSubfolder(this@MainActivity).isNotEmpty()
+            setTextColor(Color.WHITE)
+        }
+
+        val rgPrenosi = RadioGroup(this)
+        prenosiKeys.forEachIndexed { idx, _ ->
+            val rb = RadioButton(this).apply {
+                id = View.generateViewId()
+                text = prenosiNames[idx]
+                isChecked = (idx == selectedPrenosiIdx)
+                setTextColor(Color.WHITE)
+            }
+            rgPrenosi.addView(rb)
+        }
+        view.addView(rgPrenosi)
+        view.addView(cbPrenosiPodmapa)
+        view.addView(tvPrenosiCurrent)
+
+        // Ločilna črta
+        view.addView(View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 2).apply {
+                setMargins(0, 24, 0, 24)
+            }
+            setBackgroundColor(Color.parseColor("#334155"))
+        })
+
         // 3. Počisti podatke
         val btnClearData = Button(this).apply {
             text = I18n.t(this@MainActivity, "btn_clear_data")
@@ -1928,6 +2017,17 @@ class MainActivity : android.app.Activity() {
                 PreferencesManager.setSecureProxyUrl(this, editCustomProxy.text.toString().trim())
 
                 DoHProxyEngine.applySettings(this)
+
+                // 📁 Mapa za prenose
+                val prenosiCheckedId = rgPrenosi.checkedRadioButtonId
+                val prenosiCheckedRb = rgPrenosi.findViewById<RadioButton>(prenosiCheckedId)
+                val prenosiIdx = rgPrenosi.indexOfChild(prenosiCheckedRb)
+                val selPrenosi = if (prenosiIdx in prenosiKeys.indices) prenosiKeys[prenosiIdx] else PrenosiMapa.PRENOSI
+                PreferencesManager.setDownloadDir(this, selPrenosi)
+                PreferencesManager.setDownloadSubfolder(
+                    this,
+                    if (cbPrenosiPodmapa.isChecked) PreferencesManager.PODMAPA_SAFEER else ""
+                )
 
                 Toast.makeText(this, I18n.t(this, "toast_settings_saved"), Toast.LENGTH_SHORT).show()
 

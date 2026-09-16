@@ -22,22 +22,33 @@ import java.util.concurrent.TimeUnit
  *
  * Omogoča:
  * 1. Povezavo s Safeer Cast Hubom
- * 2. Poslušanje seznama aktivnih naprav (TV-ji v omrežju)
+ * 2. Poslušanje seznama aktivnih naprav (vse povezane naprave, z vlogo)
  * 3. Pošiljanje spletnih strani in videov na TV (cast.url)
  * 4. Nadzor predvajanja (cast.control: play/pause/seek)
  * 5. Spremljanje stanja predvajalnika (cast.status)
+ * 6. Sprejem deljenja z drugih naprav (share.text, share.file, share.screen)
  */
 class CastSenderClient(
     private val hubWsUrl: String,
     private val controlToken: String? = null,
     private val ticketPath: String = "/cast/ticket",
+    /** Odtis Hubovega potrdila (SHA-256), pripet ob seznanitvi; brez njega se ne povezemo. */
+    private val hubOdtis: String? = null,
+    /**
+     * Id te naprave pri Hubu. Mora biti stalen (isti kot pri seznanitvi), sicer nas druge
+     * naprave ne najdejo, ko nam hocejo kaj poslati.
+     */
     private val senderId: String = "phone-" + UUID.randomUUID().toString().take(8),
     /**
      * Ali ta naprava sinhronizira. Zmoznost "sync" prijavimo Hubu samo, kadar je
      * vklopljena -- Hub sync sporocila poslje le napravam, ki jo prijavijo, zato
      * izklopljena naprava tujih zaznamkov niti ne prejme niti jih ne oddaja.
      */
-    private val sinhronizira: Boolean = false
+    private val sinhronizira: Boolean = false,
+    /** Ime, ki ga vidijo druge naprave v seznamu. */
+    private val deviceName: String = "Safeer Mobile Phone",
+    /** Kaj ta naprava zna sprejeti od drugih (text, file, screen). */
+    private val zmoznosti: List<String> = emptyList()
 ) {
     companion object {
         private const val TAG = "SafeerCastSender"
@@ -47,7 +58,10 @@ class CastSenderClient(
         val id: String,
         val name: String,
         val role: String,
-        val capabilities: List<String>
+        val capabilities: List<String>,
+        /** Kdo trenutno deli s to napravo (id in ime), ali prazno; z eno napravo deli ena naenkrat. */
+        val busyBy: String = "",
+        val busyByName: String = ""
     )
 
     data class PlaybackStatus(
@@ -66,18 +80,55 @@ class CastSenderClient(
     var onPlaybackStatus: ((PlaybackStatus) -> Unit)? = null
     var onConnectedStateChanged: ((Boolean) -> Unit)? = null
 
-    private val client = OkHttpClient.Builder()
-        .readTimeout(0, TimeUnit.MILLISECONDS)
-        .pingInterval(15, TimeUnit.SECONDS)
-        .build()
+    /** Deljenje z druge naprave (share.text, share.file, share.screen): celo sporocilo. */
+    var onShare: ((JSONObject) -> Unit)? = null
+
+    /** TLS z odtisom Huba: vsako drugo potrdilo je napaka, ne opozorilo. */
+    private val client: OkHttpClient = HubTls.okhttp(
+        OkHttpClient.Builder()
+            .readTimeout(0, TimeUnit.MILLISECONDS)
+            .pingInterval(15, TimeUnit.SECONDS),
+        hubOdtis ?: ""
+    ).first.build()
 
     private var webSocket: WebSocket? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     private var isConnected = false
 
-    fun connect() {
+    /** Ali uporabnik povezavo hoce; dokler jo, se po padcu sama obnovi. */
+    @Volatile private var zeljena = false
+    private var poskusov = 0
+    private val ponovnaPovezava = Runnable { if (zeljena && !isConnected) connect(ponovno = true) }
+
+    fun jePovezan(): Boolean = isConnected
+
+    fun connect() = connect(ponovno = false)
+
+    private fun connect(ponovno: Boolean) {
+        zeljena = true
+        if (!ponovno) poskusov = 0
+        mainHandler.removeCallbacks(ponovnaPovezava)
+        if (!hubWsUrl.startsWith("wss://") || hubOdtis.isNullOrBlank()) {
+            // Brez TLS ali brez pripetega odtisa bi zeton potoval nezavarovan. Naprava se mora
+            // s posodobljenim Hubom znova seznaniti; stran to pokaze kot "ni seznanjena".
+            Log.w(TAG, "Povezava s Hubom zavrnjena: brez TLS ali brez odtisa potrdila ($hubWsUrl).")
+            mainHandler.post { onConnectedStateChanged?.invoke(false) }
+            return
+        }
         Log.i(TAG, "Povezujem se na Safeer Cast Hub: $hubWsUrl")
         zVstopnico(hubWsUrl, controlToken) { naslov -> odpriPovezavo(naslov) }
+    }
+
+    /**
+     * Novejsi Android aplikaciji v ozadju zapre vticnice; ko se uporabnik vrne, mora biti
+     * Safeer Link spet povezan brez klika. Premor raste do 30 s, nato vsako minuto.
+     */
+    private fun nacrtujPonovno() {
+        if (!zeljena) return
+        poskusov++
+        val premor = if (poskusov > 10) 60_000L else (poskusov * 2000L).coerceAtMost(30_000L)
+        mainHandler.removeCallbacks(ponovnaPovezava)
+        mainHandler.postDelayed(ponovnaPovezava, premor)
     }
 
     private fun odpriPovezavo(naslov: String) {
@@ -87,6 +138,7 @@ class CastSenderClient(
             override fun onOpen(ws: WebSocket, response: Response) {
                 Log.i(TAG, "Povezan na Cast Hub!")
                 isConnected = true
+                poskusov = 0
                 mainHandler.post { onConnectedStateChanged?.invoke(true) }
 
                 // Registracija kot pošiljatelj (Sender)
@@ -95,30 +147,31 @@ class CastSenderClient(
                     put("type", "cast.register")
                     put("payload", JSONObject().apply {
                         put("device_id", senderId)
-                        put("name", "Safeer Mobile Phone")
+                        put("name", deviceName)
                         put("role", "sender")
-                        if (sinhronizira) {
-                            put("capabilities", JSONArray().put("sync"))
-                        }
+                        val caps = JSONArray()
+                        zmoznosti.forEach { caps.put(it) }
+                        if (sinhronizira) caps.put("sync")
+                        if (caps.length() > 0) put("capabilities", caps)
                     })
                 }
                 ws.send(registerMsg.toString())
             }
 
             override fun onMessage(ws: WebSocket, text: String) {
-                handleMessage(text)
+                handleMessage(ws, text)
             }
 
             override fun onFailure(ws: WebSocket, t: Throwable, response: Response?) {
                 Log.w(TAG, "Povezava s hubom neuspešna: ${t.message}")
                 isConnected = false
-                mainHandler.post { onConnectedStateChanged?.invoke(false) }
+                mainHandler.post { onConnectedStateChanged?.invoke(false); nacrtujPonovno() }
             }
 
             override fun onClosed(ws: WebSocket, code: Int, reason: String) {
                 Log.i(TAG, "Povezava zaprta: $reason")
                 isConnected = false
-                mainHandler.post { onConnectedStateChanged?.invoke(false) }
+                mainHandler.post { onConnectedStateChanged?.invoke(false); nacrtujPonovno() }
             }
         })
     }
@@ -148,6 +201,7 @@ class CastSenderClient(
         client.newCall(zahteva).enqueue(object : Callback {
             override fun onFailure(call: Call, e: java.io.IOException) {
                 Log.w(TAG, "Vstopnice ni bilo mogoce dobiti: ${e.message}")
+                mainHandler.post { onConnectedStateChanged?.invoke(false); nacrtujPonovno() }
             }
 
             override fun onResponse(call: Call, response: Response) {
@@ -155,6 +209,7 @@ class CastSenderClient(
                     val telo = it.body?.string().orEmpty()
                     if (!it.isSuccessful) {
                         Log.w(TAG, "Control je zavrnil zahtevo za vstopnico (${it.code}).")
+                        mainHandler.post { onConnectedStateChanged?.invoke(false); nacrtujPonovno() }
                         return
                     }
                     val vstopnica = try {
@@ -164,6 +219,7 @@ class CastSenderClient(
                     }
                     if (vstopnica.isBlank()) {
                         Log.w(TAG, "Odgovor Controla ne vsebuje vstopnice.")
+                        mainHandler.post { onConnectedStateChanged?.invoke(false) }
                         return
                     }
                     val locilo = if (wsUrl.contains("?")) "&" else "?"
@@ -176,7 +232,7 @@ class CastSenderClient(
 
     private fun ticketPath(): String = ticketPath
 
-    private fun handleMessage(text: String) {
+    private fun handleMessage(ws: WebSocket, text: String) {
         try {
             val json = JSONObject(text)
             val type = json.optString("type")
@@ -199,7 +255,9 @@ class CastSenderClient(
                                 id = d.getString("id"),
                                 name = d.getString("name"),
                                 role = d.optString("role", "receiver"),
-                                capabilities = caps
+                                capabilities = caps,
+                                busyBy = d.optString("busy_by", ""),
+                                busyByName = d.optString("busy_by_name", "")
                             )
                         )
                     }
@@ -229,6 +287,22 @@ class CastSenderClient(
                         duration = payload.optDouble("duration", 0.0)
                     )
                     mainHandler.post { onPlaybackStatus?.invoke(status) }
+                }
+
+                "share.text", "share.file", "share.screen" -> {
+                    // Hub je posiljatelja ze vpisal (sender, sender_name); vsebina je v payload.
+                    mainHandler.post { onShare?.invoke(json) }
+                    val ack = JSONObject().apply {
+                        put("id", UUID.randomUUID().toString())
+                        put("type", "share.ack")
+                        put("ref_id", json.optString("id", ""))
+                        put("status", "accepted")
+                    }
+                    ws.send(ack.toString())
+                }
+
+                "cast.ping" -> {
+                    ws.send(JSONObject().put("id", json.optString("id", "")).put("type", "cast.pong").toString())
                 }
             }
         } catch (e: Exception) {
@@ -297,6 +371,8 @@ class CastSenderClient(
     }
 
     fun disconnect() {
+        zeljena = false
+        mainHandler.removeCallbacks(ponovnaPovezava)
         webSocket?.close(1000, "User disconnected")
         webSocket = null
         isConnected = false

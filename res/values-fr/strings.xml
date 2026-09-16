@@ -75,4 +75,6 @@
     <string name="menu_popup_block">Bloquer les fenêtres pop-up</string>
     <string name="toast_popup_block_on">Les fenêtres pop-up sont bloquées</string>
     <string name="toast_popup_block_off">Les fenêtres pop-up sont autorisées</string>
+    <string name="menu_shield_active">Bouclier actif</string>
+    <string name="menu_shield_active_count">Bouclier actif · %1$d bloquées</string>
 </resources>

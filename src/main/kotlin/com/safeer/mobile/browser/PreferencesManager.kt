@@ -20,6 +20,8 @@ object PreferencesManager {
     private const val KEY_THIRD_PARTY_COOKIES = "pref_third_party_cookies"
     private const val KEY_JAVASCRIPT_ENABLED = "pref_javascript_enabled"
     private const val KEY_POPUP_BLOCK_ENABLED = "pref_popup_block_enabled"
+    private const val KEY_DOWNLOAD_DIR = "pref_download_dir"
+    private const val KEY_DOWNLOAD_SUBDIR = "pref_download_subdir"
     private const val KEY_TOTAL_ADS_BLOCKED = "pref_total_ads_blocked"
     private const val KEY_TOTAL_THREATS_BLOCKED = "pref_total_threats_blocked"
     private const val KEY_DOH_ENABLED = "pref_doh_enabled"
@@ -43,6 +45,19 @@ object PreferencesManager {
     const val FONT_SANS = "sans"
     const val FONT_SERIF = "serif"
     const val FONT_MONOSPACE = "monospace"
+
+    /** Podmapa, ki jo ponudimo uporabniku, ce hoce prenose lociti od ostalih datotek. */
+    const val PODMAPA_SAFEER = "Safeer"
+
+    // Javne mape Androida, med katerimi uporabnik izbira, kam gredo prenosi. Seznam zivi
+    // tu (in ne v pomocniku za prenose), da ta razred ostane brez Androidovih odvisnosti
+    // in ga preizkusi v navadnem JVM se vedno prevedejo.
+    const val DIR_DOWNLOADS = "DOWNLOADS"
+    const val DIR_DOCUMENTS = "DOCUMENTS"
+    const val DIR_PICTURES = "PICTURES"
+    const val DIR_MUSIC = "MUSIC"
+    const val DIR_MOVIES = "MOVIES"
+    val DOWNLOAD_DIRS = listOf(DIR_DOWNLOADS, DIR_DOCUMENTS, DIR_PICTURES, DIR_MUSIC, DIR_MOVIES)
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -242,7 +257,30 @@ object PreferencesManager {
         getPrefs(context).edit().putBoolean(KEY_POPUP_BLOCK_ENABLED, enabled).apply()
     }
 
-    // --- 10. SponsorBlock (preskakovanje sponzorskih odsekov na YouTubu) ---
+    // --- 11. Kam se shranjujejo prenesene datoteke ---
+    // Privzeto ostane vse tako, kot je bilo: javna mapa Prenosi, brez podmape.
+    // Isto mesto velja tudi za datoteke, prejete prek Safeer Linka.
+    fun getDownloadDir(context: Context): String {
+        val shranjeno = getPrefs(context).getString(KEY_DOWNLOAD_DIR, DIR_DOWNLOADS) ?: DIR_DOWNLOADS
+        return if (DOWNLOAD_DIRS.contains(shranjeno)) shranjeno else DIR_DOWNLOADS
+    }
+
+    fun setDownloadDir(context: Context, mapa: String) {
+        val veljavna = if (DOWNLOAD_DIRS.contains(mapa)) mapa else DIR_DOWNLOADS
+        getPrefs(context).edit().putString(KEY_DOWNLOAD_DIR, veljavna).apply()
+    }
+
+    fun getDownloadSubfolder(context: Context): String {
+        return getPrefs(context).getString(KEY_DOWNLOAD_SUBDIR, "") ?: ""
+    }
+
+    fun setDownloadSubfolder(context: Context, podmapa: String) {
+        // Dovolimo le preprosto ime brez poti, da ne moremo pisati izven javne mape.
+        val ocisceno = podmapa.trim().trim('/').replace("..", "").replace("/", "")
+        getPrefs(context).edit().putString(KEY_DOWNLOAD_SUBDIR, ocisceno).apply()
+    }
+
+    // --- 12. SponsorBlock (preskakovanje sponzorskih odsekov na YouTubu) ---
     fun isSponsorBlockEnabled(context: Context): Boolean {
         return getPrefs(context).getBoolean(KEY_SPONSORBLOCK_ENABLED, true)
     }

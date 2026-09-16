@@ -35,7 +35,19 @@ class HubStreznik(
     /** Ali je ta zahteva za nadgradnjo v WebSocket dovoljena; vrne razlog zavrnitve ali null. */
     private val preveriVstopnico: (Zahteva) -> String?,
     /** Nova odprta povezava. */
-    private val naPovezavo: (Povezava) -> Unit
+    private val naPovezavo: (Povezava) -> Unit,
+    /**
+     * Zahteve, ki potrebujejo tok (prenos datoteke, deljenje zaslona): dobijo vhod in izhod
+     * vticnice, same preberejo telo in same odgovorijo. Vrne true, ce je zahtevo prevzel.
+     * Telo takih zahtev se NE bere vnaprej - lahko je vec sto MB ali pa tece brez konca.
+     */
+    private val naTok: ((Zahteva, InputStream, OutputStream, Socket) -> Boolean)? = null,
+    /**
+     * TLS: tovarna streznih vticnic s kljucem Huba. Brez nje streznik govori goli HTTP -
+     * to je dovoljeno samo v preizkusih na JVM; na napravah Hub vedno tece s TLS, ker po
+     * omrezju potujejo zetoni, datoteke in zaslon.
+     */
+    private val tlsTovarna: javax.net.ssl.SSLServerSocketFactory? = null
 ) {
 
     data class Zahteva(
@@ -60,10 +72,24 @@ class HubStreznik(
     /** Koliko bajtov trenutno zadrzujejo vse povezave skupaj (sestavljanje sporocil). */
     private val skupajZadrzano = java.util.concurrent.atomic.AtomicLong(0)
 
+    /**
+     * Koliko vticnic strezemo v tem trenutku - skupaj z navadnimi zahtevami HTTP.
+     *
+     * NAJVEC_POVEZAV steje samo odprte WebSocket povezave, torej naprave, ki ostanejo
+     * povezane. Kratke zahteve HTTP (seznanitev, vstopnica, kasneje prenos datoteke) niso
+     * bile omejene z nicemer: vsaka je dobila svojo nit. Dve napravi hkrati to zdrzita brez
+     * tezav, pokvarjena ali zlonamerna naprava pa bi lahko odprla toliko vticnic, da bi
+     * sistem zaradi pomanjkanja pomnilnika ubil cel brskalnik. Zato ima tudi to svojo mejo.
+     */
+    private val strezenihZdaj = java.util.concurrent.atomic.AtomicInteger(0)
+
     /** Vrata, na katerih streznik dejansko poslusa (lahko se razlikujejo od zeljenih). */
     @Volatile
     var vrata: Int = 0
         private set
+
+    /** Ali streznik govori TLS (na napravah vedno). */
+    val jeTls: Boolean get() = tlsTovarna != null
 
     fun zazeni(): Boolean {
         if (tece.get()) return true
@@ -106,7 +132,14 @@ class HubStreznik(
     private fun odpriVticnico(): ServerSocket? {
         for (kandidat in listOf(zeljenaVrata, 0)) {
             try {
-                return ServerSocket(kandidat, CAKALNA_VRSTA, InetAddress.getByName("0.0.0.0"))
+                val naslov = InetAddress.getByName("0.0.0.0")
+                val t = tlsTovarna ?: return ServerSocket(kandidat, CAKALNA_VRSTA, naslov)
+                val v = t.createServerSocket(kandidat, CAKALNA_VRSTA, naslov) as javax.net.ssl.SSLServerSocket
+                // Samo TLS 1.2/1.3; brez preverjanja odjemalskih potrdil (identiteto naprav dajo zetoni).
+                v.useClientMode = false
+                v.enabledProtocols = v.supportedProtocols.filter { it == "TLSv1.3" || it == "TLSv1.2" }.toTypedArray()
+                v.needClientAuth = false
+                return v
             } catch (e: Exception) {
                 Log.w(OZNAKA, "Vrat $kandidat ni bilo mogoče odpreti: ${e.message}")
             }
@@ -135,18 +168,44 @@ class HubStreznik(
                 if (tece.get()) Log.w(OZNAKA, "Napaka pri sprejemanju: ${e.message}")
                 break
             }
+            if (strezenihZdaj.get() >= NAJVEC_SOCASNIH) {
+                // Raje jasno povemo, da zdaj ne gre, kot da bi niti rasle brez konca.
+                // Naprava naj poskusi cez trenutek; nobena od ze odprtih pri tem ne trpi.
+                zavrniPrezasedeno(odjemalec)
+                continue
+            }
+            strezenihZdaj.incrementAndGet()
             zazeniNit("safeer-hub-odjemalec") {
                 try {
                     postrezi(odjemalec)
                 } catch (e: Exception) {
                     Log.w(OZNAKA, "Povezava končana z napako: ${e.message}")
                 } finally {
+                    strezenihZdaj.decrementAndGet()
                     try {
                         if (!odjemalec.isClosed) odjemalec.close()
                     } catch (_: Exception) {
                     }
                 }
             }
+        }
+    }
+
+    /** Kratek 503 in konec; pisanje ima svoj rok, da nas pocasen odjemalec ne zadrzi. */
+    private fun zavrniPrezasedeno(vticnica: Socket) {
+        try {
+            vticnica.soTimeout = 2_000
+            val telo = "{\"napaka\":\"preveč hkratnih zahtev\"}"
+            val glava = "HTTP/1.1 503 Service Unavailable\r\n" +
+                "Content-Type: application/json; charset=utf-8\r\n" +
+                "Content-Length: " + telo.toByteArray(Charsets.UTF_8).size + "\r\n" +
+                "Cache-Control: no-store\r\nConnection: close\r\n\r\n"
+            vticnica.getOutputStream().write((glava + telo).toByteArray(Charsets.UTF_8))
+            vticnica.getOutputStream().flush()
+        } catch (e: Exception) {
+            Log.w(OZNAKA, "Zavrnitve ni bilo mogoče sporočiti: ${e.message}")
+        } finally {
+            try { vticnica.close() } catch (_: Exception) { }
         }
     }
 
@@ -190,6 +249,18 @@ class HubStreznik(
             return
         }
 
+        if (jeTokovnaPot(zahteva.pot)) {
+            val prevzeto = try {
+                naTok?.invoke(zahteva, vhod, izhod, vticnica) ?: false
+            } catch (e: Exception) {
+                Log.w(OZNAKA, "Tok ${zahteva.pot} se je koncal z napako: ${e.message}")
+                true
+            }
+            if (prevzeto) return
+            posljiOdgovor(izhod, Odgovor(404, "{\"napaka\":\"ni te poti\"}"))
+            return
+        }
+
         val odgovor = try {
             naZahtevo(zahteva) ?: Odgovor(404, "{\"napaka\":\"ni te poti\"}")
         } catch (e: Exception) {
@@ -220,7 +291,11 @@ class HubStreznik(
                 vrstica.substring(dvopicje + 1).trim()
         }
 
-        val dolzina = glave["content-length"]?.toIntOrNull() ?: 0
+        val vprasajZaPot = celotnaPot.indexOf('?')
+        val golaPot = if (vprasajZaPot >= 0) celotnaPot.substring(0, vprasajZaPot) else celotnaPot
+        val tokovna = jeTokovnaPot(golaPot)
+
+        val dolzina = if (tokovna) 0 else (glave["content-length"]?.toIntOrNull() ?: 0)
         if (dolzina > NAJVECJE_TELO) return null
         val telo = if (dolzina > 0) {
             val medpomnilnik = ByteArray(dolzina)
@@ -247,6 +322,10 @@ class HubStreznik(
             odjemalec = vticnica.inetAddress?.hostAddress ?: ""
         )
     }
+
+    /** Poti, katerih telo je tok in ne kratko sporocilo. */
+    private fun jeTokovnaPot(pot: String): Boolean =
+        pot.startsWith("/cast/file") || pot.startsWith("/cast/screen")
 
     private fun preberiVrstico(vhod: InputStream): String? {
         val izpis = ByteArrayOutputStream()
@@ -602,6 +681,14 @@ class HubStreznik(
         // nevarno je, da sistem zaradi pomanjkanja pomnilnika ubije cel brskalnik. Zato
         // raje zavrnemo odvecno povezavo ali preveliko sporocilo, kot da tvegamo to.
         const val NAJVEC_POVEZAV = 6
+
+        /**
+         * Zgornja meja hkrati strezenih vticnic, WebSocket in HTTP skupaj. Sest naprav ima
+         * lahko vsaka svojo trajno povezavo in ob njej se kaksno kratko zahtevo (seznanitev,
+         * vstopnica, prenos datoteke), zato je meja postavljena visje od stevila naprav -
+         * a ne v nebo.
+         */
+        const val NAJVEC_SOCASNIH = 24
         private const val NAJVECJE_SPOROCILO = 256L * 1024
         private const val NAJVECJI_SKUPNI_ZADRZEK = 1L * 1024 * 1024
         private const val NAJVECJE_TELO = 64 * 1024

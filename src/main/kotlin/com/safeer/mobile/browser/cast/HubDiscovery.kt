@@ -1,5 +1,9 @@
 package com.safeer.mobile.browser.cast
 
+// Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
+// gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2.
+
 import android.content.Context
 import android.net.nsd.NsdManager
 import android.net.nsd.NsdServiceInfo
@@ -32,17 +36,25 @@ object HubDiscovery {
     const val KEY_HUB_SEEN = "hub_last_seen"
 
 
-    private val preverjalnik: OkHttpClient by lazy {
-        OkHttpClient.Builder()
-            .connectTimeout(2, TimeUnit.SECONDS)
-            .readTimeout(2, TimeUnit.SECONDS)
-            .build()
+    private val preverjalniki = HashMap<String, OkHttpClient>()
+
+    /**
+     * Odjemalec za preverjanje naslova. Ce je naprava ze seznanjena, zaupa samo odtisu iz
+     * seznanitve; pred seznanitvijo sprejme katerokoli potrdilo (zetona takrat ne posilja).
+     */
+    private fun preverjalnik(pripeti: String?): OkHttpClient = synchronized(preverjalniki) {
+        preverjalniki.getOrPut(pripeti ?: "") {
+            val g = OkHttpClient.Builder()
+                .connectTimeout(2, TimeUnit.SECONDS)
+                .readTimeout(2, TimeUnit.SECONDS)
+            HubTls.okhttp(g, pripeti).first.build()
+        }
     }
 
-    /** Odzivna koda naslova; 0 pomeni, da se ni oglasil nihce. */
-    private fun koda(url: String, odgovor: (Int) -> Unit) {
+    /** Odzivna koda naslova; 0 pomeni, da se ni oglasil nihce (ali da potrdilo ni pravo). */
+    private fun koda(url: String, pripeti: String?, odgovor: (Int) -> Unit) {
         try {
-            preverjalnik.newCall(Request.Builder().url(url).get().build())
+            preverjalnik(pripeti).newCall(Request.Builder().url(url).get().build())
                 .enqueue(object : okhttp3.Callback {
                     override fun onFailure(call: okhttp3.Call, e: java.io.IOException) {
                         odgovor(0)
@@ -69,29 +81,30 @@ object HubDiscovery {
      * a ne kot GET (405 ali 401). Zetona pri tem ne posljemo -- to je preverba PRED
      * zaupanjem, ne po njem.
      */
-    private fun preveriHub(osnova: String, odgovor: (Boolean) -> Unit) {
-        koda("$osnova/cast/health") { zdravje ->
+    private fun preveriHub(osnova: String, pripeti: String?, odgovor: (Boolean) -> Unit) {
+        koda("$osnova/cast/health", pripeti) { zdravje ->
             if (zdravje == 0 || zdravje == 404) {
                 odgovor(false)
             } else {
-                koda("$osnova/cast/ticket") { vstopnica ->
+                koda("$osnova/cast/ticket", pripeti) { vstopnica ->
                     odgovor(vstopnica != 0 && vstopnica != 404)
                 }
             }
         }
     }
 
-    /** Iz ws://gostitelj:vrata/pot naredi http://gostitelj:vrata. */
+    /** Iz wss://gostitelj:vrata/pot naredi https://gostitelj:vrata (ws -> http). */
     private fun osnovaIz(naslov: String): String {
         val brezSheme = naslov.substringAfter("://", naslov)
         val gostitelj = brezSheme.substringBefore("/")
-        return "http://$gostitelj"
+        val shema = if (naslov.startsWith("wss://") || naslov.startsWith("https://")) "https" else "http"
+        return "$shema://$gostitelj"
     }
 
     /** Ali gre za isti Hub? Primerjamo gostitelja in vrata, ne sheme ne poti. */
     private fun istiHub(a: String, b: String): Boolean {
         if (a.isBlank() || b.isBlank()) return false
-        return osnovaIz(a).equals(osnovaIz(b), ignoreCase = true)
+        return osnovaIz(a).substringAfter("://").equals(osnovaIz(b).substringAfter("://"), ignoreCase = true)
     }
 
     /** Ali je naprava ze seznanjena (ima zeton)? Potem je previdnost vecja. */
@@ -120,7 +133,8 @@ object HubDiscovery {
             iskanjeZMdns(app, timeoutMs, onResult)
             return
         }
-        preveriHub(osnovaIz(znani)) { jeHub ->
+        // Znani Hub: ce smo seznanjeni, mora pokazati isto potrdilo kot ob seznanitvi.
+        preveriHub(osnovaIz(znani), if (jeSeznanjena(app)) HubTls.pripetiOdtis(app) else null) { jeHub ->
             if (jeHub) {
                 app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
                     .putLong(KEY_HUB_SEEN, System.currentTimeMillis())
@@ -181,7 +195,13 @@ object HubDiscovery {
                 val lastnosti = info.attributes ?: emptyMap<String, ByteArray>()
                 val wsPot = lastnosti["ws"]?.toString(Charsets.UTF_8) ?: "/cast/ws"
                 val ticketPot = lastnosti["ticket"]?.toString(Charsets.UTF_8) ?: "/api/auth/ws-ticket"
-                val naslov = "ws://$gostitelj:${info.port}$wsPot"
+                // Hub brez TLS ne pride v postev: po povezavi gredo zetoni, datoteke in zaslon.
+                val tls = lastnosti["tls"]?.toString(Charsets.UTF_8) == "1"
+                if (!tls) {
+                    Log.w(TAG, "Hub na $gostitelj ne govori TLS; ne prevzemam ga (posodobi Safeer na tisti napravi).")
+                    return
+                }
+                val naslov = "wss://$gostitelj:${info.port}$wsPot"
                 // Ce smo ze seznanjeni, oglasa z drugega naslova ne prevzamemo: zeton je
                 // dolgoziv poverilnik, oglas pa lahko odda kdorkoli v omrezju.
                 val znani = knownHubUrl(app)
@@ -191,7 +211,8 @@ object HubDiscovery {
                 }
                 // Zapis v mDNS ostane v omrezju, tudi ko Hub ze ne tece vec, in oglasi se
                 // ne preverjajo sami. Zato naslov preverimo, preden mu karkoli zaupamo.
-                preveriHub("http://$gostitelj:${info.port}") { ziv ->
+                val pripeti = if (jeSeznanjena(app)) HubTls.pripetiOdtis(app) else null
+                preveriHub("https://$gostitelj:${info.port}", pripeti) { ziv ->
                     if (!ziv) {
                         Log.i(TAG, "Zapis za Hub obstaja, a to ni Safeer Hub: $gostitelj")
                         return@preveriHub
