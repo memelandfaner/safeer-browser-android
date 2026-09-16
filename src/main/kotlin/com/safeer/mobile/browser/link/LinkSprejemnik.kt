@@ -236,7 +236,8 @@ class LinkSprejemnik : Service() {
     private fun prejmi(sporocilo: JSONObject) {
         try {
             val tip = sporocilo.optString("type", "")
-            val od = sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") }
+            val od = LinkVzdevki.ime(this, sporocilo.optString("sender", ""),
+                sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") })
             val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
             when (tip) {
                 "cast.url" -> {

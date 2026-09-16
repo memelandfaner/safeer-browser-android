@@ -621,7 +621,8 @@ class LinkMost(
     private fun prejmiDeljenje(sporocilo: JSONObject) {
         try {
             val tip = sporocilo.optString("type", "")
-            val od = sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") }
+            val od = LinkVzdevki.ime(dejavnost, sporocilo.optString("sender", ""),
+                sporocilo.optString("sender_name", "").ifBlank { sporocilo.optString("sender", "naprava") })
             val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
             when (tip) {
                 "cast.url" -> {
@@ -946,6 +947,25 @@ class LinkMost(
     }
 
     /** Odvzame dostop napravi in jo, ce je povezana, odklopi. */
+    // ------------------------------------------------------------------ krajevna imena naprav
+
+    /** Imena, ki jih je uporabnik te naprave dal drugim napravam (JSON {id: ime}); ostanejo na tej napravi. */
+    @JavascriptInterface
+    fun vzdevki(): String = nastavitve().getString("link_vzdevki", "{}") ?: "{}"
+
+    /** Prazno ime vzdevek odstrani (naprava se spet kaze s svojim imenom). */
+    @JavascriptInterface
+    fun shraniVzdevek(idNaprave: String, ime: String) {
+        try {
+            val vsi = JSONObject(nastavitve().getString("link_vzdevki", "{}") ?: "{}")
+            val cisto = ime.trim().take(64)
+            if (cisto.isEmpty()) vsi.remove(idNaprave) else vsi.put(idNaprave, cisto)
+            nastavitve().edit().putString("link_vzdevki", vsi.toString()).apply()
+        } catch (e: Throwable) {
+            android.util.Log.w(TAG, "Vzdevka ni bilo mogoce shraniti: ${e.message}")
+        }
+    }
+
     @JavascriptInterface
     fun hubPreklici(idNaprave: String) {
         val u = com.safeer.mobile.browser.cast.HubKrmilnik.usmerjevalnik

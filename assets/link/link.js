@@ -20,6 +20,27 @@
 
   var most = window.SafeerLink || null;
 
+  // Krajevna imena naprav: vsak uporabnik na svoji napravi poimenuje ostale po svoje.
+  // Shranjena so na tej napravi (most.vzdevki / most.shraniVzdevek), ne na Safeer Linku,
+  // zato prezivijo tudi zamenjavo naprave, ki gosti. Brez mostu ostane localStorage.
+  var vzdevki = {};
+  function naloziVzdevke() {
+    try {
+      if (most && most.vzdevki) { vzdevki = JSON.parse(most.vzdevki() || "{}") || {}; return; }
+      vzdevki = JSON.parse(window.localStorage.getItem("safeer_link_vzdevki") || "{}") || {};
+    } catch (e) { vzdevki = {}; }
+  }
+  function shraniVzdevek(id, ime) {
+    if (!id) return false;
+    if (ime) vzdevki[id] = ime; else delete vzdevki[id];
+    try {
+      if (most && most.shraniVzdevek) { most.shraniVzdevek(id, ime || ""); return true; }
+      window.localStorage.setItem("safeer_link_vzdevki", JSON.stringify(vzdevki));
+      return true;
+    } catch (e) { return false; }
+  }
+  naloziVzdevke();
+
   var el = function (id) { return document.getElementById(id); };
 
   // ----------------------------------------------------------------
@@ -1146,6 +1167,7 @@
   /** Ime naprave, kot ga razume clovek. Tehnicnega ID nikoli ne pokazemo. */
   function prijaznoIme(naprava) {
     if (!naprava) return t("zaslon");
+    if (naprava.id && vzdevki[naprava.id]) return vzdevki[naprava.id];
     var ime = (naprava.ime || "").trim();
     if (ime && !/^[a-z0-9]+-[a-z0-9-]{4,}$/i.test(ime)) return ime;
     return naprava.vloga === "receiver" ? t("televizor") : t("zaslon");
@@ -1519,24 +1541,15 @@
     if (naprave) {
       naprave.innerHTML = "";
       stanje.hubNaprave.forEach(function (n) {
-        // Dostop se odvzame v dveh korakih: en sam pritisk na daljincu je prehitro
-        // storjen, naprava pa se mora potem znova seznaniti.
-        var odvzemamTo = odvzemam === n.id;
+        // Klik odpre plosco z imenom naprave: Preimenuj (krajevno ime) in Odstrani (dostop se
+        // odvzame v dveh korakih: en sam pritisk na daljincu je prehitro storjen).
         var vrsticaNaprave = vrstica(
           ikonaNaprave(n),
-          n.ime || t("zaslon"),
-          odvzemamTo ? t("sePotrdi") : t("povezanNaTv"),
-          odvzemamTo ? t("odstrani") : t("povezana"),
-          odvzemamTo ? "" : "zivo",
-          function () {
-            if (!odvzemamTo) {
-              odvzemam = n.id;
-              narisiHub();
-              return;
-            }
-            odvzemam = "";
-            if (most && most.hubPreklici) most.hubPreklici(n.id);
-          });
+          prijaznoIme(n),
+          t("povezanNaTv"),
+          t("povezana"),
+          "zivo",
+          function () { odpriDeljenje(n, true, true); });
         vrsticaNaprave.setAttribute("data-fokus", "naprava:" + n.id);
         naprave.appendChild(vrsticaNaprave);
       });
@@ -1831,11 +1844,15 @@
   var deljenje = { naprava: null, vrsta: "" };
   var zaslonDeljenje = { tece: false, ime: "", cilj: "" };
 
-  function odpriDeljenje(naprava, samoIme) {
-    if (!znaDeliti) return;
+  function odpriDeljenje(naprava, samoIme, hubVnos) {
+    if (!znaDeliti && !hubVnos) return;
     deljenje.naprava = naprava;
     deljenje.vrsta = "";
     deljenje.samoIme = !!samoIme;
+    deljenje.hubVnos = !!hubVnos;
+    odvzemam = "";
+    besedilo("gumbOdstrani", t("odstrani"));
+    pokazi("gumbOdstrani", !!hubVnos);
     besedilo("deljenjeNaslov", samoIme ? prijaznoIme(naprava) : t("deliZ", { ime: prijaznoIme(naprava) }));
     besedilo("opombaDeljenje", "");
     besedilo("deljenjeOpis", "");
@@ -1884,11 +1901,37 @@
 
   function shraniIme() {
     var n = deljenje.naprava;
-    if (!n || !most || !most.preimenujNapravo) return;
+    if (!n) return;
     var v = el("vnosImena");
     var ime = v ? String(v.value || "").trim() : "";
+    // Svoje ime naprava sporoci Safeer Linku (vidijo ga vsi); imena drugih naprav so krajevna.
+    if (n.id !== stanje.idNaprave) {
+      if (ime === (n.ime || "").trim()) ime = "";
+      if (shraniVzdevek(n.id, ime)) {
+        pokazi("preimenujBlok", false);
+        besedilo("opombaDeljenje", t("preimenovano"));
+        besedilo("deljenjeNaslov", deljenje.samoIme ? prijaznoIme(n) : t("deliZ", { ime: prijaznoIme(n) }));
+        narisiVse();
+        return;
+      }
+    }
+    if (!most || !most.preimenujNapravo) return;
     besedilo("opombaDeljenje", t("posiljam"));
     most.preimenujNapravo(n.id, ime);
+  }
+
+  /** Odvzem dostopa napravi s plosce: prvi pritisk vprasa, drugi odvzame. */
+  function odstraniNapravo() {
+    var n = deljenje.naprava;
+    if (!n || !deljenje.hubVnos) return;
+    if (odvzemam !== n.id) {
+      odvzemam = n.id;
+      besedilo("gumbOdstrani", t("sePotrdi"));
+      return;
+    }
+    odvzemam = "";
+    if (most && most.hubPreklici) most.hubPreklici(n.id);
+    zapriDeljenje();
   }
 
   /** Odziv mostu "preimenovano": {id, ime}. Ime pride nazaj tudi v novem seznamu naprav. */
@@ -2020,6 +2063,7 @@
     naKlik("gumbDeljenjeZapri", zapriDeljenje);
     naKlik("gumbPosljiNaNapravo", posljiNaNapravo);
     naKlik("gumbPreimenuj", odpriPreimenovanje);
+    naKlik("gumbOdstrani", odstraniNapravo);
     naKlik("gumbShraniIme", shraniIme);
     var vnosImena = el("vnosImena");
     if (vnosImena) vnosImena.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); shraniIme(); } });
