@@ -328,7 +328,9 @@ class LinkSprejemnik : Service() {
         val opisMape = com.safeer.mobile.browser.PrenosiMapa.opis(this)
         val besedilo = if (uspelo) I18n.t(this, "share_received_file").replace("{ime}", imeDat) + " (" + opisMape + ")"
         else I18n.t(this, "share_file_failed").replace("{ime}", imeDat)
-        val namera = Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        // Odpre seznam prenosov v Safeerju (ne sistemske aplikacije, iz katere se ni mogoce vrniti v brskalnik).
+        val namera = Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            .putExtra(MainActivity.ODPRI_PRENOSE, true)
         val klik = try {
             PendingIntent.getActivity(this, stevecObvestil, namera, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         } catch (_: Throwable) { null }

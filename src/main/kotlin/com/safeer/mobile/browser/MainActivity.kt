@@ -24,6 +24,8 @@ import java.net.URLEncoder
 class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Daljinec.VOspredju {
 
     companion object {
+        /** Dodatek namere: ob zagonu odpri seznam prenosov (obvestilo o prejeti datoteki prek Safeer Linka). */
+        const val ODPRI_PRENOSE = "com.safeer.mobile.browser.ODPRI_PRENOSE"
         private const val REQ_CODE_PERMISSIONS = 1001
         private const val REQ_CODE_GEO_PERMISSIONS = 1002
         private const val REQ_CODE_NOTIFICATION = 1003
@@ -206,6 +208,11 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
                 if (existing != null) tabManager.switchTab(existing.id)
                 else tabManager.createTab(this, finalUrl, true)
             }
+        }
+        // Obvestilo o prejeti datoteki (Safeer Link) odpre seznam prenosov v brskalniku.
+        if (intent?.getBooleanExtra(ODPRI_PRENOSE, false) == true) {
+            intent.removeExtra(ODPRI_PRENOSE)
+            window.decorView.post { if (!isFinishing) PrenosiUi.show(this) { url -> tabManager.createTab(this, url, true) } }
         }
     }
 
@@ -849,6 +856,12 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
 
         try {
             val uri = Uri.parse(url)
+            if (uri.scheme == "content" || uri.scheme == "file") {
+                // Dokument z naprave (prenosi, Safeer Link): v vrstici pokazi ime datoteke, ne notranjega naslova.
+                val ime = (title?.takeIf { it.isNotBlank() && !it.contains("://") } ?: uri.lastPathSegment?.substringAfterLast('/')).orEmpty()
+                editUrl.setText("📄 " + ime.ifBlank { url })
+                return
+            }
             val host = uri.host ?: url
             val cleanHost = host.removePrefix("www.")
             val path = uri.path ?: ""
@@ -1472,11 +1485,8 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
 
         dialog.findViewById<LinearLayout>(R.id.rowMenuDownloads).setOnClickListener {
             dialog.dismiss()
-            try {
-                startActivity(Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS))
-            } catch (_: Exception) {
-                Toast.makeText(this, "Mapa prenosov je v mapi Prenosi", Toast.LENGTH_SHORT).show()
-            }
+            // Seznam prenosov v brskalniku (ne sistemska aplikacija, iz katere se ni bilo mogoce vrniti).
+            PrenosiUi.show(this) { url -> tabManager.createTab(this, url, true) }
         }
 
         dialog.findViewById<LinearLayout>(R.id.rowMenuHistory).setOnClickListener {

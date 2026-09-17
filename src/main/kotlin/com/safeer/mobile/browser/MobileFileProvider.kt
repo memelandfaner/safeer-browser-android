@@ -92,6 +92,15 @@ class MobileFileProvider : ContentProvider() {
         val file = if (path.startsWith("/external_files/")) {
             val base = ctx.getExternalFilesDir(null) ?: ctx.filesDir
             safeChild(base, path.removePrefix("/external_files/"))
+        } else if (path.startsWith("/javno/")) {
+            // Javna mapa (Prenosi, Dokumenti ...): samo datoteke, ki jih je ta aplikacija sama zapisala
+            // (prenosi brskalnika, prejete prek Safeer Linka) - za odpiranje in deljenje iz seznama prenosov.
+            val ostanek = path.removePrefix("/javno/")
+            val mapa = ostanek.substringBefore('/')
+            if (mapa !in PrenosiUi.JAVNE_MAPE || !ostanek.contains('/')) throw FileNotFoundException("Neznana javna mapa: $mapa")
+            val f = safeChild(android.os.Environment.getExternalStoragePublicDirectory(mapa), ostanek.substringAfter('/'))
+            if (!f.isFile) throw FileNotFoundException("Datoteke ni: $f")
+            return f
         } else if (path.startsWith("/cache_files/")) {
             safeChild(ctx.cacheDir, path.removePrefix("/cache_files/"))
         } else {
