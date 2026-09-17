@@ -131,6 +131,12 @@
       pozabljeno: "Naprava je odklopljena. Znova jo lahko povežeš kadar koli.",
       sinhronizacija: "Sinhronizacija",
       syncOpis: "Zaznamki potujejo med tvojimi napravami prek domačega Safeer Linka. Nič ne gre v oblak.",
+      mapeNaslov: "Datoteke za televizor",
+      mapeOpis: "Izbrane mape vidi Safeer OS na televizorju — filmi, glasba in slike se predvajajo naravnost s tega računalnika, samo v domačem omrežju.",
+      mapeDodaj: "Dodaj mapo",
+      mapePrazno: "Ni izbrane nobene mape. Televizor ne vidi nič.",
+      mapeOdstrani: "Odstrani",
+      mapeStandardne: "Deli Videi, Glasba in Slike",
       syncPrivzeto: "Sinhronizacija se vklopi, ko jo potrdiš — do takrat se ne pošlje nič.",
       zaznamki: "Zaznamki",
       syncVklopljena: "Vklopljeno",
@@ -237,6 +243,12 @@
       pozabljeno: "The device is disconnected. You can connect it again any time.",
       sinhronizacija: "Sync",
       syncOpis: "Your bookmarks travel between your devices through your home Safeer Link. Nothing goes to the cloud.",
+      mapeNaslov: "Files for the TV",
+      mapeOpis: "Safeer OS on the TV sees the folders you pick here — films, music and photos play straight from this computer, on your home network only.",
+      mapeDodaj: "Add folder",
+      mapePrazno: "No folder selected. The TV sees nothing.",
+      mapeOdstrani: "Remove",
+      mapeStandardne: "Share Videos, Music and Pictures",
       syncPrivzeto: "Sync starts once you confirm it — until then nothing is sent.",
       zaznamki: "Bookmarks",
       syncVklopljena: "On",
@@ -343,6 +355,12 @@
       pozabljeno: "Das Gerät ist getrennt. Du kannst es jederzeit wieder verbinden.",
       sinhronizacija: "Synchronisierung",
       syncOpis: "Deine Lesezeichen wandern über deinen Safeer Link zu Hause zwischen deinen Geräten. Nichts geht in die Cloud.",
+      mapeNaslov: "Dateien für den Fernseher",
+      mapeOpis: "Safeer OS auf dem Fernseher sieht die hier gewählten Ordner — Filme, Musik und Fotos laufen direkt von diesem Computer, nur im Heimnetz.",
+      mapeDodaj: "Ordner hinzufügen",
+      mapePrazno: "Kein Ordner gewählt. Der Fernseher sieht nichts.",
+      mapeOdstrani: "Entfernen",
+      mapeStandardne: "Videos, Musik und Bilder freigeben",
       syncPrivzeto: "Die Synchronisierung startet, sobald du sie bestätigst — bis dahin wird nichts gesendet.",
       zaznamki: "Lesezeichen",
       syncVklopljena: "Ein",
@@ -449,6 +467,12 @@
       pozabljeno: "El dispositivo está desconectado. Puedes volver a conectarlo cuando quieras.",
       sinhronizacija: "Sincronización",
       syncOpis: "Tus marcadores viajan entre tus dispositivos a través de tu Safeer Link de casa. Nada va a la nube.",
+      mapeNaslov: "Archivos para el televisor",
+      mapeOpis: "Safeer OS en el televisor ve las carpetas que elijas aquí: películas, música y fotos se reproducen directamente desde este ordenador, solo en tu red doméstica.",
+      mapeDodaj: "Añadir carpeta",
+      mapePrazno: "Ninguna carpeta seleccionada. El televisor no ve nada.",
+      mapeOdstrani: "Quitar",
+      mapeStandardne: "Compartir Vídeos, Música e Imágenes",
       syncPrivzeto: "La sincronización empieza cuando la confirmes; hasta entonces no se envía nada.",
       zaznamki: "Marcadores",
       syncVklopljena: "Activada",
@@ -555,6 +579,12 @@
       pozabljeno: "L\'appareil est déconnecté. Tu peux le reconnecter quand tu veux.",
       sinhronizacija: "Synchronisation",
       syncOpis: "Tes favoris circulent entre tes appareils via ton Safeer Link à la maison. Rien ne part vers le cloud.",
+      mapeNaslov: "Fichiers pour le téléviseur",
+      mapeOpis: "Safeer OS sur le téléviseur voit les dossiers choisis ici : films, musique et photos se lisent directement depuis cet ordinateur, uniquement sur le réseau domestique.",
+      mapeDodaj: "Ajouter un dossier",
+      mapePrazno: "Aucun dossier choisi. Le téléviseur ne voit rien.",
+      mapeOdstrani: "Retirer",
+      mapeStandardne: "Partager Vidéos, Musique et Images",
       syncPrivzeto: "La synchronisation démarre dès que tu la confirmes — jusque-là rien n\'est envoyé.",
       zaznamki: "Favoris",
       syncVklopljena: "Activée",
@@ -661,6 +691,12 @@
       pozabljeno: "Il dispositivo è scollegato. Puoi ricollegarlo quando vuoi.",
       sinhronizacija: "Sincronizzazione",
       syncOpis: "I tuoi preferiti viaggiano tra i tuoi dispositivi attraverso il Safeer Link di casa. Niente finisce nel cloud.",
+      mapeNaslov: "File per il televisore",
+      mapeOpis: "Safeer OS sul televisore vede le cartelle scelte qui: film, musica e foto si riproducono direttamente da questo computer, solo nella rete di casa.",
+      mapeDodaj: "Aggiungi cartella",
+      mapePrazno: "Nessuna cartella scelta. Il televisore non vede nulla.",
+      mapeOdstrani: "Rimuovi",
+      mapeStandardne: "Condividi Video, Musica e Immagini",
       syncPrivzeto: "La sincronizzazione parte quando la confermi: fino ad allora non viene inviato nulla.",
       zaznamki: "Preferiti",
       syncVklopljena: "Attiva",
@@ -1532,6 +1568,26 @@
     pokazi("panelCast", false);
     pokazi("panelSync", false);
     pokazi("predvajalnik", false);
+    pokazi("panelMape", stanje.znan && stanje.seznanjen);
+    narisiMape();
+  }
+
+  /** Deljene mape (Safeer Control): seznam, odstranitev s klikom na vrstico, gumb za dodajanje. */
+  function narisiMape() {
+    var seznam = el("seznamMape");
+    if (!seznam) return;
+    seznam.innerHTML = "";
+    var mape = stanje.deljeneMape || [];
+    pokazi("opombaMape", mape.length === 0);
+    pokazi("gumbStandardneMape", !(stanje.standardneDeljene));
+    mape.forEach(function (m, i) {
+      var li = vrstica("mapa", m.ime || m.pot, m.pot || "", t("mapeOdstrani"), "", function () {
+        if (most && most.odstraniDeljenoMapo) most.odstraniDeljenoMapo(i);
+      });
+      var pod = li.querySelector(".pod");
+      if (pod) pod.style.wordBreak = "break-all";  // dolga pot brez presledkov ne sme prekriti znacke
+      seznam.appendChild(li);
+    });
   }
 
   // ----------------------------------------------------------------
@@ -1831,6 +1887,10 @@
         } else {
           besedilo("opombaSync", t("syncUgasnjena"));
         }
+      } else if (vrsta === "deljeneMape") {
+        stanje.deljeneMape = (podatki && podatki.mape) || [];
+        stanje.standardneDeljene = !!(podatki && podatki.standardne);
+        narisiMape();
       } else if (vrsta === "stanje") {
         // Most je zamenjal Hub (npr. vklop/izklop sredisca tu): znova preberemo stanje.
         stanje.naprave = [];
@@ -2200,6 +2260,8 @@
     stanje.imeNaprave = s.naprava || "";
     stanje.idNaprave = s.id || "";
     stanje.control = !!s.control;
+    stanje.deljeneMape = s.deljeneMape || [];
+    stanje.standardneDeljene = !!s.standardneDeljene;
     besedilo("naslovHuba", prijaznaHisa(s.hub));
     narisiVse();
     if (stanje.znan && stanje.seznanjen) poveziSe();
@@ -2226,6 +2288,12 @@
       if (most && most.jeTelevizor && most.jeTelevizor()) stanje.televizor = true;
     } catch (e) {}
 
+    naKlik("gumbDodajMapo", function () {
+      if (most && most.dodajDeljenoMapo) most.dodajDeljenoMapo();
+    });
+    naKlik("gumbStandardneMape", function () {
+      if (most && most.deliStandardneMape) most.deliStandardneMape();
+    });
     naKlik("gumbZapri", function () {
       if (most) most.zapri();
     });
