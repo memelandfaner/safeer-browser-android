@@ -33,6 +33,12 @@
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .daljinecStanje.napaka { color: var(--rumena); }
+.daljinecSredisce {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--zelena);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 
 /* ---------- posnetek zaslona ---------- */
 

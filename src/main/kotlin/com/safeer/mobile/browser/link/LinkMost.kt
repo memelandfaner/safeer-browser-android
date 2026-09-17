@@ -306,6 +306,7 @@ class LinkMost(
                     put("zmoznosti", JSONArray(n.capabilities))
                     put("zasedenaOd", n.busyBy)
                     put("zasedenaOdIme", n.busyByName)
+                    put("naslov", n.address)
                 })
             }
             zadnjeNaprave = polje

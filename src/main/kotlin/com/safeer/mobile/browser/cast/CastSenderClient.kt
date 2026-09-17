@@ -61,7 +61,8 @@ class CastSenderClient(
         val capabilities: List<String>,
         /** Kdo trenutno deli s to napravo (id in ime), ali prazno; z eno napravo deli ena naenkrat. */
         val busyBy: String = "",
-        val busyByName: String = ""
+        val busyByName: String = "",
+        val address: String = ""
     )
 
     data class PlaybackStatus(
@@ -263,7 +264,8 @@ class CastSenderClient(
                                 role = d.optString("role", "receiver"),
                                 capabilities = caps,
                                 busyBy = d.optString("busy_by", ""),
-                                busyByName = d.optString("busy_by_name", "")
+                                busyByName = d.optString("busy_by_name", ""),
+                                address = d.optString("ip", "")
                             )
                         )
                     }
