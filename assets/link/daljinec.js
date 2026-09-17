@@ -32,7 +32,7 @@
       vnosNamig: "Ukaz, stran ali iskanje …",
       domov: "Domov", nazaj: "Nazaj", predvajaj: "Predvajaj", meni: "Meni",
       stranGor: "Stran gor", stranDol: "Stran dol", prejsnji: "Prejšnji", naslednji: "Naslednji",
-      aplikacije: "Aplikacije na napravi", osvezi: "Osveži", vec: "Več",
+      aplikacije: "Aplikacije na napravi", aplikacijeNa: "Aplikacije na napravi »{ime}«", sredisce: "Središče Safeer Linka: {ime}", osvezi: "Osveži", vec: "Več",
       znovaZazeni: "Znova zaženi Safeer", pocistiPredpomnilnik: "Počisti predpomnilnik", stanjeNaprave: "Stanje naprave",
       poslusam: "Poslušam …", obdelujem: "Razumem …", nicSlisano: "Nič nisem slišal. Poskusi znova.",
       dovoljenje: "Dovoli mikrofon, nato pritisni znova.", niGovora: "Glasovno upravljanje na tej napravi ni na voljo.",
@@ -58,7 +58,7 @@
       vnosNamig: "Command, page or search …",
       domov: "Home", nazaj: "Back", predvajaj: "Play", meni: "Menu",
       stranGor: "Page up", stranDol: "Page down", prejsnji: "Previous", naslednji: "Next",
-      aplikacije: "Apps on the device", osvezi: "Refresh", vec: "More",
+      aplikacije: "Apps on the device", aplikacijeNa: "Apps on “{ime}”", sredisce: "Safeer Link hub: {ime}", osvezi: "Refresh", vec: "More",
       znovaZazeni: "Restart Safeer", pocistiPredpomnilnik: "Clear cache", stanjeNaprave: "Device status",
       poslusam: "Listening …", obdelujem: "Got it …", nicSlisano: "I didn't hear anything. Try again.",
       dovoljenje: "Allow the microphone, then tap again.", niGovora: "Voice control is not available on this device.",
@@ -84,7 +84,7 @@
       vnosNamig: "Befehl, Seite oder Suche …",
       domov: "Start", nazaj: "Zurück", predvajaj: "Wiedergabe", meni: "Menü",
       stranGor: "Seite hoch", stranDol: "Seite runter", prejsnji: "Zurück", naslednji: "Weiter",
-      aplikacije: "Apps auf dem Gerät", osvezi: "Aktualisieren", vec: "Mehr",
+      aplikacije: "Apps auf dem Gerät", aplikacijeNa: "Apps auf „{ime}“", sredisce: "Safeer-Link-Zentrale: {ime}", osvezi: "Aktualisieren", vec: "Mehr",
       znovaZazeni: "Safeer neu starten", pocistiPredpomnilnik: "Cache leeren", stanjeNaprave: "Gerätestatus",
       poslusam: "Ich höre …", obdelujem: "Verstanden …", nicSlisano: "Ich habe nichts gehört. Versuch es noch einmal.",
       dovoljenje: "Mikrofon erlauben, dann erneut tippen.", niGovora: "Sprachsteuerung ist auf diesem Gerät nicht verfügbar.",
@@ -110,7 +110,7 @@
       vnosNamig: "Comando, página o búsqueda …",
       domov: "Inicio", nazaj: "Atrás", predvajaj: "Reproducir", meni: "Menú",
       stranGor: "Página arriba", stranDol: "Página abajo", prejsnji: "Anterior", naslednji: "Siguiente",
-      aplikacije: "Apps en el dispositivo", osvezi: "Actualizar", vec: "Más",
+      aplikacije: "Apps en el dispositivo", aplikacijeNa: "Apps en «{ime}»", sredisce: "Centro de Safeer Link: {ime}", osvezi: "Actualizar", vec: "Más",
       znovaZazeni: "Reiniciar Safeer", pocistiPredpomnilnik: "Borrar caché", stanjeNaprave: "Estado del dispositivo",
       poslusam: "Escuchando …", obdelujem: "Entendido …", nicSlisano: "No he oído nada. Inténtalo de nuevo.",
       dovoljenje: "Permite el micrófono y vuelve a tocar.", niGovora: "El control por voz no está disponible en este dispositivo.",
@@ -136,7 +136,7 @@
       vnosNamig: "Commande, page ou recherche …",
       domov: "Accueil", nazaj: "Retour", predvajaj: "Lecture", meni: "Menu",
       stranGor: "Page haut", stranDol: "Page bas", prejsnji: "Précédent", naslednji: "Suivant",
-      aplikacije: "Applis sur l'appareil", osvezi: "Actualiser", vec: "Plus",
+      aplikacije: "Applis sur l'appareil", aplikacijeNa: "Applis sur « {ime} »", sredisce: "Centre Safeer Link : {ime}", osvezi: "Actualiser", vec: "Plus",
       znovaZazeni: "Redémarrer Safeer", pocistiPredpomnilnik: "Vider le cache", stanjeNaprave: "État de l'appareil",
       poslusam: "J'écoute …", obdelujem: "Compris …", nicSlisano: "Je n'ai rien entendu. Réessayez.",
       dovoljenje: "Autorisez le micro, puis touchez à nouveau.", niGovora: "La commande vocale n'est pas disponible sur cet appareil.",
@@ -162,7 +162,7 @@
       vnosNamig: "Comando, pagina o ricerca …",
       domov: "Home", nazaj: "Indietro", predvajaj: "Riproduci", meni: "Menu",
       stranGor: "Pagina su", stranDol: "Pagina giù", prejsnji: "Precedente", naslednji: "Successivo",
-      aplikacije: "App sul dispositivo", osvezi: "Aggiorna", vec: "Altro",
+      aplikacije: "App sul dispositivo", aplikacijeNa: "App su «{ime}»", sredisce: "Centro Safeer Link: {ime}", osvezi: "Aggiorna", vec: "Altro",
       znovaZazeni: "Riavvia Safeer", pocistiPredpomnilnik: "Svuota la cache", stanjeNaprave: "Stato del dispositivo",
       poslusam: "In ascolto …", obdelujem: "Capito …", nicSlisano: "Non ho sentito nulla. Riprova.",
       dovoljenje: "Consenti il microfono, poi tocca di nuovo.", niGovora: "Il controllo vocale non è disponibile su questo dispositivo.",
@@ -935,6 +935,16 @@
     }, 6000);
   }
 
+  /** Katera naprava je sredisce Safeer Linka (na njej tece Link, prek nje gredo ukazi). */
+  function osveziSredisce() {
+    var e = el("daljinecSredisce");
+    if (!e) return;
+    var ime = "";
+    try { ime = api().sredisce ? api().sredisce() : ""; } catch (err) { ime = ""; }
+    e.textContent = ime ? t("sredisce", { ime: ime }) : "";
+    e.style.display = ime ? "" : "none";
+  }
+
   // ----------------------------------------------------------------
   // Odpiranje in zapiranje
   // ----------------------------------------------------------------
@@ -951,6 +961,8 @@
     var ime = (api().prijaznoIme ? api().prijaznoIme(naprava) : (naprava.ime || t("naprava")));
     besedilo("daljinecIme", ime);
     besedilo("daljinecStanje", "");
+    besedilo("daljinecAplikacijeNaslov", t("aplikacijeNa", { ime: ime }));
+    osveziSredisce();
     besedilo("daljinecOdgovor", "");
     var e = el("daljinecSliseno");
     if (e) { e.textContent = t("govoriNamig"); e.classList.add("namig"); }
@@ -993,7 +1005,8 @@
   function naprave(seznam) {
     if (!stanje.odprt || !stanje.naprava) return;
     var se = (seznam || []).some(function (n) { return n.id === stanje.naprava.id; });
-    if (!se) zapri();
+    if (!se) { zapri(); return; }
+    osveziSredisce();
   }
 
   function pripni() {

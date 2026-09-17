@@ -1343,8 +1343,11 @@
     // Vrstica "Safeer Link na naslovu ..." ima smisel le na napravi, ki se povezuje drugam;
     // ce Safeer Link tece tu, bi kazala 127.0.0.1 in podvajala glavo strani.
     if (stanje.hub && !stanje.hubTece) {
+      var sredisce = imeSredisca();
+      var naslovHuba = prijaznaHisa(stanje.hub);
       seznam.appendChild(vrstica(
-        "hisa", "Safeer Link", prijaznaHisa(stanje.hub), t("domace"), "zivo", null));
+        "hisa", "Safeer Link", (sredisce && sredisce !== naslovHuba) ? sredisce + " · " + naslovHuba : naslovHuba,
+        t("domace"), "zivo", null));
     }
 
     // Vse naprave, ki jih Hub pozna, razen te: vsaka je lahko cilj deljenja.
@@ -2370,10 +2373,22 @@
     }
   }
 
+  /** Ime naprave, na kateri tece Safeer Link (sredisce): ta naprava, naprava z lokalnim naslovom pri Hubu ali naslov Huba. */
+  function imeSredisca() {
+    if (stanje.hubTece) return stanje.imeNaprave || t("taNaprava");
+    var lokalni = { "127.0.0.1": 1, "::1": 1, "localhost": 1, "::ffff:127.0.0.1": 1 };
+    for (var i = 0; i < stanje.naprave.length; i++) {
+      var n = stanje.naprave[i];
+      if (n && n.naslov && lokalni[String(n.naslov)]) return prijaznoIme(n);
+    }
+    return prijaznaHisa(stanje.hub);
+  }
+
   window.SafeerLinkStran = {
     jezik: jezik,
     prijaznoIme: prijaznoIme,
     televizor: function () { return !!stanje.televizor; },
+    sredisce: imeSredisca,
     pokaziDaljinec: pokaziDaljinec
   };
 
