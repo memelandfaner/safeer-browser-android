@@ -1033,7 +1033,7 @@ class HubUsmerjevalnik(
         if (pot == "/cast/pair/sibling" && zahteva.metoda == "POST") {
             // Sorodna naprava na istem racunalniku (Safeer Control ob ze seznanjenem Safeer Browserju):
             // zeton seznanjene naprave (isti uporabnik, ista datoteka) da zeton se njenemu sorodniku,
-            // brez nove kode. Sorodnik je le id z isto osnovo (npr. pc-primer -> pc-primer-control).
+            // brez nove kode. Sorodnik je le id z isto osnovo (npr. pc-mojpc -> pc-mojpc-control).
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
             val lastnik = napravaZeZetona(zahteva.glave["x-safeer-token"])
                 ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
