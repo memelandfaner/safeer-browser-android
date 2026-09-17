@@ -29,6 +29,7 @@
       upravljam: "Upravljam", nazajNaLink: "Nazaj na Safeer Link", pokaziZaslon: "Pokaži zaslon naprave",
       samodejno: "Samodejno", govori: "Govori", poslji: "Pošlji",
       govoriNamig: "Pritisni mikrofon in povej, npr. »odpri YouTube« ali »glasneje«",
+      pisiNamig: "Vpiši ukaz, npr. »odpri YouTube«, »glasneje« ali »program 25«",
       vnosNamig: "Ukaz, stran ali iskanje …",
       domov: "Domov", nazaj: "Nazaj", predvajaj: "Predvajaj", meni: "Meni",
       stranGor: "Stran gor", stranDol: "Stran dol", prejsnji: "Prejšnji", naslednji: "Naslednji",
@@ -55,6 +56,7 @@
       upravljam: "Controlling", nazajNaLink: "Back to Safeer Link", pokaziZaslon: "Show device screen",
       samodejno: "Auto", govori: "Speak", poslji: "Send",
       govoriNamig: "Tap the microphone and say e.g. “open YouTube” or “louder”",
+      pisiNamig: "Type a command, e.g. “open YouTube”, “louder” or “channel 25”",
       vnosNamig: "Command, page or search …",
       domov: "Home", nazaj: "Back", predvajaj: "Play", meni: "Menu",
       stranGor: "Page up", stranDol: "Page down", prejsnji: "Previous", naslednji: "Next",
@@ -81,6 +83,7 @@
       upravljam: "Steuere", nazajNaLink: "Zurück zu Safeer Link", pokaziZaslon: "Gerätebildschirm zeigen",
       samodejno: "Automatisch", govori: "Sprechen", poslji: "Senden",
       govoriNamig: "Tippe auf das Mikrofon und sage z. B. „öffne YouTube“ oder „lauter“",
+      pisiNamig: "Gib einen Befehl ein, z. B. „öffne YouTube“, „lauter“ oder „Programm 25“",
       vnosNamig: "Befehl, Seite oder Suche …",
       domov: "Start", nazaj: "Zurück", predvajaj: "Wiedergabe", meni: "Menü",
       stranGor: "Seite hoch", stranDol: "Seite runter", prejsnji: "Zurück", naslednji: "Weiter",
@@ -107,6 +110,7 @@
       upravljam: "Controlando", nazajNaLink: "Volver a Safeer Link", pokaziZaslon: "Mostrar pantalla del dispositivo",
       samodejno: "Automático", govori: "Hablar", poslji: "Enviar",
       govoriNamig: "Toca el micrófono y di, p. ej., «abre YouTube» o «más alto»",
+      pisiNamig: "Escribe una orden, p. ej. «abre YouTube», «más alto» o «canal 25»",
       vnosNamig: "Comando, página o búsqueda …",
       domov: "Inicio", nazaj: "Atrás", predvajaj: "Reproducir", meni: "Menú",
       stranGor: "Página arriba", stranDol: "Página abajo", prejsnji: "Anterior", naslednji: "Siguiente",
@@ -133,6 +137,7 @@
       upravljam: "Je contrôle", nazajNaLink: "Retour à Safeer Link", pokaziZaslon: "Afficher l'écran de l'appareil",
       samodejno: "Auto", govori: "Parler", poslji: "Envoyer",
       govoriNamig: "Touchez le micro et dites p. ex. « ouvre YouTube » ou « plus fort »",
+      pisiNamig: "Tapez une commande, p. ex. « ouvre YouTube », « plus fort » ou « chaîne 25 »",
       vnosNamig: "Commande, page ou recherche …",
       domov: "Accueil", nazaj: "Retour", predvajaj: "Lecture", meni: "Menu",
       stranGor: "Page haut", stranDol: "Page bas", prejsnji: "Précédent", naslednji: "Suivant",
@@ -159,6 +164,7 @@
       upravljam: "Controllo", nazajNaLink: "Torna a Safeer Link", pokaziZaslon: "Mostra lo schermo del dispositivo",
       samodejno: "Automatico", govori: "Parla", poslji: "Invia",
       govoriNamig: "Tocca il microfono e di' ad es. «apri YouTube» o «più forte»",
+      pisiNamig: "Scrivi un comando, ad es. «apri YouTube», «più forte» o «canale 25»",
       vnosNamig: "Comando, pagina o ricerca …",
       domov: "Home", nazaj: "Indietro", predvajaj: "Riproduci", meni: "Menu",
       stranGor: "Pagina su", stranDol: "Pagina giù", prejsnji: "Precedente", naslednji: "Successivo",
@@ -965,9 +971,11 @@
     osveziSredisce();
     besedilo("daljinecOdgovor", "");
     var e = el("daljinecSliseno");
-    if (e) { e.textContent = t("govoriNamig"); e.classList.add("namig"); }
+    var govor = znaGovor();
+    if (e) { e.textContent = t(govor ? "govoriNamig" : "pisiNamig"); e.classList.add("namig"); }
     var mik = el("daljinecMikrofon");
-    if (mik) mik.disabled = !znaGovor();
+    // Brez prepoznave govora (racunalnik) mikrofona ne kazemo: ukaz se vpise v polje spodaj.
+    if (mik) { mik.disabled = !govor; mik.style.display = govor ? "" : "none"; }
     pokazi("daljinecGlas", true);
     // Shranjen seznam aplikacij (brez ikon) pokazemo takoj; sveze pridejo iz naprave.
     if (stanje.aplikacijeZa !== naprava.id) {

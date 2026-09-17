@@ -75,6 +75,8 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
     private lateinit var repository: BrowserRepository
     private var historySuggestions: HistorySuggestions? = null
     private lateinit var downloadHandler: DownloadHandler
+    /** Meni, odprt z daljinca z druge naprave: tipke daljinca gredo vanj, dokler je odprt. */
+    private var meniDaljinca: android.app.Dialog? = null
 
     private var customVideoView: View? = null
     private var customVideoCallback: WebChromeClient.CustomViewCallback? = null
@@ -401,14 +403,18 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         return when (dejanje) {
             "key" -> {
                 val ime = parametri.optString("key", "").trim().lowercase()
+                val meni = meniDaljinca?.takeIf { it.isShowing }
                 when (ime) {
-                    "home" -> { openUrlInBrowser(com.safeer.mobile.browser.link.LinkSprejemnik.DOMACA_STRAN); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Domov") }
-                    "back" -> { onBackPressed(); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Nazaj") }
+                    "home" -> { meni?.dismiss(); openUrlInBrowser(com.safeer.mobile.browser.link.LinkSprejemnik.DOMACA_STRAN); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Domov") }
+                    "back" -> { if (meni != null) meni.dismiss() else onBackPressed(); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Nazaj") }
+                    "menu" -> { if (meni != null) meni.dismiss() else showMobileMenu(); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Meni") }
                 }
                 val koda = com.safeer.mobile.browser.link.Daljinec.TIPKE[ime] ?: return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Neznana tipka: $ime", koda = "neznana_tipka")
                 val zdaj = android.os.SystemClock.uptimeMillis()
-                dispatchKeyEvent(KeyEvent(zdaj, zdaj, KeyEvent.ACTION_DOWN, koda, 0))
-                dispatchKeyEvent(KeyEvent(zdaj, zdaj + 40, KeyEvent.ACTION_UP, koda, 0))
+                // Odprt meni je svoje okno: tipke mora dobiti on.
+                val cilj: (KeyEvent) -> Boolean = if (meni != null) meni::dispatchKeyEvent else this::dispatchKeyEvent
+                cilj(KeyEvent(zdaj, zdaj, KeyEvent.ACTION_DOWN, koda, 0))
+                cilj(KeyEvent(zdaj, zdaj + 40, KeyEvent.ACTION_UP, koda, 0))
                 com.safeer.mobile.browser.link.Daljinec.Izid(true, "Tipka $ime")
             }
             "scroll" -> {
@@ -1573,6 +1579,9 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
             showSettingsDialog()
         }
 
+        // Daljinec z druge naprave: tipke gredo v odprti meni (svoje okno), ne v dejavnost.
+        meniDaljinca = dialog
+        dialog.setOnDismissListener { if (meniDaljinca === dialog) meniDaljinca = null }
         dialog.show()
     }
 
