@@ -83,6 +83,12 @@ class CastSenderClient(
     /** Deljenje z druge naprave (share.text, share.file, share.screen): celo sporocilo. */
     var onShare: ((JSONObject) -> Unit)? = null
 
+    /** Ukaz daljinca (control.command) s Safeer Controla ali druge seznanjene naprave. */
+    var onControl: ((JSONObject) -> Unit)? = null
+
+    /** Odgovor na nas ukaz daljinca (control.result) ali zavrnitev sredisca (control.ack). */
+    var onControlOdziv: ((JSONObject) -> Unit)? = null
+
     /** TLS z odtisom Huba: vsako drugo potrdilo je napaka, ne opozorilo. */
     private val client: OkHttpClient = HubTls.okhttp(
         OkHttpClient.Builder()
@@ -302,6 +308,16 @@ class CastSenderClient(
                     ws.send(ack.toString())
                 }
 
+                "control.command" -> {
+                    // Odgovor (control.result) poslje prejemnik ukaza sam prek posljiSporocilo.
+                    mainHandler.post { onControl?.invoke(json) }
+                }
+
+                "control.result", "control.ack" -> {
+                    if (type == "control.ack" && json.optString("status", "") == "accepted") return
+                    mainHandler.post { onControlOdziv?.invoke(json) }
+                }
+
                 "cast.ping" -> {
                     ws.send(JSONObject().put("id", json.optString("id", "")).put("type", "cast.pong").toString())
                 }
@@ -309,6 +325,13 @@ class CastSenderClient(
         } catch (e: Exception) {
             Log.e(TAG, "Napaka pri razčlenjevanju sporočila: ${e.message}")
         }
+    }
+
+    /** Poslje poljubno sporocilo sredi scu (npr. control.result). Vrne false, ce ni povezave. */
+    fun posljiSporocilo(sporocilo: JSONObject): Boolean {
+        val ws = webSocket ?: return false
+        if (!isConnected) return false
+        return try { ws.send(sporocilo.toString()) } catch (_: Throwable) { false }
     }
 
     fun sendUrl(targetDeviceId: String, url: String, title: String? = null, startPosition: Double = 0.0) {

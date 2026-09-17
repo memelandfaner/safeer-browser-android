@@ -735,6 +735,40 @@ class HubUsmerjevalnik(
             else potrditev(id, "error", "Napaka pri posredovanju.", "share", "posredovanje_ni_uspelo")
         }
 
+        if (tip in CONTROL_POSREDOVANJE) {
+            // Daljinec med napravama (Safeer Control): ukaz gre samo napravi, ki je prijavila
+            // zmoznost "remote", odgovor pa nazaj posiljatelju ukaza. Hub ukaza ne izvaja in
+            // ga ne razlaga; posiljatelja vpise sam, da se ga ne da ponarediti.
+            val cilj = sporocilo.niz("target") ?: ""
+            val posiljatelj = synchronized(kljucnica) { idPovezave(od) } ?: ""
+            val (prejemnik, zmoznosti) = synchronized(kljucnica) {
+                val n = naprave[cilj]
+                Pair(n?.povezava, n?.zmoznosti ?: emptyList())
+            }
+            if (prejemnik == null) {
+                return potrditev(id, "rejected", "Ciljna naprava '$cilj' ni povezana ali ne obstaja.", "control", "naprava_ni_povezana")
+            }
+            if (prejemnik === od) return potrditev(id, "rejected", "Naprava ne more upravljati sama sebe.", "control", "isti_naprava")
+            if (tip == "control.command" && !zmoznosti.contains(ZMOZNOST_DALJINEC)) {
+                return potrditev(id, "rejected", "Naprave '${imeNaprave(cilj)}' ni mogoče upravljati; posodobi Safeer na njej.", "control", "brez_daljinca")
+            }
+            val zapis = JsonLahki.objekt(surovo) ?: return potrditev(id, "error", "Neveljavno sporočilo.", "control", "neveljavno_sporocilo")
+            val naprej = JsonLahki.Zapis()
+                .niz("id", id)
+                .niz("type", tip)
+                .niz("target", cilj)
+                .niz("sender", posiljatelj)
+                .niz("sender_name", imeNaprave(posiljatelj))
+                .stevilo("timestamp", ura() / 1000.0)
+            zapis.niz("ref_id")?.let { naprej.niz("ref_id", it) }
+            zapis.surovo("payload")?.let { naprej.surovo("payload", it) }
+            return if (posljiVarno(prejemnik, naprej.toString())) {
+                // Odgovor na sam ukaz pride kasneje kot control.result; potrditev pove le, da je
+                // ukaz prisel do naprave. Odgovorov (control.result) ne potrjujemo nazaj.
+                if (tip == "control.command") potrditev(id, "accepted", null, "control") else null
+            } else potrditev(id, "error", "Napaka pri posredovanju.", "control", "posredovanje_ni_uspelo")
+        }
+
         if (tip == "cast.status") {
             val deviceId = sporocilo.niz("device_id")
             synchronized(kljucnica) {
@@ -1260,6 +1294,9 @@ class HubUsmerjevalnik(
         private val SYNC_POSREDOVANJE = setOf("sync.request", "sync.data", "sync.status")
         /** Deljenje med napravama; Hub vsebine ne odpira, le posreduje izbrani napravi. */
         private val SHARE_POSREDOVANJE = setOf("share.text", "share.file", "share.screen")
+        /** Daljinec (Safeer Control): ukaz napravi z zmoznostjo "remote" in njen odgovor nazaj. */
+        private val CONTROL_POSREDOVANJE = setOf("control.command", "control.result")
+        const val ZMOZNOST_DALJINEC = "remote"
 
         // Meje so del zasnove, ne naknadni popravek. Televizor ima malo pomnilnika in ga
         // sistem ob pomanjkanju ubije brez opozorila, zato ima vsak seznam svojo streho.

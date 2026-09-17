@@ -21,7 +21,7 @@ import android.webkit.WebChromeClient
 import android.widget.*
 import java.net.URLEncoder
 
-class MainActivity : android.app.Activity() {
+class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Daljinec.VOspredju {
 
     companion object {
         private const val REQ_CODE_PERMISSIONS = 1001
@@ -309,6 +309,7 @@ class MainActivity : android.app.Activity() {
         com.safeer.mobile.browser.cast.HubKrmilnik.naPrijavoZaZaslon = null
         com.safeer.mobile.browser.link.LinkSprejemnik.naStran = null
         com.safeer.mobile.browser.link.LinkSprejemnik.naBesedilo = null
+        com.safeer.mobile.browser.link.LinkSprejemnik.naUkaz = null
         val playing = tabManager.getPlayingTab()
         if (playing != null) {
             // 🎵 Sound keeps playing: the WebView stays "visible" (ChromiumEngineView) and a foreground service with
@@ -327,6 +328,7 @@ class MainActivity : android.app.Activity() {
         // Sprejem prek Safeer Linka, ko je brskalnik v ospredju: stran v zavihek, besedilo v okno.
         com.safeer.mobile.browser.link.LinkSprejemnik.naStran = { url -> runOnUiThread { openUrlInBrowser(url) } }
         com.safeer.mobile.browser.link.LinkSprejemnik.naBesedilo = { od, b -> runOnUiThread { pokaziPrejetoBesedilo(od, b) } }
+        com.safeer.mobile.browser.link.LinkSprejemnik.naUkaz = this
         // Ce je uporabnik Safeer Link pustil prizgan oz. je telefon seznanjen, naj to velja tudi po ponovnem zagonu.
         com.safeer.mobile.browser.cast.HubStoritev.zagotovi(this)
         com.safeer.mobile.browser.link.LinkSprejemnik.zagotovi(this)
@@ -381,6 +383,74 @@ class MainActivity : android.app.Activity() {
         DoHProxyEngine.stopServer()
         if (::tabManager.isInitialized) tabManager.dispose()
         super.onDestroy()
+    }
+
+    /**
+     * Daljinec Safeer Controla (prek Safeer Linka), ko je brskalnik v ospredju: tipke gredo
+     * v okno kot s tipkovnice, drsenje in posnetek po dejavnem zavihku. Kar ni nasteto,
+     * izvede storitev sama (glasnost, aplikacije, ponovni zagon ...).
+     */
+    override fun izvediUkaz(dejanje: String, parametri: org.json.JSONObject): com.safeer.mobile.browser.link.Daljinec.Izid? {
+        return when (dejanje) {
+            "key" -> {
+                val ime = parametri.optString("key", "").trim().lowercase()
+                when (ime) {
+                    "home" -> { openUrlInBrowser(com.safeer.mobile.browser.link.LinkSprejemnik.DOMACA_STRAN); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Domov") }
+                    "back" -> { onBackPressed(); return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Nazaj") }
+                }
+                val koda = com.safeer.mobile.browser.link.Daljinec.TIPKE[ime] ?: return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Neznana tipka: $ime", koda = "neznana_tipka")
+                val zdaj = android.os.SystemClock.uptimeMillis()
+                dispatchKeyEvent(KeyEvent(zdaj, zdaj, KeyEvent.ACTION_DOWN, koda, 0))
+                dispatchKeyEvent(KeyEvent(zdaj, zdaj + 40, KeyEvent.ACTION_UP, koda, 0))
+                com.safeer.mobile.browser.link.Daljinec.Izid(true, "Tipka $ime")
+            }
+            "scroll" -> {
+                val smer = parametri.optString("direction", "down").trim().lowercase()
+                val js = when (smer) {
+                    "up" -> "window.scrollBy({top:-Math.round(window.innerHeight*0.8),behavior:'smooth'})"
+                    "down" -> "window.scrollBy({top:Math.round(window.innerHeight*0.8),behavior:'smooth'})"
+                    "top" -> "window.scrollTo({top:0,behavior:'smooth'})"
+                    "bottom" -> "window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'})"
+                    else -> return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Neznana smer: $smer")
+                }
+                val wv = tabManager.getActiveTab()?.webView ?: return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Ni odprtega zavihka")
+                try { wv.evaluateJavascript(js, null) } catch (_: Exception) { }
+                com.safeer.mobile.browser.link.Daljinec.Izid(true, "Drsenje $smer")
+            }
+            "screenshot" -> posnetekZaslona()
+            "status" -> com.safeer.mobile.browser.link.Daljinec.Izid(true, "Stanje", com.safeer.mobile.browser.link.Daljinec.stanje(this,
+                org.json.JSONObject().put("url", PdfPregledovalnik.javniNaslov(tabManager.getActiveTab()?.url ?: ""))
+                    .put("title", tabManager.getActiveTab()?.webView?.title ?: "")))
+            else -> null
+        }
+    }
+
+    /** Posnetek dejavnega zavihka: pomanjsan JPEG (najvec 640 px), da gre skozi sredisce. */
+    private fun posnetekZaslona(): com.safeer.mobile.browser.link.Daljinec.Izid {
+        val pogled: View = customVideoView ?: tabManager.getActiveTab()?.webView
+            ?: return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Ni odprtega zavihka")
+        val sirina = pogled.width
+        val visina = pogled.height
+        if (sirina <= 0 || visina <= 0) return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Zaslon se ni pripravljen")
+        val merilo = minOf(1f, 640f / sirina)
+        val slika = android.graphics.Bitmap.createBitmap(
+            (sirina * merilo).toInt().coerceAtLeast(1), (visina * merilo).toInt().coerceAtLeast(1),
+            android.graphics.Bitmap.Config.RGB_565)
+        val platno = android.graphics.Canvas(slika)
+        platno.scale(merilo, merilo)
+        try {
+            pogled.draw(platno)
+        } catch (e: Throwable) {
+            slika.recycle()
+            return com.safeer.mobile.browser.link.Daljinec.Izid(false, "Posnetka ni bilo mogoce narediti: ${e.message}")
+        }
+        val izhod = java.io.ByteArrayOutputStream()
+        slika.compress(android.graphics.Bitmap.CompressFormat.JPEG, 55, izhod)
+        val (w, h) = Pair(slika.width, slika.height)
+        slika.recycle()
+        val b64 = android.util.Base64.encodeToString(izhod.toByteArray(), android.util.Base64.NO_WRAP)
+        return com.safeer.mobile.browser.link.Daljinec.Izid(true, "Posnetek zaslona",
+            org.json.JSONObject().put("image", "data:image/jpeg;base64," + b64).put("width", w).put("height", h))
     }
 
     private fun openUrlInBrowser(url: String) {

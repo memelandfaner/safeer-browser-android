@@ -260,9 +260,20 @@ class LinkMost(
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(dejavnost),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen")
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST)
         )
         nov.onShare = { sporocilo -> prejmiDeljenje(sporocilo) }
+        nov.onControlOdziv = { json -> ukazOdziv(json) }
+        // Dokler je stran Linka odprta, ima povezavo ona: ukazi Safeer Controla gredo sem.
+        // Tipk in drsenja tu ni (odprt je Link, ne stran); glasnost, aplikacije in ostalo delujejo.
+        nov.onControl = { sporocilo ->
+            val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
+            val dejanje = tovor.optString("action", "")
+            val izid = Daljinec.izvedi(dejavnost, dejanje, tovor.optJSONObject("params") ?: tovor, null,
+                LinkSprejemnik.DOMACA_STRAN) { url, _ -> zapriZaslon(); odpriVBrskalniku(url) }
+            val posiljatelj = sporocilo.optString("sender", "")
+            if (posiljatelj.isNotBlank()) nov.posljiSporocilo(Daljinec.sporociloIzida(posiljatelj, sporocilo.optString("id", ""), dejanje, izid))
+        }
         nov.onSyncData = { kategorija, razlicica, _, vsebina ->
             if (kategorija == ZaznamkiSync.KATEGORIJA && ZaznamkiSync.jeVklopljena(dejavnost)) {
                 // Zdruzevanje odpre bazo, zato ne na glavni niti.
@@ -433,6 +444,75 @@ class LinkMost(
         } catch (e: Throwable) {
             napaka("ukaz_ni_uspel", "Ukaz ni uspel: ${e.message}")
         }
+    }
+
+    // ------------------------------------------------------------------ daljinec (Safeer Control)
+
+    /**
+     * Ukaz daljinca drugi napravi prek sredisca (control.command). Odgovor pride kot odziv
+     * "ukaz" z istim `ref`, ki ga je dala stran; ce sredisce ukaz zavrne, prav tako.
+     */
+    @JavascriptInterface
+    fun ukaz(idNaprave: String, dejanje: String, parametriJson: String, ref: String) {
+        val o = odjemalec()
+        if (o == null || !o.jePovezan()) {
+            odziv("ukaz", JSONObject().put("ref", ref).put("ok", false).put("message", "Ni povezave s Safeer Linkom."))
+            return
+        }
+        val parametri = try { JSONObject(parametriJson) } catch (_: Throwable) { JSONObject() }
+        val sporocilo = JSONObject().apply {
+            put("id", ref.ifBlank { java.util.UUID.randomUUID().toString() })
+            put("type", "control.command")
+            put("target", idNaprave)
+            put("payload", JSONObject().put("action", dejanje).put("params", parametri))
+        }
+        if (!o.posljiSporocilo(sporocilo)) {
+            odziv("ukaz", JSONObject().put("ref", ref).put("ok", false).put("message", "Ukaza ni bilo mogoce poslati."))
+        }
+    }
+
+    /** Odgovor naprave (control.result) ali zavrnitev sredisca (control.ack) -> stran. */
+    private fun ukazOdziv(json: JSONObject) {
+        val tovor = json.optJSONObject("payload") ?: JSONObject()
+        val o = JSONObject()
+            .put("ref", json.optString("ref_id", ""))
+            .put("naprava", json.optString("sender", ""))
+        if (json.optString("type") == "control.ack") {
+            o.put("ok", false).put("message", json.optString("error", "").ifBlank { "Sredisce je ukaz zavrnilo." })
+                .put("koda", json.optString("error_code", ""))
+        } else {
+            o.put("ok", tovor.optBoolean("ok", false)).put("message", tovor.optString("message", ""))
+                .put("action", tovor.optString("action", "")).put("koda", tovor.optString("code", ""))
+            tovor.optJSONObject("data")?.let { o.put("data", it) }
+        }
+        odziv("ukaz", o)
+    }
+
+    /** Telefon strani in ukaze odpre prek obvestila; dovoljenja za prekrivanje ne zahteva. */
+    @JavascriptInterface
+    fun lahkoVOspredje(): Boolean = true
+
+    @JavascriptInterface
+    fun dovoliOspredje() {}
+
+    private var govor: Govor? = null
+
+    /** Ali naprava zna prepoznavati govor. */
+    @JavascriptInterface
+    fun znaGovor(): Boolean = try { Govor(dejavnost) { }.jeNaVoljo() } catch (_: Throwable) { false }
+
+    /** Zacne poslusati; odzivi "govor" nosijo stanje (poslusam, delno, koncno, napaka) in besedilo. */
+    @JavascriptInterface
+    fun poslusaj(jezik: String) {
+        dejavnost.runOnUiThread {
+            val g = govor ?: Govor(dejavnost) { podatki -> odziv("govor", podatki) }.also { govor = it }
+            g.zacni(jezik)
+        }
+    }
+
+    @JavascriptInterface
+    fun nehajPoslusati() {
+        dejavnost.runOnUiThread { govor?.ustavi() }
     }
 
     // ------------------------------------------------------------------
@@ -998,6 +1078,8 @@ class LinkMost(
     fun pospravi() {
         try { odjemalec?.disconnect() } catch (_: Throwable) {}
         odjemalec = null
+        try { govor?.ustavi() } catch (_: Throwable) {}
+        govor = null
         // Stran se zapira: sprejem v ozadju spet prevzame povezavo (ce je telefon seznanjen).
         try { LinkSprejemnik.nadaljuj(dejavnost) } catch (_: Throwable) {}
         DeljenjeZaslonaStoritev.naSpremembo = null
