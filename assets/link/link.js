@@ -1375,6 +1375,17 @@
   }
 
 
+  /** Ali je trenutno odprta stran sploh mogoce poslati (domaca stran, datoteke z naprave niso). */
+  function stranPosljiva() {
+    if (!most || !most.trenutnaStranJson) return true;
+    try {
+      var p = JSON.parse(most.trenutnaStranJson());
+      return !p || p.posljiva !== false;
+    } catch (e) {
+      return true;
+    }
+  }
+
   function narisiPrejemnike() {
     var seznam = el("seznamPrejemnikov");
     if (!seznam) return;
@@ -1384,6 +1395,9 @@
     // Smernica: gumb za posiljanje naj obstaja samo, ko je kam poslati.
     pokazi("panelCast", prejemniki.length > 0);
     if (!prejemniki.length) return;
+    // Domace strani ni mogoce poslati: vrstica s stranjo to ze pove, vrstic »Poslji« zato ne ponujamo,
+    // da dotik ne konca z napako.
+    if (!stranPosljiva()) { besedilo("opombaCast", ""); return; }
 
     besedilo("opombaCast", "");
     prejemniki.forEach(function (n) {
@@ -1813,7 +1827,9 @@
         naPreimenovano(podatki);
       } else if (vrsta === "napaka") {
         // Tehnicnega besedila uporabniku ne kazemo: povemo, kaj to pomeni zanj.
-        stanje.tezava = true;
+        // Zavrnitev enega dejanja (stran ni primerna, ukaz ni uspel ...) ni tezava povezave:
+        // glava ostane zelena, sporocilo se pokaze ob dejanju.
+        if (!jeMehkaNapaka(podatki)) stanje.tezava = true;
         var sporocilo = izNapake(podatki);
         besedilo("opombaNaprave", sporocilo);
         besedilo("opombaIskanje", sporocilo);
@@ -1827,6 +1843,13 @@
 
   /** Iz tehnicne napake naredi poved, ki uporabniku pove, kaj naj naredi. */
   /** Napaka pride kot besedilo ali kot {koda, sporocilo}; koda ima prednost. */
+  var MEHKE_NAPAKE = { stran_ni_primerna: 1, samo_http: 1, ukaz_ni_uspel: 1, zaznamki_niso_poslani: 1,
+                       sync_ni_nastavljena: 1, zdruzevanje_ni_koncano: 1 };
+
+  function jeMehkaNapaka(podatki) {
+    return !!(podatki && typeof podatki === "object" && MEHKE_NAPAKE[String(podatki.koda || "")]);
+  }
+
   function izNapake(podatki) {
     if (podatki && typeof podatki === "object") {
       var kljuc = NAPAKE[String(podatki.koda || "")];

@@ -282,7 +282,7 @@ object Daljinec {
                 if (paket == context.packageName || najdene.containsKey(paket)) continue
                 val ime = try { info.loadLabel(pm).toString().trim() } catch (_: Throwable) { "" }
                 // Brez cloveskega imena (samo ime paketa) je vnos za uporabnika neuporaben.
-                if (ime.isBlank() || ime == paket || Regex("^[a-z0-9_]+(\\.[a-z0-9_]+)+$").matches(ime)) continue
+                if (ime.isBlank() || ime == paket || Regex("^[a-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$").matches(ime)) continue
                 najdene[paket] = ime
             }
         }
