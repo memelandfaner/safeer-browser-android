@@ -61,6 +61,10 @@ class LinkSprejemnik : Service() {
 
         @Volatile
         var naStran: ((String) -> Unit)? = null
+        /** Dejavnost v ospredju, ki zna izvesti tipke, drsenje in posnetek (Safeer Control). */
+        var naUkaz: Daljinec.VOspredju? = null
+        /** Domaca stran brskalnika; tipka Domov z daljinca jo odpre. */
+        const val DOMACA_STRAN = "file:///android_asset/brave_home.html"
 
         private var stevecObvestil = 4200
 
@@ -167,9 +171,10 @@ class LinkSprejemnik : Service() {
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(this),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen")
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST)
         )
         nov.onShare = { sporocilo -> prejmi(sporocilo) }
+        nov.onControl = { sporocilo -> izvediUkaz(nov, sporocilo) }
         nov.onConnectedStateChanged = { p ->
             povezan = p
             posodobiObvestilo()
@@ -271,6 +276,28 @@ class LinkSprejemnik : Service() {
             }
         } catch (e: Throwable) {
             Log.w(TAG, "Prejetega ni bilo mogoce obdelati: ${e.message}")
+        }
+    }
+
+    /**
+     * Ukaz Safeer Controla (control.command): izvede ga Daljinec na glavni niti - kar potrebuje
+     * odprt brskalnik, prek dejavnosti v ospredju (naUkaz), ostalo storitev sama. Odgovor gre
+     * nazaj posiljatelju kot control.result.
+     */
+    private fun izvediUkaz(odjemalec: CastSenderClient, sporocilo: JSONObject) {
+        val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
+        val posiljatelj = sporocilo.optString("sender", "")
+        val dejanje = tovor.optString("action", "")
+        val parametri = tovor.optJSONObject("params") ?: tovor
+        val refId = sporocilo.optString("id", "")
+        glavnaNit.post {
+            val ospredje = naUkaz
+            val izid = Daljinec.izvedi(this, dejanje, parametri, ospredje, DOMACA_STRAN) { url, naslov ->
+                odpriStran("Safeer Control", url, naslov)
+            }
+            if (posiljatelj.isNotBlank()) {
+                odjemalec.posljiSporocilo(Daljinec.sporociloIzida(posiljatelj, refId, dejanje, izid))
+            }
         }
     }
 

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Safeer Link</title>
 <link rel="stylesheet" href="link.css">
+<link rel="stylesheet" href="daljinec.css">
 </head>
 <body>
 
@@ -147,6 +148,7 @@
         <input class="vnosImena" id="vnosImena" type="text" maxlength="64" />
         <button class="drugotni tanek" id="gumbShraniIme" data-t="shraniIme">Shrani ime</button>
       </div>
+      <button class="glavni" id="gumbDaljinec" hidden><svg viewBox="0 0 24 24" aria-hidden="true" style="width:18px;height:18px;margin-right:6px"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z M12 6v.1 M10 11h4 M12 9v4 M10 17h4"/></svg><span data-t="daljinec">Daljinec</span></button>
       <p class="pojasnilo drobno" id="opisIzbire" data-t="izberiVsebino">Kaj želiš deliti s to napravo?</p>
       <div class="izbire" id="izbireDeljenja">
         <button class="izbira" data-vrsta="zaslon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 1.5h11a2.5 2.5 0 0 1 2.5 2.5v16a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 20V4a2.5 2.5 0 0 1 2.5-2.5z M8 6h8v9H8z"/></svg> <span data-t="deliZaslon">Zaslon</span></button>
@@ -185,6 +187,12 @@
       </div>
     </div>
 
+    <!-- Samo televizor: dovoljenje, da se Safeer odpre sam ob ukazu ali strani s telefona. -->
+    <div class="panel opozoriloOspredje" id="opozoriloOspredje" hidden>
+      <p class="pojasnilo" data-t="ospredjeOpis">Da se Safeer odpre sam, ko mu s telefona pošlješ stran ali ukaz, mu enkrat dovoli prekrivanje drugih aplikacij.</p>
+      <button class="drugotni tanek" id="gumbDovoliOspredje" data-t="ospredjeDovoli">Dovoli</button>
+    </div>
+
     <div class="panel" id="panelNaprave">
       <div class="vrsticaGlave">
         <h2 data-t="povezaneNaprave">Povezane naprave</h2>
@@ -210,6 +218,105 @@
 
   </section>
 
+  <!-- Stanje 5: daljinec za izbrano napravo (Safeer Control prek Safeer Linka).
+       Vsa besedila napolni daljinec.js v jeziku uporabnika; slovenscina je privzetek. -->
+  <section class="zaslon daljinec" id="zaslonDaljinec" hidden>
+
+    <div class="daljinecGlava">
+      <button class="daljinecNazaj" id="daljinecNazaj" aria-label="Nazaj" data-d-naslov="nazajNaLink">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+      </button>
+      <div class="daljinecNaprava">
+        <p class="oznaka" data-d="upravljam">Upravljam</p>
+        <h2 id="daljinecIme">Televizor</h2>
+        <p class="daljinecStanje" id="daljinecStanje"></p>
+      </div>
+      <button class="daljinecPosnetekGumb" id="daljinecPosnetekGumb" data-d-naslov="pokaziZaslon" aria-label="Pokaži zaslon">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 5h20v13H2z M8 21h8"/></svg>
+      </button>
+    </div>
+
+    <!-- Posnetek zaslona naprave: pokaze se na zahtevo, lahko se osvezuje sam. -->
+    <div class="daljinecPosnetek" id="daljinecPosnetek" hidden>
+      <img id="daljinecSlika" alt="" />
+      <div class="daljinecPosnetekVrstica">
+        <span class="opomba" id="daljinecPosnetekOpomba"></span>
+        <label class="daljinecStikalo"><input type="checkbox" id="daljinecSamodejno" /> <span data-d="samodejno">Samodejno</span></label>
+      </div>
+    </div>
+
+    <!-- Glas: en velik gumb, pod njim, kar je bilo sliseno in kaj se je zgodilo. -->
+    <div class="daljinecGlas" id="daljinecGlas">
+      <button class="mikrofon" id="daljinecMikrofon" aria-label="Govori" data-d-naslov="govori">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z M5 11a7 7 0 0 0 14 0 M12 18v4 M8 22h8"/></svg>
+      </button>
+      <p class="daljinecSliseno" id="daljinecSliseno" data-d="govoriNamig">Pritisni in povej, npr. »odpri YouTube« ali »glasneje«</p>
+      <p class="daljinecOdgovor" id="daljinecOdgovor"></p>
+      <form class="daljinecVnos" id="daljinecVnosObrazec">
+        <input type="text" id="daljinecVnos" autocomplete="off" data-d-placeholder="vnosNamig" placeholder="Ukaz, stran ali iskanje …" />
+        <button type="submit" class="daljinecPoslji" aria-label="Pošlji" data-d-naslov="poslji"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14 M13 6l6 6-6 6"/></svg></button>
+      </form>
+    </div>
+
+    <!-- Hitre tipke in smerni kriz. -->
+    <div class="daljinecTipke">
+      <div class="daljinecVrsta">
+        <button class="dTipka" data-tipka="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8 M5 10v11h5v-6h4v6h5V10"/></svg><span data-d="domov">Domov</span></button>
+        <button class="dTipka" data-tipka="back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg><span data-d="nazaj">Nazaj</span></button>
+        <button class="dTipka" data-tipka="play_pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4l9 8-9 8z M17 4h3v16h-3z"/></svg><span data-d="predvajaj">Predvajaj</span></button>
+        <button class="dTipka" data-tipka="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16 M4 12h16 M4 18h16"/></svg><span data-d="meni">Meni</span></button>
+      </div>
+
+      <div class="daljinecSredina">
+        <div class="dpad" id="daljinecDpad">
+          <button class="dpadTipka gor" data-tipka="up" aria-label="Gor"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg></button>
+          <button class="dpadTipka levo" data-tipka="left" aria-label="Levo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+          <button class="dpadTipka ok" data-tipka="ok" aria-label="OK">OK</button>
+          <button class="dpadTipka desno" data-tipka="right" aria-label="Desno"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+          <button class="dpadTipka dol" data-tipka="down" aria-label="Dol"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
+        </div>
+        <div class="glasnost" id="daljinecGlasnost">
+          <button class="glasnostTipka" data-glasnost="up" aria-label="Glasneje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14 M5 12h14"/></svg></button>
+          <div class="glasnostStolpec" id="daljinecGlasnostStolpec"><div class="glasnostRaven" id="daljinecGlasnostRaven"></div></div>
+          <span class="glasnostVrednost" id="daljinecGlasnostVrednost">–</span>
+          <button class="glasnostTipka" data-glasnost="down" aria-label="Tišje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+          <button class="glasnostTipka utisaj" data-glasnost="toggle_mute" aria-label="Utišaj"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z M16 9l5 6 M21 9l-5 6"/></svg></button>
+        </div>
+      </div>
+
+      <div class="daljinecVrsta drsenje" id="daljinecDrsenje">
+        <button class="dTipka" data-drsenje="up"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg><span data-d="stranGor">Stran gor</span></button>
+        <button class="dTipka" data-drsenje="down"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg><span data-d="stranDol">Stran dol</span></button>
+        <button class="dTipka" data-tipka="previous"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 19 2 12l9-7z M21 19l-9-7 9-7z"/></svg><span data-d="prejsnji">Prejšnji</span></button>
+        <button class="dTipka" data-tipka="next"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 5l9 7-9 7z M3 5l9 7-9 7z"/></svg><span data-d="naslednji">Naslednji</span></button>
+      </div>
+    </div>
+
+    <!-- Aplikacije na napravi: prave, z ikonami, ne vnaprej izbrane. -->
+    <div class="panel" id="daljinecAplikacijePanel">
+      <div class="vrsticaGlave">
+        <h2 data-d="aplikacije">Aplikacije na napravi</h2>
+        <button class="drobniGumb" id="daljinecAplikacijeOsvezi" data-d="osvezi">Osveži</button>
+      </div>
+      <div class="aplikacije" id="daljinecAplikacije"></div>
+      <p class="opomba" id="daljinecAplikacijeOpomba"></p>
+    </div>
+
+    <!-- Redkeje: vzdrzevanje. -->
+    <div class="panel" id="daljinecVecPanel">
+      <details class="daljinecVec">
+        <summary data-d="vec">Več</summary>
+        <div class="tipke">
+          <button data-ukaz="restart"><span data-d="znovaZazeni">Znova zaženi Safeer</span></button>
+          <button data-ukaz="clear_cache"><span data-d="pocistiPredpomnilnik">Počisti predpomnilnik</span></button>
+          <button data-ukaz="status"><span data-d="stanjeNaprave">Stanje naprave</span></button>
+        </div>
+        <p class="opomba" id="daljinecVecOpomba"></p>
+      </details>
+    </div>
+
+  </section>
+
   <!-- Vedno vidno, na dnu: kaj velja v javnih omrezjih in zakaj si kljub temu zascite. -->
   <footer class="opozoriloWifi">
     <p class="wifiNaslov"><span class="wifiIkona"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a15 15 0 0 1 20 0 M5.5 12.5a10 10 0 0 1 13 0 M9 16a5 5 0 0 1 6 0 M12 19.5v.1"/></svg></span>
@@ -226,5 +333,6 @@
 </main>
 
 <script src="link.js"></script>
+<script src="daljinec.js"></script>
 </body>
 </html>
