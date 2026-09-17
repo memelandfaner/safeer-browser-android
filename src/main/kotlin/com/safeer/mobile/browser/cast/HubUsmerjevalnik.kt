@@ -1030,6 +1030,31 @@ class HubUsmerjevalnik(
             )
         }
 
+        if (pot == "/cast/pair/sibling" && zahteva.metoda == "POST") {
+            // Sorodna naprava na istem racunalniku (Safeer Control ob ze seznanjenem Safeer Browserju):
+            // zeton seznanjene naprave (isti uporabnik, ista datoteka) da zeton se njenemu sorodniku,
+            // brez nove kode. Sorodnik je le id z isto osnovo (npr. pc-primer -> pc-primer-control).
+            if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
+            val lastnik = napravaZeZetona(zahteva.glave["x-safeer-token"])
+                ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
+            val telo = JsonLahki.objekt(zahteva.telo)
+            val deviceId = (telo?.niz("device_id") ?: "").trim().take(NAJVEC_IMENA)
+            val ime = (telo?.niz("name") ?: "").trim().take(NAJVEC_IMENA).ifEmpty { deviceId }
+            if (deviceId.isEmpty()) return HubStreznik.Odgovor(400, napakaJson("Manjka device_id.", "manjka_device_id"))
+            if (deviceId == lastnik || !deviceId.startsWith("$lastnik-")) {
+                return HubStreznik.Odgovor(403, napakaJson("Ni sorodna naprava.", "ni_sorodnik"))
+            }
+            val zeton = synchronized(kljucnica) {
+                if (jePolno(deviceId)) return HubStreznik.Odgovor(429, napakaJson("Preveč seznanjenih naprav.", "prevec_naprav"))
+                val nov = "saf_tv_" + nakljucni(24)
+                vpisiZeton(nov, SeznanjenaNaprava(deviceId, ime, ura() / 1000.0))
+                shraniZetone()
+                nov
+            }
+            naSpremembeNaprav?.invoke()
+            return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("token", zeton).niz("hub_id", IDENTITETA_HUBA).niz("fp", lastniOdtis).toString())
+        }
+
         if (pot == "/cast/pair/spake" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
             val telo = JsonLahki.objekt(zahteva.telo)
@@ -1287,7 +1312,7 @@ class HubUsmerjevalnik(
         private const val KLJUC_VZDEVKOV = "cast_vzdevki"
 
         private val ZNANE_POTI = setOf(
-            "/cast/pair/start", "/cast/pair/claim", "/cast/ticket", "/cast/devices", "/cast/health"
+            "/cast/pair/start", "/cast/pair/claim", "/cast/pair/sibling", "/cast/ticket", "/cast/devices", "/cast/health"
         )
 
         private val CAST_POSREDOVANJE = setOf("cast.url", "cast.media", "cast.control")

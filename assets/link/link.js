@@ -58,6 +58,7 @@
       napNapacnaKoda: "Koda ni pravilna. Poskusi znova.",
       napPrevecPoskusov: "Preveč poskusov. Začni znova — dobiš novo kodo.",
       napPrijavaPotekla: "Koda je potekla. Začni znova.",
+      napNapravaNiZnana: "Safeer Link te naprave ne pozna več (gostitelj je bil ponastavljen ali te je odstranil). Poveži jo znova s kodo.",
       prijavaCakaKodo: "Na tej napravi vtipkaj številko, ki jo vidiš tukaj",
       javniWifiNaslov: "V javnih omrežjih priporočamo, da je Safeer Link izklopljen",
       javniWifiOpis: "V kavarni, hotelu ali na letališču je v istem omrežju lahko kdorkoli. Če Safeer Link tam kljub temu uporabljaš, ostaneš zaščiten: tuja naprava se ne more povezati sama. Naprava, ki gosti Safeer Link, izpiše na svojem zaslonu 6-mestno številko, in dokler te številke ne vtipkaš na drugi napravi, se ne poveže nič in se ne prenese nič.",
@@ -163,6 +164,7 @@
       napNapacnaKoda: "That code is not right. Try again.",
       napPrevecPoskusov: "Too many attempts. Start again — you will get a new code.",
       napPrijavaPotekla: "The code has expired. Start again.",
+      napNapravaNiZnana: "Safeer Link no longer knows this device (the host was reset or removed it). Connect it again with a code.",
       prijavaCakaKodo: "Type the number you see here on that device",
       javniWifiNaslov: "On public networks we recommend turning Safeer Link off",
       javniWifiOpis: "In a cafe, hotel or airport anyone can be on the same network. If you still use Safeer Link there, you stay protected: a stranger's device cannot connect on its own. The device hosting Safeer Link shows a 6-digit number on its screen, and until you type that number on the other device, nothing connects and nothing is transferred.",
@@ -268,6 +270,7 @@
       napNapacnaKoda: "Der Code stimmt nicht. Versuchen Sie es erneut.",
       napPrevecPoskusov: "Zu viele Versuche. Beginnen Sie neu — Sie erhalten einen neuen Code.",
       napPrijavaPotekla: "Der Code ist abgelaufen. Beginnen Sie neu.",
+      napNapravaNiZnana: "Safeer Link kennt dieses Gerät nicht mehr (der Host wurde zurückgesetzt oder hat es entfernt). Verbinde es erneut mit einem Code.",
       prijavaCakaKodo: "Geben Sie die hier angezeigte Zahl auf jenem Gerät ein",
       javniWifiNaslov: "In öffentlichen Netzen empfehlen wir, Safeer Link auszuschalten",
       javniWifiOpis: "Im Cafe, Hotel oder Flughafen kann jeder im selben Netz sein. Wenn Sie Safeer Link dort trotzdem nutzen, bleiben Sie geschützt: ein fremdes Gerät kann sich nicht von selbst verbinden. Das Gerät, auf dem Safeer Link läuft, zeigt eine 6-stellige Zahl an, und solange Sie diese Zahl nicht auf dem anderen Gerät eingeben, verbindet sich nichts und wird nichts übertragen.",
@@ -373,6 +376,7 @@
       napNapacnaKoda: "El código no es correcto. Inténtelo de nuevo.",
       napPrevecPoskusov: "Demasiados intentos. Empiece de nuevo: obtendrá un código nuevo.",
       napPrijavaPotekla: "El código ha caducado. Empiece de nuevo.",
+      napNapravaNiZnana: "Safeer Link ya no conoce este dispositivo (el anfitrión se reinició o lo eliminó). Conéctalo de nuevo con un código.",
       prijavaCakaKodo: "Escriba en ese dispositivo el número que ve aquí",
       javniWifiNaslov: "En redes públicas recomendamos apagar Safeer Link",
       javniWifiOpis: "En una cafetería, un hotel o un aeropuerto cualquiera puede estar en la misma red. Si aun así usa Safeer Link allí, sigue protegido: un dispositivo ajeno no puede conectarse por su cuenta. El dispositivo que aloja Safeer Link muestra un número de 6 dígitos en su pantalla, y mientras no escriba ese número en el otro dispositivo, no se conecta nada ni se transfiere nada.",
@@ -478,6 +482,7 @@
       napNapacnaKoda: "Ce code n'est pas correct. Réessayez.",
       napPrevecPoskusov: "Trop de tentatives. Recommencez : vous obtiendrez un nouveau code.",
       napPrijavaPotekla: "Le code a expiré. Recommencez.",
+      napNapravaNiZnana: "Safeer Link ne connaît plus cet appareil (l’hôte a été réinitialisé ou l’a retiré). Reconnecte-le avec un code.",
       prijavaCakaKodo: "Saisissez sur cet appareil le nombre affiché ici",
       javniWifiNaslov: "Sur les réseaux publics, nous conseillons de désactiver Safeer Link",
       javniWifiOpis: "Dans un café, un hôtel ou un aéroport, n'importe qui peut être sur le même réseau. Si vous utilisez quand même Safeer Link, vous restez protégé : un appareil inconnu ne peut pas se connecter tout seul. L'appareil qui héberge Safeer Link affiche un nombre à 6 chiffres à l'écran, et tant que vous ne saisissez pas ce nombre sur l'autre appareil, rien ne se connecte et rien n'est transféré.",
@@ -583,6 +588,7 @@
       napNapacnaKoda: "Il codice non è corretto. Riprova.",
       napPrevecPoskusov: "Troppi tentativi. Ricomincia: otterrai un nuovo codice.",
       napPrijavaPotekla: "Il codice è scaduto. Ricomincia.",
+      napNapravaNiZnana: "Safeer Link non conosce più questo dispositivo (l’host è stato ripristinato o l’ha rimosso). Collegalo di nuovo con un codice.",
       prijavaCakaKodo: "Digita su quel dispositivo il numero che vedi qui",
       javniWifiNaslov: "Sulle reti pubbliche consigliamo di spegnere Safeer Link",
       javniWifiOpis: "Al bar, in hotel o in aeroporto chiunque può essere sulla stessa rete. Se usi comunque Safeer Link, resti protetto: un dispositivo estraneo non può collegarsi da solo. Il dispositivo che ospita Safeer Link mostra sullo schermo un numero di 6 cifre e, finché non digiti quel numero sull'altro dispositivo, non si collega nulla e non viene trasferito nulla.",
@@ -703,6 +709,7 @@
     hub_ni_zagnan: "napHubNiZagnan",
     hub_ni_ustavljen: "napHubNiUstavljen",
     prijava_potekla: "napPrijavaPotekla",
+    naprava_ni_znana: "napNapravaNiZnana",
     tv_je_zaslon: "napTvJeZaslon",
     tv_ne_upravlja: "napTvNeUpravlja",
     sync_tv_ni_na_voljo: "napSyncTvNiNaVoljo",
@@ -1849,6 +1856,7 @@
         besedilo("opombaNaprave", sporocilo);
         besedilo("opombaIskanje", sporocilo);
         besedilo("opombaCast", sporocilo);
+        besedilo("opombaSeznanitev", sporocilo);
         narisiStanje();
       }
     } catch (e) {
@@ -1859,7 +1867,7 @@
   /** Iz tehnicne napake naredi poved, ki uporabniku pove, kaj naj naredi. */
   /** Napaka pride kot besedilo ali kot {koda, sporocilo}; koda ima prednost. */
   var MEHKE_NAPAKE = { stran_ni_primerna: 1, samo_http: 1, ukaz_ni_uspel: 1, zaznamki_niso_poslani: 1,
-                       sync_ni_nastavljena: 1, zdruzevanje_ni_koncano: 1 };
+                       sync_ni_nastavljena: 1, zdruzevanje_ni_koncano: 1, naprava_ni_znana: 1 };
 
   function jeMehkaNapaka(podatki) {
     return !!(podatki && typeof podatki === "object" && MEHKE_NAPAKE[String(podatki.koda || "")]);
