@@ -1149,6 +1149,7 @@
     tezava: false,
     preseljen: false,
     hubTece: false,
+    control: false,
     hubPovezanih: 0,
     prijave: [],
     hubNaprave: []
@@ -1395,9 +1396,9 @@
     seznam.innerHTML = "";
 
     var prejemniki = zasloni();
-    // Smernica: gumb za posiljanje naj obstaja samo, ko je kam poslati.
-    pokazi("panelCast", prejemniki.length > 0);
-    if (!prejemniki.length) return;
+    // Smernica: gumb za posiljanje naj obstaja samo, ko je kam poslati (in Control nima strani).
+    pokazi("panelCast", prejemniki.length > 0 && !stanje.control);
+    if (!prejemniki.length || stanje.control) return;
     // Domace strani ni mogoce poslati: vrstica s stranjo to ze pove, vrstic »Poslji« zato ne ponujamo,
     // da dotik ne konca z napako.
     if (!stranPosljiva()) { besedilo("opombaCast", ""); return; }
@@ -1513,6 +1514,17 @@
     narisiPrejemnike();
     narisiTrenutnoStran();
     if (!stanje.televizor) narisiPredvajanje();
+    if (stanje.control) narisiControl();
+  }
+
+  /** Safeer Control (namizna aplikacija brez brskalnika): ista stran, brez tistega, kar potrebuje brskalnik. */
+  function narisiControl() {
+    var naslov = document.querySelector(".glava h1");
+    if (naslov) naslov.textContent = "Safeer Control";
+    pokazi("gumbZapri", false);
+    pokazi("panelCast", false);
+    pokazi("panelSync", false);
+    pokazi("predvajalnik", false);
   }
 
   // ----------------------------------------------------------------
@@ -2179,6 +2191,7 @@
     stanje.hub = s.hub || "";
     stanje.imeNaprave = s.naprava || "";
     stanje.idNaprave = s.id || "";
+    stanje.control = !!s.control;
     besedilo("naslovHuba", prijaznaHisa(s.hub));
     narisiVse();
     if (stanje.znan && stanje.seznanjen) poveziSe();
