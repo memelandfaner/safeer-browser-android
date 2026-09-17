@@ -680,7 +680,8 @@ class HubStreznik(
         // pa je le nekaj sto MB, brskalnik sam pa je ze velik. Java kopica ni ozko grlo -
         // nevarno je, da sistem zaradi pomanjkanja pomnilnika ubije cel brskalnik. Zato
         // raje zavrnemo odvecno povezavo ali preveliko sporocilo, kot da tvegamo to.
-        const val NAJVEC_POVEZAV = 6
+        // Domace omrezje ima hitro 6+ naprav (TV, telefon, tablica, racunalnik, Control, Safeer OS): 16 kot NAJVEC_NAPRAV.
+        const val NAJVEC_POVEZAV = 16
 
         /**
          * Zgornja meja hkrati strezenih vticnic, WebSocket in HTTP skupaj. Sest naprav ima
