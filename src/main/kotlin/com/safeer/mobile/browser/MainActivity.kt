@@ -584,6 +584,63 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         }
     }
 
+    /** Zadnje prepusceno pojavno okno; isti klik zna sprozit vec dogodkov. */
+    private var zadnjePojavno: Pair<String, Long> = "" to 0L
+
+    /**
+     * Stran je zahtevala novo okno. Kam pelje, se ne vemo, zato dobi zavihek v ozadju, ki ni
+     * viden in v katerem se ne nalozi nic. Ko brskalnik pove prvi naslov, se zavihek pokaze
+     * (prijava) ali tiho zapre (oglas). Stevec zavihkov se ob oglasu ne premakne.
+     *
+     * Okno namenoma dobi pravi pogled in ne nadomestka: brez povezave z izvorno stranjo
+     * (window.opener) prijava z Google, Facebook ali X ne more vrniti odgovora.
+     */
+    private fun odpriPojavnoOkno(resultMsg: android.os.Message): Boolean {
+        val transport = resultMsg.obj as? android.webkit.WebView.WebViewTransport ?: return false
+        val zavihek = try {
+            tabManager.createTab(this, "about:blank", false)
+        } catch (_: Throwable) {
+            return false
+        }
+        val pogled = zavihek.webView
+        var odloceno = false
+
+        pogled.vratarPojavnega = vratar@{ naslov ->
+            if (odloceno) return@vratar false
+            odloceno = true
+            val prijava = PrijavnaOkna.jePrijava(naslov)
+            val zdaj = android.os.SystemClock.elapsedRealtime()
+            val podvojeno = naslov == zadnjePojavno.first && zdaj - zadnjePojavno.second < 2_000L
+            if (prijava && !podvojeno) {
+                zadnjePojavno = naslov to zdaj
+                runOnUiThread { try { tabManager.switchTab(zavihek.id) } catch (_: Throwable) {} }
+                android.util.Log.i("SafeerPojavno", "Prijavno okno odprto: ${naslov.take(90)}")
+                true
+            } else {
+                android.util.Log.i(
+                    "SafeerPojavno",
+                    if (podvojeno) "Podvojeno okno zaprto: ${naslov.take(90)}"
+                    else "Pojavno okno preprečeno: ${naslov.take(90)}"
+                )
+                runOnUiThread { try { tabManager.closeTab(this, zavihek.id) } catch (_: Throwable) {} }
+                false
+            }
+        }
+
+        transport.webView = pogled
+        resultMsg.sendToTarget()
+
+        // Prazna lupina, ki nikamor ne odnavigira, se po tiho pospravi.
+        pogled.postDelayed({
+            if (!odloceno) {
+                odloceno = true
+                pogled.vratarPojavnega = null
+                try { tabManager.closeTab(this, zavihek.id) } catch (_: Throwable) {}
+            }
+        }, 15_000L)
+        return true
+    }
+
     private fun attachTabListeners(tab: TabModel) {
         val wv = tab.webView
 
@@ -678,9 +735,9 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
                     resultMsg.sendToTarget()
                     true
                 } else {
-                    // Nobenega zavihka: okno dobi zacasen skrit pogled samo zato, da izvemo
-                    // naslov, nato ga vratar unici. Stevec zavihkov se ne premakne.
-                    PopUpVratar.prestrezi(this, resultMsg)
+                    // Okno dobi zavihek v ozadju, v katerem se ne nalozi nic, dokler ne
+                    // izvemo, kam pelje. Prijava se pokaze, oglas se tiho zapre.
+                    odpriPojavnoOkno(resultMsg)
                 }
             }
         }
