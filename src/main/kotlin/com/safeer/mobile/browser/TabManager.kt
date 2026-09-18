@@ -26,6 +26,10 @@ class TabModel(
     internal var lastUsed = SystemClock.elapsedRealtime()
     /** Po sesutju izrisovalnika: stran se ne nalozi sama, ceka na uporabnikov gumb. */
     internal var crashed = false
+    /** Zavihek je nastal kot pojavno okno (prijava); Nazaj ga zapre, ne pelje na prazno stran. */
+    internal var jePojavni = false
+    /** Zavihek, ki je to okno odprl - tja se vrnemo, ko ga zapremo. */
+    internal var odpiralec: String? = null
 }
 
 class TabManager(
@@ -74,11 +78,8 @@ class TabManager(
         return tab
     }
 
-    private fun ensureView(tab: TabModel): ChromiumEngineView {
-        check(!disposed && tab in tabs)
-        tab.loadedWebView?.let { return it }
-        val view = ChromiumEngineView(context)
-        tab.loadedWebView = view
+    /** Poveze pogled z zavihkom. Loceno, ker pogled lahko nastane tudi pred zavihkom. */
+    private fun opremi(tab: TabModel, view: ChromiumEngineView) {
         view.layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         view.isDesktopMode = tab.isDesktop
         view.onAudioStateChanged = { playing ->
@@ -90,6 +91,59 @@ class TabManager(
         }
         view.onRendererGone = { rendererGone(tab, view) }
         onViewCreated?.invoke(tab)
+    }
+
+    /**
+     * Pogled za pojavno okno, ki (se) ni zavihek. Dokler ne vemo, kam okno pelje, ga med
+     * zavihke ne vpisemo - sicer bi ob vsakem oglasnem oknu stevec zavihkov poskocil in
+     * se takoj vrnil.
+     */
+    fun pripraviPojavni(): ChromiumEngineView {
+        val view = ChromiumEngineView(context)
+        // Pogled, ki ni v oknu, ne izvede naslova, ki mu ga stran nastavi naknadno
+        // (window.open('about:blank'), nato location = ...). Zato ga pritrdimo takoj -
+        // a skritega in velikosti 1x1, da uporabnik o njem ne ve nicesar.
+        view.layoutParams = FrameLayout.LayoutParams(1, 1)
+        view.visibility = android.view.View.INVISIBLE
+        try { container.addView(view) } catch (_: Exception) {}
+        return view
+    }
+
+    /** Okno se je izkazalo za pravo (prijava): pogled sprejmemo med zavihke in ga pokazemo. */
+    fun posvoji(pogled: ChromiumEngineView, naslov: String, odpiralec: String? = null): TabModel {
+        val tab = addModel(SavedTab(UUID.randomUUID().toString(), naslov, "Nov zavihek",
+            PreferencesManager.isDesktopModeDefault(context)))
+        tab.loadedWebView = pogled
+        tab.jePojavni = true
+        tab.odpiralec = odpiralec
+        pogled.visibility = android.view.View.VISIBLE
+        opremi(tab, pogled)
+        switchTab(tab.id)
+        return tab
+    }
+
+    /**
+     * Zapre pojavni zavihek in se vrne na zavihek, ki ga je odprl. Pojavno okno nima
+     * zgodovine, v katero bi se lahko vrnilo: Nazaj v njem pomeni "zapri to okno".
+     */
+    fun zapriPojavni(context: Context, tab: TabModel) {
+        val nazaj = tab.odpiralec
+        closeTab(context, tab.id)
+        if (nazaj != null && tabs.any { it.id == nazaj }) switchTab(nazaj)
+    }
+
+    /** Okno je bilo oglas: pogled zavrzemo, zavihkov se nismo dotaknili. */
+    fun zavrziPojavni(pogled: ChromiumEngineView) {
+        try { (pogled.parent as? ViewGroup)?.removeView(pogled) } catch (_: Exception) {}
+        try { pogled.destroy() } catch (_: Exception) {}
+    }
+
+    private fun ensureView(tab: TabModel): ChromiumEngineView {
+        check(!disposed && tab in tabs)
+        tab.loadedWebView?.let { return it }
+        val view = ChromiumEngineView(context)
+        tab.loadedWebView = view
+        opremi(tab, view)
         if (activeTabId == tab.id) attach(view)
         val state = tab.savedState
         tab.savedState = null
@@ -234,6 +288,8 @@ class TabManager(
 
     fun getActiveTab(): TabModel? = tabs.find { it.id == activeTabId } ?: tabs.firstOrNull()
     fun getAllTabs(): List<TabModel> = tabs.toList()
+    /** Ali je zavihek nastal kot pojavno okno. */
+    fun jePojavni(tab: TabModel): Boolean = tab.jePojavni
     fun switchToNextTab() = switchRelative(1)
     fun switchToPrevTab() = switchRelative(-1)
     private fun switchRelative(offset: Int) {
