@@ -20,6 +20,9 @@ object I18n {
 
     private val TRANSLATIONS: Map<String, Map<String, String>> = mapOf(
         "sl" to mapOf(
+            "appearance_title" to "🎨 Izgled brskalnika",
+            "theme_label" to "Izbira teme brskalnika:",
+            "theme_dark_slate" to "🌙 Nočna",
             "settings_title" to "⚙️ Nastavitve",
             "settings_language" to "🌐 Jezik vmesnika:",
             "lang_auto" to "Samodejno (Sistemski jezik)",
@@ -145,6 +148,9 @@ object I18n {
             "share_file_notif_title" to "Safeer Link pošilja datoteko"
         ),
         "en" to mapOf(
+            "appearance_title" to "🎨 Browser appearance",
+            "theme_label" to "Browser theme:",
+            "theme_dark_slate" to "🌙 Dark Slate",
             "settings_title" to "⚙️ Settings",
             "settings_language" to "🌐 Interface Language:",
             "lang_auto" to "Auto (System Language)",
@@ -270,6 +276,9 @@ object I18n {
             "share_file_notif_title" to "Safeer Link is sending a file"
         ),
         "de" to mapOf(
+            "appearance_title" to "🎨 Erscheinungsbild",
+            "theme_label" to "Browser-Design:",
+            "theme_dark_slate" to "🌙 Dark Slate",
             "settings_title" to "⚙️ Einstellungen",
             "settings_language" to "🌐 Sprache:",
             "lang_auto" to "Automatisch (Systemsprache)",
@@ -395,6 +404,9 @@ object I18n {
             "share_file_notif_title" to "Safeer Link sendet eine Datei"
         ),
         "es" to mapOf(
+            "appearance_title" to "🎨 Aspecto del navegador",
+            "theme_label" to "Tema del navegador:",
+            "theme_dark_slate" to "🌙 Dark Slate",
             "settings_title" to "⚙️ Configuración",
             "settings_language" to "🌐 Idioma:",
             "lang_auto" to "Automático (Idioma del sistema)",
@@ -520,6 +532,9 @@ object I18n {
             "share_file_notif_title" to "Safeer Link está enviando un archivo"
         ),
         "fr" to mapOf(
+            "appearance_title" to "🎨 Apparence du navigateur",
+            "theme_label" to "Thème du navigateur :",
+            "theme_dark_slate" to "🌙 Dark Slate",
             "settings_title" to "⚙️ Paramètres",
             "settings_language" to "🌐 Langue :",
             "lang_auto" to "Automatique (Langue du système)",
@@ -645,6 +660,9 @@ object I18n {
             "share_file_notif_title" to "Safeer Link envoie un fichier"
         ),
         "it" to mapOf(
+            "appearance_title" to "🎨 Aspetto del browser",
+            "theme_label" to "Tema del browser:",
+            "theme_dark_slate" to "🌙 Dark Slate",
             "settings_title" to "⚙️ Impostazioni",
             "settings_language" to "🌐 Lingua:",
             "lang_auto" to "Automatico (Lingua di sistema)",

@@ -1764,7 +1764,7 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
 
         // 2. Izgled brskalnika (Browser Appearance & Styling)
         val tvAppearanceTitle = TextView(this).apply {
-            text = "🎨 " + (if (currentLang == "sl") "Izgled brskalnika" else "Browser Appearance")
+            text = I18n.t(this@MainActivity, "appearance_title")
             textSize = 15f
             setTextColor(Color.parseColor("#00d2ff"))
             setTypeface(null, android.graphics.Typeface.BOLD)
@@ -1774,7 +1774,7 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
 
         // 2.1. Izbira teme brskalnika
         val tvThemeLabel = TextView(this).apply {
-            text = if (currentLang == "sl") "Izbira teme brskalnika:" else "Browser Theme:"
+            text = I18n.t(this@MainActivity, "theme_label")
             textSize = 13f
             setTextColor(Color.parseColor("#94A3B8"))
             setPadding(0, 4, 0, 4)
@@ -1782,16 +1782,17 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         view.addView(tvThemeLabel)
 
         val themeKeys = arrayOf("dark_slate", "amoled", "midnight", "emerald")
-        val themeLabels = if (currentLang == "sl") {
-            arrayOf("🌙 Nočna", "🖤 AMOLED", "🌌 Midnight", "🍃 Emerald")
-        } else {
-            arrayOf("🌙 Dark Slate", "🖤 AMOLED", "🌌 Midnight", "🍃 Emerald")
-        }
+        // Imena tem razen prve so lastna imena in se ne prevajajo.
+        val themeLabels = arrayOf(
+            I18n.t(this, "theme_dark_slate"),
+            "🖤 AMOLED", "🌌 Midnight", "🍃 Emerald")
         val currentTheme = PreferencesManager.getTheme(this)
         val selectedThemeIdx = themeKeys.indexOf(currentTheme).let { if (it >= 0) it else 0 }
 
+        // Navpicno: stiri imena tem v eni vrstici se na telefonu ne izidejo - zadnji dve sta
+        // se stisnili v navpicno, odrezano besedilo.
         val rgTheme = RadioGroup(this).apply {
-            orientation = LinearLayout.HORIZONTAL
+            orientation = LinearLayout.VERTICAL
         }
         themeKeys.forEachIndexed { idx, _ ->
             val rb = RadioButton(this).apply {
@@ -1799,8 +1800,8 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
                 text = themeLabels[idx]
                 isChecked = (idx == selectedThemeIdx)
                 setTextColor(Color.WHITE)
-                textSize = 12f
-                setPadding(0, 0, 14, 0)
+                textSize = 13f
+                setPadding(0, 6, 0, 6)
             }
             rgTheme.addView(rb)
         }
