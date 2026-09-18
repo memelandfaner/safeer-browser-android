@@ -1,0 +1,51 @@
+package com.safeer.mobile.browser
+
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
+import android.os.Environment
+import android.webkit.CookieManager
+import android.webkit.URLUtil
+import android.widget.Toast
+
+class DownloadHandler(private val context: Context) {
+
+    fun startDownload(url: String, userAgent: String?, contentDisposition: String?, mimeType: String?) {
+        try {
+            val filename = URLUtil.guessFileName(url, contentDisposition, mimeType)
+            val request = DownloadManager.Request(Uri.parse(url)).apply {
+                setMimeType(mimeType)
+                if (userAgent != null) {
+                    addRequestHeader("User-Agent", userAgent)
+                }
+                // 🍪 Posreduj sejne piškotke za preprečitev 403 Forbidden napak pri prijavljenih računih
+                val cookies = CookieManager.getInstance().getCookie(url)
+                if (!cookies.isNullOrEmpty()) {
+                    addRequestHeader("Cookie", cookies)
+                }
+                addRequestHeader("Referer", url)
+
+                setDescription("Prenašam datoteko...")
+                setTitle(filename)
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                // Mapa, ki jo je izbral uporabnik v nastavitvah. Ce je ni mogoce uporabiti
+                // (npr. je sistem ne dovoli), se prenos vseeno zgodi - v mapo Prenosi.
+                try {
+                    setDestinationInExternalPublicDir(
+                        PrenosiMapa.sistemskoIme(PreferencesManager.getDownloadDir(context)),
+                        PrenosiMapa.relativnaPot(context, filename)
+                    )
+                } catch (_: Throwable) {
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, filename)
+                }
+                allowScanningByMediaScanner()
+            }
+
+            val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
+            dm?.enqueue(request)
+            Toast.makeText(context, context.getString(R.string.toast_downloading, filename), Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            Toast.makeText(context, context.getString(R.string.toast_download_error, e.message ?: ""), Toast.LENGTH_LONG).show()
+        }
+    }
+}

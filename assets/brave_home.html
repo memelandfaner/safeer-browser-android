@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safeer Browser - Začetna stran</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #05070d;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(255, 85, 0, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 10% 30%, rgba(120, 40, 200, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 60%, rgba(0, 210, 255, 0.08) 0%, transparent 40%);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px 16px 40px 16px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* 🦁 Brave Shield Privacy Card */
+        .shield-card {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 16px 18px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .shield-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .shield-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            color: #ffffff;
+        }
+
+        .shield-icon {
+            font-size: 18px;
+            background: linear-gradient(135deg, #ff5500, #ff8800);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .shield-badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: rgba(0, 230, 118, 0.15);
+            color: #00e676;
+            border: 1px solid rgba(0, 230, 118, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 14px;
+            padding: 10px 6px;
+        }
+
+        .stat-val {
+            font-size: 18px;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+
+        .stat-val.ads {
+            background: linear-gradient(135deg, #ff5500, #ff9100);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-val.data {
+            background: linear-gradient(135deg, #00d2ff, #0088ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-val.time {
+            background: linear-gradient(135deg, #00e676, #00b0ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-lbl {
+            font-size: 10px;
+            font-weight: 600;
+            color: #8b9bb4;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        /* 🕒 Clock & Date Widget */
+        .clock-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 6px 0;
+        }
+
+        .clock-time {
+            font-size: 46px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: #ffffff;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            line-height: 1.1;
+        }
+
+        .clock-date {
+            font-size: 13px;
+            font-weight: 500;
+            color: #9aa8bd;
+            text-transform: capitalize;
+            letter-spacing: 0.3px;
+            margin-top: 2px;
+        }
+
+        /* 🔍 Search Widget */
+        .search-card {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .search-bar-wrapper {
+            position: relative;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 28px;
+            padding: 4px 6px 4px 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .search-bar-wrapper:focus-within {
+            border-color: #ff5500;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(255, 85, 0, 0.35);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 500;
+            padding: 8px 0;
+            user-select: text;
+        }
+
+        .search-input::placeholder {
+            color: #7b8a9e;
+        }
+
+        .search-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff5500, #ff7700);
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(255, 85, 0, 0.4);
+            transition: transform 0.15s ease;
+        }
+
+        .search-btn:active {
+            transform: scale(0.9);
+        }
+
+        .engine-chips {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .engine-chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #8c9ba8;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .engine-chip.active {
+            background: rgba(255, 85, 0, 0.2);
+            border-color: #ff5500;
+            color: #ff8833;
+        }
+
+        /* ⭐ Top Sites / Speed Dial Grid */
+        .section-header {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding: 0 4px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #7f91a8;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .section-edit-btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #d1dbe8;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .mob-lang-toggle {
+            display: flex;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 2px 4px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mob-lang-opt {
+            font-size: 9px;
+            font-weight: 700;
+            color: #8fa0b5;
+            padding: 2px 5px;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .mob-lang-opt.active {
+            background: #ff5500;
+            color: #ffffff;
+        }
+
+        .section-edit-btn.active {
+            background: rgba(255, 85, 0, 0.25);
+            border-color: #ff5500;
+            color: #ff8833;
+        }
+
+        .favorites-grid {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px 10px;
+        }
+
+        .favorite-tile {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.15s ease;
+            position: relative;
+        }
+
+        .favorite-tile:active {
+            transform: scale(0.92);
+        }
+
+        .tile-icon-wrapper {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .tile-delete-btn {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            border: 2px solid #05070d;
+            z-index: 10;
+        }
+
+        .favorite-tile:hover .tile-icon-wrapper {
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tile-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #d1dbe8;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 68px;
+        }
+
+        /* 🛡️ Footer Security Status */
+        .footer-badge {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #5c6c80;
+        }
+
+        .pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #00e676;
+            box-shadow: 0 0 8px #00e676;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+    </style>
+<link rel="stylesheet" href="safeer-home.css">
+</head>
+<body>
+
+<div class="container">
+
+    <!-- 🦁 1. Brave Shield Dashboard Stats -->
+    <div class="shield-card">
+        <div class="shield-header">
+            <div class="shield-title">
+                <img class="safeer-logo" src="safeer-mark.svg" width="44" height="44" alt="">
+                <span>Safeer</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <span class="shield-badge">Android</span>
+                <div class="mob-lang-toggle">
+                    <span class="mob-lang-opt active" data-lang="sl" onclick="setMobileLanguage('sl')">SL</span>
+                    <span class="mob-lang-opt" data-lang="en" onclick="setMobileLanguage('en')">EN</span>
+                    <span class="mob-lang-opt" data-lang="de" onclick="setMobileLanguage('de')">DE</span>
+                    <span class="mob-lang-opt" data-lang="es" onclick="setMobileLanguage('es')">ES</span>
+                    <span class="mob-lang-opt" data-lang="fr" onclick="setMobileLanguage('fr')">FR</span>
+                    <span class="mob-lang-opt" data-lang="it" onclick="setMobileLanguage('it')">IT</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🕒 2. Clock & Date Widget -->
+    <div class="clock-widget">
+        <div class="clock-time" id="clockTime">13:15</div>
+        <div class="clock-date" id="clockDate">sobota, 29. avgust 2026</div>
+    </div>
+
+    <!-- 🔍 3. Omnibox / Search Widget -->
+    <div class="search-card">
+        <form class="search-bar-wrapper" id="searchForm" onsubmit="return handleSearch(event)">
+            <input type="text" class="search-input" id="searchInput" aria-label="Išči ali vnesi naslov" enterkeyhint="go" placeholder="Iščite ali vnesite naslov spleta..." autocomplete="off" autocorrect="off">
+            <button type="submit" class="search-btn">🔍</button>
+        </form>
+        <div class="engine-chips">
+            <div class="engine-chip active" onclick="setEngine('google', this)">Google</div>
+            <div class="engine-chip" onclick="setEngine('duckduckgo', this)">DuckDuckGo</div>
+            <div class="engine-chip" onclick="setEngine('youtube', this)">YouTube</div>
+            <div class="engine-chip" onclick="setEngine('brave', this)">Brave Search</div>
+            <div class="engine-chip" onclick="setEngine('wikipedia', this)">Wikipedia</div>
+        </div>
+    </div>
+
+    <!-- ⭐ 4. Priljubljene strani in multimedija -->
+    <div class="section-header">
+        <div class="section-title" data-i18n="fav_title">Tvoje priljubljene strani</div>
+        <div style="display:flex; gap:6px;">
+            <button type="button" class="section-edit-btn" id="btnEditFavs" onclick="toggleEditFavorites()" data-i18n="btn_edit">⚙️ Uredi</button>
+            <button type="button" class="section-edit-btn" onclick="addNewFavorite()" data-i18n="btn_add">➕ Dodaj</button>
+        </div>
+    </div>
+
+    <div class="favorites-grid" id="favoritesGrid">
+        <!-- Generirano dinamično iz shrambe -->
+    </div>
+
+    <!-- 🛡️ Footer -->
+    <div class="footer-badge">
+        <div class="pulse-dot"></div>
+        <span>Safeer · Filtriranje oglasov in znanih groženj</span>
+    </div>
+
+</div>
+
+<script>
+    var currentEngine = 'google';
+
+    function setEngine(engine, el) {
+        currentEngine = engine;
+        var chips = document.querySelectorAll('.engine-chip');
+        chips.forEach(function(c) { c.classList.remove('active'); });
+        if (el) el.classList.add('active');
+        
+        var input = document.getElementById('searchInput');
+        if (engine === 'youtube') input.placeholder = 'Išči na YouTube...';
+        else if (engine === 'wikipedia') input.placeholder = 'Išči v Wikipediji...';
+        else if (engine === 'duckduckgo') input.placeholder = 'Zasebno iskanje DuckDuckGo...';
+        else if (engine === 'brave') input.placeholder = 'Brave Search...';
+        else input.placeholder = 'Iščite ali vnesite naslov spleta...';
+        input.focus();
+    }
+
+    function handleSearch(e) {
+        if (e) e.preventDefault();
+        var q = document.getElementById('searchInput').value.trim();
+        if (!q) return false;
+
+        var targetUrl = '';
+        if (q.startsWith('http://') || q.startsWith('https://')) {
+            targetUrl = q;
+        } else if (q.includes('.') && !q.includes(' ')) {
+            targetUrl = 'https://' + q;
+        } else {
+            if (currentEngine === 'youtube') {
+                targetUrl = 'https://m.youtube.com/results?search_query=' + encodeURIComponent(q);
+            } else if (currentEngine === 'duckduckgo') {
+                targetUrl = 'https://duckduckgo.com/?q=' + encodeURIComponent(q);
+            } else if (currentEngine === 'brave') {
+                targetUrl = 'https://search.brave.com/search?q=' + encodeURIComponent(q);
+            } else if (currentEngine === 'wikipedia') {
+                targetUrl = 'https://sl.wikipedia.org/w/index.php?search=' + encodeURIComponent(q);
+            } else {
+                targetUrl = 'https://www.google.com/search?q=' + encodeURIComponent(q);
+            }
+        }
+        openUrl(targetUrl);
+        return false;
+    }
+
+    function openUrl(url) {
+        if (!url) return;
+        if (window.SafeerBridge && typeof window.SafeerBridge.navigate === 'function') {
+            try {
+                window.SafeerBridge.navigate(url);
+                return;
+            } catch (err) {
+                console.error('SafeerBridge navigate error:', err);
+            }
+        }
+        window.location.href = url;
+    }
+
+    // --- Dynamic Favorites & Multimedia Engine ---
+    var isEditFavoritesMode = false;
+    var defaultFavoritesList = [
+        { title: "YouTube", url: "https://www.youtube.com", mark: "▶️", color: "#cc0000" },
+        { title: "24ur", url: "https://www.24ur.com", mark: "📰", color: "#1256a8" },
+        { title: "RTV SLO", url: "https://www.rtvslo.si/", mark: "🇸🇮", color: "#0284c7" },
+        { title: "SiOL", url: "https://siol.net", mark: "🌐", color: "#0ea5e9" },
+        { title: "ChatGPT", url: "https://chatgpt.com", mark: "🤖", color: "#10a37f" },
+        { title: "GitHub", url: "https://github.com", mark: "🐙", color: "#64748b" },
+        { title: "Reddit", url: "https://www.reddit.com", mark: "📱", color: "#ff4500" },
+        { title: "Wikipedija", url: "https://sl.wikipedia.org", mark: "📖", color: "#94a3b8" },
+        { title: "Hitrost", url: "https://www.speedtest.net", mark: "⚡", color: "#10b981" }
+    ];
+
+    function getMobileFavorites() {
+        try {
+            var raw = localStorage.getItem('safeer_mobile_favs_v2');
+            if (raw) {
+                var arr = JSON.parse(raw);
+                if (Array.isArray(arr) && arr.length > 0) {
+                    var modified = false;
+                    arr.forEach(function(item) {
+                        if (item.title === 'RTV SLO' || (item.url && item.url.indexOf('rtvslo.si') !== -1)) {
+                            if (item.url !== 'https://www.rtvslo.si/' || item.mark !== '🇸🇮') {
+                                item.url = 'https://www.rtvslo.si/';
+                                item.mark = '🇸🇮';
+                                modified = true;
+                            }
+                        }
+                    });
+                    if (modified) {
+                        localStorage.setItem('safeer_mobile_favs_v2', JSON.stringify(arr));
+                    }
+                    return arr;
+                }
+            }
+        } catch(e) {}
+        return defaultFavoritesList;
+    }
+
+    function saveMobileFavorites(arr) {
+        try {
+            localStorage.setItem('safeer_mobile_favs_v2', JSON.stringify(arr));
+        } catch(e) {}
+        renderFavorites();
+    }
+
+    function toggleEditFavorites() {
+        isEditFavoritesMode = !isEditFavoritesMode;
+        var btn = document.getElementById('btnEditFavs');
+        if (btn) {
+            btn.textContent = isEditFavoritesMode ? '✓ Končano' : '⚙️ Uredi';
+            if (isEditFavoritesMode) btn.classList.add('active');
+            else btn.classList.remove('active');
+        }
+        renderFavorites();
+    }
+
+    function renderFavorites() {
+        var grid = document.getElementById('favoritesGrid');
+        if (!grid) return;
+        var list = getMobileFavorites();
+        grid.innerHTML = '';
+
+        list.forEach(function(item, index) {
+            var tile = document.createElement('button');
+            tile.type = 'button';
+            tile.className = 'favorite-tile';
+            var mark = document.createElement('span');
+            mark.className = 'tile-icon-wrapper';
+            mark.textContent = item.mark || '🌐';
+            var label = document.createElement('span');
+            label.className = 'tile-name';
+            label.textContent = item.title;
+            tile.appendChild(mark); tile.appendChild(label);
+            if (isEditFavoritesMode) {
+                // Keep delete separate from the shortcut button (no nested buttons).
+                var wrap = document.createElement('div');
+                wrap.className = 'favorite-edit-wrap';
+                var del = document.createElement('button');
+                del.type = 'button'; del.className = 'tile-delete-btn';
+                del.textContent = '✕'; del.setAttribute('aria-label', 'Odstrani ' + item.title);
+                del.onclick = function(e) { e.stopPropagation(); deleteFavorite(index); };
+                wrap.appendChild(tile); wrap.appendChild(del); grid.appendChild(wrap);
+            }
+            tile.onclick = function() {
+                if (isEditFavoritesMode) {
+                    editFavorite(index);
+                } else {
+                    openUrl(item.url);
+                }
+            };
+            if (!isEditFavoritesMode) grid.appendChild(tile);
+        });
+
+        // Gumb za dodajanje
+        var addTile = document.createElement('button');
+        addTile.type = 'button';
+        addTile.className = 'favorite-tile';
+        addTile.innerHTML = '<div class="tile-icon-wrapper" style="background: rgba(255, 85, 0, 0.15); border-color: rgba(255, 85, 0, 0.4); color: #ff7700;">➕</div><div class="tile-name">Dodaj</div>';
+        addTile.onclick = addNewFavorite;
+        grid.appendChild(addTile);
+    }
+
+    function deleteFavorite(index) {
+        var list = getMobileFavorites();
+        if (index >= 0 && index < list.length) {
+            if (confirm('Želite odstraniti ' + list[index].title + '?')) {
+                list.splice(index, 1);
+                saveMobileFavorites(list);
+            }
+        }
+    }
+
+    function editFavorite(index) {
+        var list = getMobileFavorites();
+        if (index >= 0 && index < list.length) {
+            var item = list[index];
+            var newTitle = prompt('Uredite naziv priljubljene strani:', item.title);
+            if (!newTitle) return;
+            var newUrl = prompt('Uredite spletni naslov (URL):', item.url);
+            if (!newUrl) return;
+            var newMark = prompt('Uredite simbol ali emoji:', item.mark || '🌐');
+
+            item.title = newTitle.trim();
+            item.url = newUrl.trim();
+            item.mark = (newMark || '🌐').trim();
+            saveMobileFavorites(list);
+        }
+    }
+
+    function addNewFavorite() {
+        var url = prompt('Vnesite URL spletnega mesta (npr. https://siol.net):', 'https://');
+        if (url && url !== 'https://') {
+            var name = prompt('Vnesite ime zaznamka:', 'Nova stran');
+            if (name) {
+                var mark = prompt('Vnesite simbol ali emoji (npr. 📺, 🎬, 📰, ⭐):', '⭐');
+                var list = getMobileFavorites();
+                list.push({
+                    title: name.trim(),
+                    url: url.trim(),
+                    mark: (mark || '⭐').trim(),
+                    color: '#ff5500'
+                });
+                saveMobileFavorites(list);
+            }
+        }
+    }
+
+    // --- 5. Mobile Internationalization (i18n) ---
+    var mobileI18n = {
+        sl: {
+            lbl_threats: "Blokirane grožnje",
+            locale: "sl-SI",
+            shield_active: "Zaščita aktivna",
+            lbl_blocked: "Blokirano",
+            lbl_saved: "Prihranek",
+            lbl_time: "Prihranjen čas",
+            search_placeholder: "Iščite ali vnesite naslov spleta...",
+            fav_title: "Tvoje priljubljene strani",
+            btn_edit: "⚙️ Uredi",
+            btn_done: "✓ Končano",
+            btn_add: "➕ Dodaj",
+            tile_add: "Dodaj"
+        },
+        en: {
+            lbl_threats: "Threats blocked",
+            locale: "en-US",
+            shield_active: "Shield Active",
+            lbl_blocked: "Blocked",
+            lbl_saved: "Data Saved",
+            lbl_time: "Time Saved",
+            search_placeholder: "Search or enter web address...",
+            fav_title: "Favorites & Multimedia",
+            btn_edit: "⚙️ Edit",
+            btn_done: "✓ Done",
+            btn_add: "➕ Add",
+            tile_add: "Add"
+        },
+        de: {
+            lbl_threats: "Blockierte Bedrohungen",
+            locale: "de-DE",
+            shield_active: "Schutz Aktiv",
+            lbl_blocked: "Blockiert",
+            lbl_saved: "Gespart",
+            lbl_time: "Zeit Erspart",
+            search_placeholder: "Suchen oder Adresse eingeben...",
+            fav_title: "Favoriten & Multimedia",
+            btn_edit: "⚙️ Bearbeiten",
+            btn_done: "✓ Fertig",
+            btn_add: "➕ Hinzufügen",
+            tile_add: "Neu"
+        },
+        es: {
+            lbl_threats: "Amenazas bloqueadas",
+            locale: "es-ES",
+            shield_active: "Escudo Activo",
+            lbl_blocked: "Bloqueado",
+            lbl_saved: "Ahorro",
+            lbl_time: "Tiempo Ahorrado",
+            search_placeholder: "Buscar o escribir dirección...",
+            fav_title: "Favoritos y Multimedia",
+            btn_edit: "⚙️ Editar",
+            btn_done: "✓ Listo",
+            btn_add: "➕ Añadir",
+            tile_add: "Añadir"
+        },
+        fr: {
+            lbl_threats: "Menaces bloquées",
+            locale: "fr-FR",
+            shield_active: "Bouclier Actif",
+            lbl_blocked: "Bloqué",
+            lbl_saved: "Économie",
+            lbl_time: "Temps Gagné",
+            search_placeholder: "Rechercher ou entrer une adresse...",
+            fav_title: "Favoris & Multimédia",
+            btn_edit: "⚙️ Modifier",
+            btn_done: "✓ Terminé",
+            btn_add: "➕ Ajouter",
+            tile_add: "Ajouter"
+        },
+        it: {
+            lbl_threats: "Minacce bloccate",
+            locale: "it-IT",
+            shield_active: "Protezione Attiva",
+            lbl_blocked: "Bloccato",
+            lbl_saved: "Risparmio",
+            lbl_time: "Tempo Risparmiato",
+            search_placeholder: "Cerca o inserisci un indirizzo...",
+            fav_title: "Preferiti e Multimedia",
+            btn_edit: "⚙️ Modifica",
+            btn_done: "✓ Fatto",
+            btn_add: "➕ Aggiungi",
+            tile_add: "Aggiungi"
+        }
+    };
+
+    var currentMobLang = 'sl';
+
+    function detectMobileLanguage() {
+        try {
+            var raw = localStorage.getItem('safeer_mob_lang');
+            if (raw && mobileI18n[raw]) return raw;
+            var nav = (navigator.language || navigator.userLanguage || '').substring(0, 2).toLowerCase();
+            if (mobileI18n[nav]) return nav;
+        } catch(e) {}
+        /* Zadnja moznost je anglescina: izdelek je javen in ne predpostavlja Slovenije. */
+        return 'en';
+    }
+
+    function setMobileLanguage(lang) {
+        if (!mobileI18n[lang]) lang = 'en';
+        currentMobLang = lang;
+        try {
+            localStorage.setItem('safeer_mob_lang', lang);
+        } catch(e) {}
+
+        var dict = mobileI18n[lang];
+        document.querySelectorAll('[data-i18n]').forEach(function(el) {
+            var key = el.getAttribute('data-i18n');
+            if (dict[key]) el.textContent = dict[key];
+        });
+
+        var input = document.getElementById('searchInput');
+        if (input && dict.search_placeholder) {
+            input.placeholder = dict.search_placeholder;
+        }
+
+        document.querySelectorAll('.mob-lang-opt').forEach(function(opt) {
+            opt.classList.toggle('active', opt.getAttribute('data-lang') === lang);
+        });
+
+        var btnEdit = document.getElementById('btnEditFavs');
+        if (btnEdit) {
+            btnEdit.textContent = isEditFavoritesMode ? dict.btn_done : dict.btn_edit;
+        }
+
+        updateClock();
+    }
+
+    // Posodobi uro in datum v izbranem jeziku
+    function updateClock() {
+        var now = new Date();
+        var hrs = String(now.getHours()).padStart(2, '0');
+        var mins = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('clockTime').textContent = hrs + ':' + mins;
+
+        var dict = mobileI18n[currentMobLang] || mobileI18n.sl;
+        var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        var dateStr = now.toLocaleDateString(dict.locale || 'sl-SI', options);
+        document.getElementById('clockDate').textContent = dateStr;
+    }
+
+    // Posodobi statistiko Safeer Shielda
+    function updateStats() {
+        try {
+            if (window.SafeerBridge && typeof window.SafeerBridge.getStats === 'function') {
+                var jsonStr = window.SafeerBridge.getStats();
+                var s = JSON.parse(jsonStr);
+                document.getElementById('valAds').textContent = s.ads.toLocaleString('sl-SI');
+                document.getElementById('valThreats').textContent = Number(s.threats || 0).toLocaleString('sl-SI');
+            }
+        } catch(e) {}
+    }
+
+    // Brave način (Brave Shield stil ali minimalistični način)
+    window.setBraveMode = function(enabled) {
+        try {
+            var shieldCard = document.querySelector('.shield-card');
+            if (shieldCard) {
+                shieldCard.style.display = enabled ? 'flex' : 'none';
+            }
+        } catch(e) {}
+    };
+
+    function checkBraveMode() {
+        try {
+            if (window.SafeerBridge && typeof window.SafeerBridge.isBraveMode === 'function') {
+                var isBrave = window.SafeerBridge.isBraveMode();
+                window.setBraveMode(isBrave);
+            }
+        } catch(e) {}
+    }
+
+    setInterval(updateClock, 1000);
+
+    renderFavorites();
+    setMobileLanguage(detectMobileLanguage());
+    checkBraveMode();
+
+</script>
+
+</body>
+</html>

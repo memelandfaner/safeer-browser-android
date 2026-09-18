@@ -1,0 +1,45 @@
+build/
+build-ci/
+*.tmp
+.DS_Store
+tv_test/
+__pycache__/
+
+# 🔒 Privacy & Security: Ignore sensitive files, credentials and local settings
+*.env*
+*.key
+*.keystore
+*.jks
+keystore/
+*.token
+*secret*
+*credential*
+local.properties
+
+# 🧪 Test scripts, test directories & temporary benchmarks
+test_*.py
+yt_*/
+# Regresijski testi zaznave so del repozitorija
+!tests/test_zaznaj.py
+# Lokalni dnevniki testnih tekov
+tests/.astra/
+
+# 📸 Media and Log files
+*.log
+*.png
+*.jpg
+*.jpeg
+*.mp4
+*.webm
+!res/**/*.png
+# Vzorci za regresijske teste
+!tests/vzorci/
+!tests/vzorci/*.png
+
+# 💻 IDE files
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/

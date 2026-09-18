@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.safeer.mobile.browser"
+    android:versionCode="29"
+    android:versionName="1.0.28">
+
+    <uses-sdk
+        android:minSdkVersion="28"
+        android:targetSdkVersion="36" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Safeer Link: stran ali ukaz z druge naprave odpre brskalnik, tudi ko ni v ospredju
+         (Android 10+ zagon iz ozadja dovoli le prek obvestila s celozaslonsko namero). -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- mDNS: brez tega Android na Wi-Fi zavrze multicast in Safeer Hub ni najden. -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- Safeer Link: telefon lahko gosti povezavo za druge naprave v hisi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+    <!-- Safeer Link: deljenje zaslona te naprave na drugo napravo v hisi -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <!-- Safeer Link: posiljanje datoteke tece naprej, tudi ko uporabnik preklopi drugam -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
+    <uses-feature android:name="android.hardware.touchscreen" android:required="true" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="true"
+        android:xlargeScreens="true"
+        android:anyDensity="true" />
+
+    <!-- Daljinec Safeer Linka (Safeer Control): seznam aplikacij, ki jih je mogoce zagnati,
+         in aplikacije, ki znajo odpreti spletno povezavo (npr. SmartTube za YouTube).
+         Brez tega Android 11+ seznam skrije in daljinec bi videl le sistemske aplikacije. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/AppTheme"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:usesCleartextTraffic="true"
+        android:supportsRtl="true">
+
+        <activity
+            android:name="com.safeer.mobile.browser.MainActivity"
+            android:label="@string/app_name"
+            android:icon="@mipmap/ic_launcher"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|smallestScreenSize|screenLayout|density"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Default Web Browser Handlers -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="http" />
+                <data android:scheme="https" />
+            </intent-filter>
+
+            <!-- Dokumenti PDF z naprave (prenosi, upravitelj datotek, e-posta) se odprejo v vgrajenem pregledovalniku -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+
+            <!-- Web Search Handler -->
+            <intent-filter>
+                <action android:name="android.intent.action.WEB_SEARCH" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- Receive Shared Links / Text from Other Apps -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
+        <!-- 🎵 Predvajanje v ozadju (YouTube, YouTube Music, radio): obvestilo s premorom, proces ostane živ -->
+        <service
+            android:name="com.safeer.mobile.browser.MediaPlaybackService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Safeer Link (Hub): tece, dokler ga uporabnik ne ugasne, tudi ko brskalnik ni odprt -->
+        <service
+            android:name="com.safeer.mobile.browser.cast.HubStoritev"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- Safeer Link: sprejem v ozadju (stran, besedilo, datoteka, zaslon z drugih naprav), dokler je telefon seznanjen -->
+        <service
+            android:name="com.safeer.mobile.browser.link.LinkSprejemnik"
+            android:exported="false"
+            android:foregroundServiceType="connectedDevice" />
+
+        <!-- Safeer Link: deljenje zaslona (MediaProjection); tece, dokler ga uporabnik ne prekine -->
+        <service
+            android:name="com.safeer.mobile.browser.link.DeljenjeZaslonaStoritev"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+
+        <!-- Safeer Link: posiljanje datoteke na drugo napravo (v ospredju, z napredkom) -->
+        <service
+            android:name="com.safeer.mobile.browser.link.PrenosDatotekeStoritev"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <provider
+            android:name="com.safeer.mobile.browser.MobileFileProvider"
+            android:authorities="com.safeer.mobile.browser.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+    </application>
+</manifest>
