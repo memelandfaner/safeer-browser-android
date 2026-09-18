@@ -786,7 +786,8 @@
             var nav = (navigator.language || navigator.userLanguage || '').substring(0, 2).toLowerCase();
             if (mobileI18n[nav]) return nav;
         } catch(e) {}
-        return 'sl';
+        /* Zadnja moznost je anglescina: izdelek je javen in ne predpostavlja Slovenije. */
+        return 'en';
     }
 
     function setMobileLanguage(lang) {

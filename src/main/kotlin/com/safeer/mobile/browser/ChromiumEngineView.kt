@@ -792,6 +792,18 @@ class ChromiumEngineView @JvmOverloads constructor(
                         UserScriptManager.injectOnPageFinished(wv, isDarkMode, isDesktopMode)
                         installFormProtection(wv)
                     }
+                    // Zacetna stran je del aplikacije, zato naj govori isti jezik kot vmesnik.
+                    // Kadar je jezik nastavljen na samodejno, pustimo strani njeno lastno izbiro.
+                    if (it.startsWith("file:///android_asset/brave_home.html")) {
+                        val izbran = PreferencesManager.getLanguage(context)
+                        if (izbran != "auto" && I18n.SUPPORTED_LANGUAGES.containsKey(izbran)) {
+                            view?.evaluateJavascript(
+                                "try{if(window.setMobileLanguage)setMobileLanguage('" +
+                                    izbran + "')}catch(e){}",
+                                null
+                            )
+                        }
+                    }
                 }
             }
 
