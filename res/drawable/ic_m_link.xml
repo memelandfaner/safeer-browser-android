@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Crtna ikona menija; barvo daje android:tint na pogledu. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:pathData="M10,13 A5,5 0 0 0 17,13 L20,10 A5,5 0 0 0 13,3 L12,4 M14,11 A5,5 0 0 0 7,11 L4,14 A5,5 0 0 0 11,21 L12,20" android:fillColor="#00000000" android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.8" android:strokeLineCap="round" android:strokeLineJoin="round" />
+</vector>

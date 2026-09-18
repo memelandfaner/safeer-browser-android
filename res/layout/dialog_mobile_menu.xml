@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_mobile_menu_dialog"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- Top Quick Action Icons (Back, Forward, Reload, Star Bookmark, Share) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_mobile_omnibox"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="6dp">
+
+        <ImageButton
+            android:id="@+id/menuBtnBack"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_mobile_icon_button"
+            android:src="@drawable/ic_m_back"
+            android:tint="@color/menu_icon"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+
+        <ImageButton
+            android:id="@+id/menuBtnForward"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_mobile_icon_button"
+            android:src="@drawable/ic_m_forward"
+            android:tint="@color/menu_icon"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+
+        <ImageButton
+            android:id="@+id/menuBtnReload"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_mobile_icon_button"
+            android:src="@drawable/ic_m_reload"
+            android:tint="@color/menu_icon"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+
+        <ImageButton
+            android:id="@+id/menuBtnStar"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_mobile_icon_button"
+            android:src="@drawable/ic_m_star"
+            android:tint="@color/menu_icon_accent"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+
+        <ImageButton
+            android:id="@+id/menuBtnShare"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_mobile_icon_button"
+            android:src="@drawable/ic_m_share"
+            android:tint="@color/menu_icon"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginVertical="10dp"
+        android:background="@color/border_omnibox" />
+
+    <!-- Scrollable Options List -->
+    <ScrollView
+        android:id="@+id/menuOptionsScroll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout android:id="@+id/rowMenuHome" android:layout_width="match_parent" android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_home" android:tint="@color/menu_icon_accent" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/labelMenuHome" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/btn_home"
+                    android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout android:id="@+id/rowMenuDefaultBrowser" android:layout_width="match_parent" android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button" android:gravity="center_vertical"
+                android:orientation="horizontal" android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_default" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:id="@+id/labelMenuDefaultBrowser" android:layout_width="0dp" android:layout_height="wrap_content"
+                    android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_default_browser"
+                    android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Nov zavihek -->
+            <LinearLayout
+                android:id="@+id/rowMenuNewTab"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_newtab" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_new_tab" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Safeer Link: naprave, pošiljanje in sinhronizacija na enem mestu -->
+            <LinearLayout
+                android:id="@+id/rowMenuSafeerLink"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_link" android:tint="@color/menu_icon_accent" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_safeer_link" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Zaznamki -->
+            <LinearLayout
+                android:id="@+id/rowMenuBookmarks"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_bookmarks" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_bookmarks" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Prenosi -->
+            <LinearLayout
+                android:id="@+id/rowMenuDownloads"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_downloads" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_downloads" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Zgodovina -->
+            <LinearLayout
+                android:id="@+id/rowMenuHistory"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_history" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_history" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Najdi na strani -->
+            <LinearLayout
+                android:id="@+id/rowMenuFindInPage"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_find" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_find_in_page" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+            <!-- Namizno spletno mesto (Toggle) -->
+            <LinearLayout
+                android:id="@+id/rowMenuDesktopSite"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_desktop" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_desktop_site" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <CheckBox android:id="@+id/cbDesktopSite" android:layout_width="wrap_content" android:layout_height="wrap_content" android:clickable="false" />
+            </LinearLayout>
+
+            <!-- Threat Shield Pregled (Feodo/URLhaus) -->
+            <LinearLayout
+                android:id="@+id/rowMenuThreatStats"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_threat" android:tint="@color/menu_icon_accent" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_threat_stats" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <TextView android:id="@+id/tvThreatCountBadge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/menu_icon_accent" android:textSize="12sp" android:text="@string/menu_shield_active" />
+            </LinearLayout>
+
+            <!-- AdBlock Ščit (Toggle) -->
+            <LinearLayout
+                android:id="@+id/rowMenuAdBlock"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_shield" android:tint="@color/menu_icon_accent" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_adblock" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <CheckBox android:id="@+id/cbAdBlock" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:clickable="false" />
+            </LinearLayout>
+
+            <!-- Preprecevanje pojavnih oken (Toggle) -->
+            <LinearLayout
+                android:id="@+id/rowMenuPopupBlock"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_popup" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_popup_block" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <CheckBox android:id="@+id/cbPopupBlock" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:clickable="false" />
+            </LinearLayout>
+
+            <!-- AMOLED Temni način (Toggle) -->
+            <LinearLayout
+                android:id="@+id/rowMenuDarkMode"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_moon" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_dark_mode" android:textColor="@color/text_primary" android:textSize="14sp" />
+                <CheckBox android:id="@+id/cbDarkMode" android:layout_width="wrap_content" android:layout_height="wrap_content" android:checked="true" android:clickable="false" />
+            </LinearLayout>
+
+            <!-- ⚙️ Nastavitve -->
+            <LinearLayout
+                android:id="@+id/rowMenuSettings"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/bg_mobile_icon_button"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp">
+                <ImageView android:layout_width="22dp" android:layout_height="22dp" android:src="@drawable/ic_m_settings" android:tint="@color/menu_icon" android:importantForAccessibility="no" />
+                <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:text="@string/menu_settings" android:textColor="@color/text_primary" android:textSize="14sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

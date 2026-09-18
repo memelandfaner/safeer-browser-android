@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AMOLED Deep Dark & True Pitch Black -->
+    <color name="bg_primary">#090D15</color>
+    <color name="bg_pure_black">#000000</color>
+    <color name="bg_secondary">#111924</color>
+    <color name="bg_card">#151E2A</color>
+    <color name="bg_card_active">#1B2A33</color>
+    
+    <!-- Omnibox URL Bar -->
+    <color name="bg_omnibox">#111924</color>
+    <color name="bg_omnibox_focus">#16222D</color>
+    <color name="border_omnibox">#29333D</color>
+    <color name="border_omnibox_focus">#54D6A5</color>
+    
+    <!-- Neon Accents -->
+    <color name="accent_cyan">#54D6A5</color>
+    <color name="accent_cyan_glow">#4054D6A5</color>
+    <color name="accent_blue">#3B82F6</color>
+    <color name="accent_purple">#8B5CF6</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#B0BDC4</color>
+    <color name="text_dim">#8E9CA6</color>
+    
+    <!-- Badges & Status -->
+    <color name="security_green">#10B981</color>
+    <color name="warning_orange">#F59E0B</color>
+    <color name="danger_red">#EF4444</color>
+    
+    <!-- Tab Badge -->
+    <color name="badge_tab_bg">#111924</color>
+    <color name="badge_tab_border">#54D6A5</color>
+    <color name="badge_tab_text">#54D6A5</color>
+    
+    <!-- Touch Ripples & Overlays -->
+    <color name="ripple_color">#2654D6A5</color>
+    <color name="overlay_backdrop">#CC04060A</color>
+
+    <!-- Meni in Safeer Link: ista podoba kot na safeer.si (temna podlaga, mint zelena, crtne ikone) -->
+    <color name="menu_icon">#DCE6EA</color>
+    <color name="menu_icon_accent">#54D6A5</color>
+</resources>
