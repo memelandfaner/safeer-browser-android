@@ -198,7 +198,9 @@ object PreferencesManager {
 
     // --- 8. Šifriran DNS (DoH) & Šifriran tunel (Tor / Proxy) ---
     fun isDohEnabled(context: Context): Boolean {
-        return getPrefs(context).getBoolean(KEY_DOH_ENABLED, false)
+        // Privzeto sifriran DNS prek Cloudflare (1.1.1.1): ponudnik interneta ne vidi,
+        // katere strani odpiramo. Uporabnik ga lahko v nastavitvah izklopi.
+        return getPrefs(context).getBoolean(KEY_DOH_ENABLED, true)
     }
 
     fun setDohEnabled(context: Context, enabled: Boolean) {
