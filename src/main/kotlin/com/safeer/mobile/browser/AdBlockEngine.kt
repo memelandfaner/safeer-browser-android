@@ -127,7 +127,7 @@ object AdBlockEngine {
             "bks-bank.si", "unicreditbank.si", "lon.si", "gorenjska-banka.si",
             "rtvslo.si", "24ur.com", "siol.net", "github.com",
             "gov.si", "e-uprava.gov.si", "posta.si", "si-pass.si", "rekono.si",
-            "cloudflare.com", "apple.com", "microsoft.com", "xploretv.si",
+            "cloudflare.com", "apple.com", "microsoft.com",
             // AdGuard – legitimna varnostna stran; nikoli ne blokiraj njenih assetov
             "adguard.com", "adguard.net", "adguard-vpn.com",
             "adguardteam.github.io", "cdn.adguard.com", "static.adguard.com"
