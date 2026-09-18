@@ -72,6 +72,13 @@ class ChromiumEngineView @JvmOverloads constructor(
     var onGeolocationRequested: ((String, GeolocationPermissions.Callback) -> Unit)? = null
     var onCreateWindowRequested: ((isDialog: Boolean, isUserGesture: Boolean, resultMsg: android.os.Message) -> Boolean)? = null
     var onCloseWindowRequested: (() -> Unit)? = null
+
+    /**
+     * Vratar pojavnega okna. Nastavljen je samo na pogledu, ki ga je dobilo novo okno: pove
+     * mu prvi naslov, kamor okno pelje, vratar pa odgovori, ali sme tja. Dokler vratar ne
+     * odgovori, se v tem pogledu ne nalozi nic.
+     */
+    var vratarPojavnega: ((String) -> Boolean)? = null
     var isPlayingAudio: Boolean = false
     var onAudioStateChanged: ((Boolean) -> Unit)? = null
 
@@ -595,6 +602,15 @@ class ChromiumEngineView @JvmOverloads constructor(
                     request.isForMainFrame
                 } else {
                     true
+                }
+
+                // 0. Novo okno: dokler ne vemo, kam pelje, se v njem ne nalozi nic. Vratar
+                //    odgovori enkrat; ce cilj ni prijava, navigacijo tu ustavimo in zavihek
+                //    izgine, ne da bi uporabnik karkoli videl.
+                val vratar = vratarPojavnega
+                if (vratar != null && isMainFrame && urlStr.startsWith("http", ignoreCase = true)) {
+                    vratarPojavnega = null
+                    if (!vratar(urlStr)) return true
                 }
 
                 // 1. Odklep nevarne domene na lastno odgovornost z enokratnim varnostnim žetonom

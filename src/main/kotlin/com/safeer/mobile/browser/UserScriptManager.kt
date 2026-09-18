@@ -162,37 +162,12 @@ object UserScriptManager {
         })();
     """
 
-    /**
-     * Nevtralizacija window.open. Loceno od ostalega stita, ker to uporabnik lahko izklopi
-     * v meniju (Prepreci pojavna okna). Privzeto je vklopljeno.
+    /*
+     * Prej je bil tu stit, ki je window.open zamenjal z laznim oknom. To je res ustavilo
+     * oglase, hkrati pa je pomenilo, da brskalnik cilja okna nikoli ne vidi - in prijava z
+     * Google, Facebook ali X ni mogla odpreti svojega okna. Zdaj o oknu odloca brskalnik
+     * sam, ko izve, KAM pelje (PrijavnaOkna + vratar v MainActivity).
      */
-    private const val WINDOW_OPEN_SHIELD_JS = """
-        (function() {
-            if (window._safeer_window_open_shield) return;
-            window._safeer_window_open_shield = true;
-
-            /* Nevtralizacija window.open.
-               Strani s filmi porabijo prav prvi klik na predvajalnik: isti klik odpre oglasno
-               okno. Klik mora pognati film, ne okna. Namesto null vrnemo neskodljiv priklopek:
-               nekateri predvajalniki ob null vrzejo napako in se ustavijo. */
-            try {
-                var praznoOkno = {
-                    closed: true,
-                    close: function() {},
-                    focus: function() {},
-                    blur: function() {},
-                    postMessage: function() {},
-                    document: { write: function() {}, writeln: function() {}, close: function() {} },
-                    location: { href: '', replace: function() {}, assign: function() {} }
-                };
-                window.open = function(url) {
-                    console.log('[Safeer] Prepreceno pojavno okno:', url);
-                    return praznoOkno;
-                };
-                try { Object.freeze(window.open); } catch (e) {}
-            } catch (e) {}
-        })();
-    """
 
     private const val ANTI_POPUNDER_SHIELD_JS = """
         /* 🛡️ Safeer Anti-Popunder, Anti-Clickjacking & Streaming Shield Engine */
@@ -1772,9 +1747,6 @@ object UserScriptManager {
             webView.evaluateJavascript(WINDOWS_CHROME_ENVIRONMENT_JS, null)
         }
         webView.evaluateJavascript(ANTI_POPUNDER_SHIELD_JS, null)
-        if (PreferencesManager.isPopupBlockEnabled(webView.context)) {
-            webView.evaluateJavascript(WINDOW_OPEN_SHIELD_JS, null)
-        }
         val isYt = isYouTubeDomain(currentUrl)
         if (isYt) {
             webView.evaluateJavascript(BACKGROUND_PLAYBACK_JS, null)
@@ -1808,9 +1780,6 @@ object UserScriptManager {
             webView.evaluateJavascript(WINDOWS_CHROME_ENVIRONMENT_JS, null)
         }
         webView.evaluateJavascript(ANTI_POPUNDER_SHIELD_JS, null)
-        if (PreferencesManager.isPopupBlockEnabled(webView.context)) {
-            webView.evaluateJavascript(WINDOW_OPEN_SHIELD_JS, null)
-        }
         val isYt = isYouTubeDomain(currentUrl)
         if (isYt) {
             webView.evaluateJavascript(BACKGROUND_PLAYBACK_JS, null)
