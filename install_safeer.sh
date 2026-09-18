@@ -4,8 +4,16 @@
 # ==============================================================================
 set -e
 
-APK_URL="https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/Safeer-Browser.apk"
-SHA_URL="https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/SHA256SUMS"
+# Zadnja javna izdaja Safeer za Android: naslova APK in kontrolnih vsot preberemo iz GitHuba,
+# da skripta deluje tudi po novih izdajah, ko se ime datoteke spremeni.
+IZDAJA_API="https://api.github.com/repos/memelandfaner/safeer-browser-android/releases/latest"
+IZDAJA_JSON="$(curl -L -s "$IZDAJA_API")"
+APK_URL="$(printf '%s' "$IZDAJA_JSON" | grep -o '"browser_download_url": *"[^"]*\.apk"' | head -n 1 | cut -d'"' -f4)"
+SHA_URL="$(printf '%s' "$IZDAJA_JSON" | grep -o '"browser_download_url": *"[^"]*SHA256SUMS"' | head -n 1 | cut -d'"' -f4)"
+if [ -z "$APK_URL" ]; then
+    echo "❌ Ne najdem zadnje izdaje. Prenesi APK s https://safeer.si/browser/android/"
+    exit 1
+fi
 TEMP_APK="/tmp/Safeer-Browser.apk"
 TEMP_SHA="/tmp/SAFEER_SHA256SUMS"
 
