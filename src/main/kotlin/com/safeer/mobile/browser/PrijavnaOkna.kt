@@ -34,7 +34,15 @@ object PrijavnaOkna {
         "signin.aws.amazon.com", "amazon.com"
     )
 
-    private val odsekiOauth = setOf("oauth", "oauth2", "authorize")
+    /**
+     * Odseki poti, ki sami po sebi dovolj jasno govorijo o prijavi. Poleg OAuth tudi
+     * `login`, `signin` in `auth`: marsikatera stran odpre svoje prijavno okno na taki
+     * poti, oglasna okna pa je ne uporabljajo. Ujeti mora biti cel odsek - `authorize`
+     * da, `authorized-dealer` ne.
+     */
+    private val odsekiOauth = setOf(
+        "oauth", "oauth2", "authorize", "login", "signin", "sign-in", "auth", "sso"
+    )
 
     private fun potGovoriOPrijavi(odsek: String): Boolean {
         return odsek.contains("login") || odsek.contains("signin") || odsek.contains("sign-in") ||

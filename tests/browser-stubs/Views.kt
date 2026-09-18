@@ -1,8 +1,14 @@
 package android.view
 import android.content.Context
 open class View(val context: Context) {
+    companion object {
+        const val VISIBLE = 0
+        const val INVISIBLE = 4
+        const val GONE = 8
+    }
     var parent: ViewGroup? = null
     var layoutParams: Any? = null
+    var visibility: Int = VISIBLE
 }
 open class ViewGroup(context: Context): View(context) {
     class LayoutParams { companion object { const val MATCH_PARENT = -1 } }

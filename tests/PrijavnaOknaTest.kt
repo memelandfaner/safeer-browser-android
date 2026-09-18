@@ -46,12 +46,17 @@ fun main() {
     preveri("http://accounts.google.com/o/oauth2/v2/auth", false, "http, ne https")
     preveri("https://oglasi.example.com/banner/authorized-dealer.jpg", false, "beseda authorized ni odsek")
     preveri("https://example.com/authorize-dealer", false, "authorize- ni odsek authorize")
+    preveri("https://example.com/prijava", false, "slovenska pot ni v pravilu")
+    preveri("https://oglasi.example.com/go?to=x", false, "preusmeritveni oglas")
+    preveri("https://example.com/out/12345", false, "oglasni izhod")
     preveri("about:blank", false, "prazna stran")
     preveri("", false, "prazen naslov")
     preveri(null, false, "brez naslova")
     preveri("javascript:alert(1)", false, "javascript")
     preveri("https://", false, "samo shema")
-    preveri("https://example.com/login", false, "login pri neznanem gostitelju")
+    // Lastno prijavno okno strani: to mora delovati, sicer prijava na pol spleta ne dela.
+    preveri("https://example.com/login", true, "lastno prijavno okno strani")
+    preveri("https://trgovina.si/auth/callback", true, "lastni auth odsek")
 
     println("PrijavnaOkna: ${presteti - padli} passed, $padli failed")
     if (padli > 0) throw IllegalStateException("$padli preizkusov ni uspelo")

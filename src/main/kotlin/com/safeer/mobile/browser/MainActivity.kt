@@ -597,33 +597,65 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
      */
     private fun odpriPojavnoOkno(resultMsg: android.os.Message): Boolean {
         val transport = resultMsg.obj as? android.webkit.WebView.WebViewTransport ?: return false
-        val zavihek = try {
-            tabManager.createTab(this, "about:blank", false)
-        } catch (_: Throwable) {
-            return false
-        }
-        val pogled = zavihek.webView
+        // Pogled se ni zavihek: dokler ne vemo, kam okno pelje, stevec zavihkov miruje.
+        val pogled = try { tabManager.pripraviPojavni() } catch (_: Throwable) { return false }
+        val odpiralec = tabManager.getActiveTab()?.id
         var odloceno = false
+
+        fun zavrzi(razlog: String, naslov: String) {
+            android.util.Log.i("SafeerPojavno", "$razlog: ${naslov.take(90)}")
+            // Pogleda ne unicujemo znotraj njegovega lastnega povratnega klica - Chromium
+            // je takrat se sredi obdelave navigacije. Pospravimo ga v naslednjem obhodu.
+            pogled.post { tabManager.zavrziPojavni(pogled) }
+        }
 
         pogled.vratarPojavnega = vratar@{ naslov ->
             if (odloceno) return@vratar false
             odloceno = true
-            val prijava = PrijavnaOkna.jePrijava(naslov)
             val zdaj = android.os.SystemClock.elapsedRealtime()
             val podvojeno = naslov == zadnjePojavno.first && zdaj - zadnjePojavno.second < 2_000L
-            if (prijava && !podvojeno) {
-                zadnjePojavno = naslov to zdaj
-                runOnUiThread { try { tabManager.switchTab(zavihek.id) } catch (_: Throwable) {} }
-                android.util.Log.i("SafeerPojavno", "Prijavno okno odprto: ${naslov.take(90)}")
-                true
-            } else {
-                android.util.Log.i(
-                    "SafeerPojavno",
-                    if (podvojeno) "Podvojeno okno zaprto: ${naslov.take(90)}"
-                    else "Pojavno okno preprečeno: ${naslov.take(90)}"
-                )
-                runOnUiThread { try { tabManager.closeTab(this, zavihek.id) } catch (_: Throwable) {} }
-                false
+            when {
+                podvojeno -> {
+                    zavrzi("Podvojeno okno zaprto", naslov)
+                    false
+                }
+                !PrijavnaOkna.jePrijava(naslov) -> {
+                    zavrzi("Pojavno okno preprečeno", naslov)
+                    false
+                }
+                else -> {
+                    zadnjePojavno = naslov to zdaj
+                    // Prazna lupina je ze prikazala svojo stran; tak pogled ostane prazen,
+                    // ce ga preselimo med zavihke, zato ga zavrzemo in naslov odpremo v
+                    // novem zavihku. Okno, ki se ni nicesar prikazalo, pa sprejmemo takega,
+                    // kot je - tako ostane povezava z izvorno stranjo (window.opener).
+                    val lupina = (pogled.url ?: "") == "about:blank"
+                    if (lupina) {
+                        android.util.Log.i("SafeerPojavno", "Prijava v novem zavihku: ${naslov.take(90)}")
+                        pogled.post {
+                            tabManager.zavrziPojavni(pogled)
+                            try {
+                                // Tudi ta zavihek je pojavno okno: Nazaj ga zapre in vrne na
+                                // stran, ki ga je odprla, ne pa hodi po njegovi zgodovini.
+                                val nov = tabManager.createTab(this, naslov, true)
+                                nov.jePojavni = true
+                                nov.odpiralec = odpiralec
+                            } catch (_: Throwable) {}
+                        }
+                        false
+                    } else {
+                        pogled.post {
+                            try {
+                                tabManager.posvoji(pogled, naslov, odpiralec)
+                                android.util.Log.i("SafeerPojavno", "Prijavno okno odprto: ${naslov.take(90)}")
+                            } catch (e: Throwable) {
+                                android.util.Log.w("SafeerPojavno", "Zavihka ni bilo mogoce odpreti: ${e.message}")
+                                tabManager.zavrziPojavni(pogled)
+                            }
+                        }
+                        true
+                    }
+                }
             }
         }
 
@@ -635,7 +667,7 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
             if (!odloceno) {
                 odloceno = true
                 pogled.vratarPojavnega = null
-                try { tabManager.closeTab(this, zavihek.id) } catch (_: Throwable) {}
+                tabManager.zavrziPojavni(pogled)
             }
         }, 15_000L)
         return true
@@ -2488,6 +2520,13 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
             return
         }
 
+        // Pojavno okno (prijava): Nazaj ga zapre in nas vrne na stran, ki ga je odprla.
+        // Prva stran takega okna je prazna lupina - obicajen Nazaj bi pustil prazen zaslon.
+        if (activeTab != null && tabManager.jePojavni(activeTab) && !jeSmiselnoNazaj(activeTab.webView)) {
+            tabManager.zapriPojavni(this, activeTab)
+            return
+        }
+
         if (activeTab != null && activeTab.webView.canGoBack()) {
             activeTab.webView.goBack()
             return
@@ -2499,6 +2538,18 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         }
 
         super.onBackPressed()
+    }
+
+    /** Ali ima Nazaj kam iti, ali bi nas pustil na prazni lupini pojavnega okna? */
+    private fun jeSmiselnoNazaj(pogled: android.webkit.WebView): Boolean {
+        if (!pogled.canGoBack()) return false
+        return try {
+            val seznam = pogled.copyBackForwardList()
+            val prejsnji = seznam.getItemAtIndex(seznam.currentIndex - 1)?.url.orEmpty()
+            prejsnji.isNotBlank() && !prejsnji.startsWith("about:")
+        } catch (_: Throwable) {
+            false
+        }
     }
 
     private fun isYoutubeMixWatch(url: String): Boolean {
