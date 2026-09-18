@@ -1,156 +1,106 @@
-# 🛡️ Safeer Browser (Mobile Security Edition)
+# Safeer Browser for Android
 
-### **Safeer Browser v1.0.19 — izvorna koda**
-*Open-source Android browser with local malware, phishing, C2, tracker protection and Instant YouTube Music Engine.*
-*Novosti v1.0.19: stroga zaščita mešanih vsebin na HTTPS, pravilna statistika blokad, obnova odprtih zavihkov, uspavanje neaktivnih strani in prikaz uspešnosti posodabljanja seznamov.*
+A privacy-first mobile browser with local malware, phishing and C2 protection, ad and tracker
+blocking, and background playback — all decided on the device.
 
-Različica nameščenega APK je navedena v nastavitvah aplikacije. Spremembe izvorne kode same po sebi ne posodobijo že objavljenih APK datotek. [Podrobnosti in omejitve različice 1.0.19](RELEASE_NOTES_1.0.19.md).
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](LICENSE)
+[![Platform](https://img.shields.io/badge/Platform-Android_9%2B-3ddc84?style=flat-square)](#requirements)
+[![Downloads](https://img.shields.io/badge/Download-Releases-00e5ff?style=flat-square)](../../releases/latest)
 
-🌐 **Uradna spletna stran & predstavitveni portal:** [https://memelandfaner.github.io/-safeer-browser/](https://memelandfaner.github.io/-safeer-browser/)
+Slovenian: [README.sl.md](README.sl.md) · Website: [safeer.si](https://safeer.si)
 
-> ⚠️ **Safeer is a security layer, not a guarantee against all online threats.**  
-> Safeer zmanjšuje tveganje in blokira znane grožnje; ne zagotavlja zaščite pred vsemi novimi ali neznanimi grožnjami (Zero-Day).
-
-**Safeer Browser** je sodoben odprtokodni mobilni spletni brskalnik za Android z napredno večslojno zaščito, zasnovan za bistveno zmanjšanje izpostavljenosti znanim Botnet C2 strežnikom, zlonamerni programski opremi (Malware), spletnemu ribarjenju (Phishing) ter agresivnim sledilnim in oglasnim mrežam.
-
----
-
-## 🌟 Odprta Koda, Navdih in Spodbuda k Lastnemu Razvoju (Fork & Customize)
-
-> **Kdor obvladuje brskalnik, določa pravila spleta.**  
-> Milijon uporabnikov ima milijon različnih potreb, okusov in prioritet. Safeer je 100 % odprtokoden projekt pod licenco [Apache 2.0](LICENSE) prav zato, da služi kot odprta platforma in navdih za skupnost.  
->  
-> 👉 **Vabljeni k ustvarjanju lastnih vejic (Fork)!**  
-> Vzemite izvorno kodo v svoje roke, prilagodite varnostne sezname, spremenite grafično podobo, dodajte lastne bližnjice ali preizkusite nove eksperimentalne funkcionalnosti. Internet je boljši, ko ima vsakdo možnost ustvariti brskalnik po svojih lastnih željah in potrebah.
+> **Safeer is a security layer, not a guarantee.** It reduces exposure and blocks known
+> threats. It cannot protect against every new or unknown attack.
 
 ---
 
-## 🛑 Ključne Varnostne in Zasebnostne Značilnosti
+## What it does
 
-### 1. 🛡️ Večslojni Threat Shield z Atomsko Zamenjavo (Atomic Trie Swap)
-- **Viri groženj v živo (Live HTTPS Feeds)**:
-  - **abuse.ch ThreatFox IOC**: Zaznava in blokada C2 (Command & Control) botnet strežnikov in indikatorjev napada.
-  - **abuse.ch URLhaus**: Blokada domen in gostiteljev za razširjanje zlonamerne kode (Malware distribution).
-  - **Phishing Army Extended**: Zaščita pred lažnim predstavljanjem in poskusi kraje osebnih podatkov.
-- **Semenska baza (Seed Database)**:
-  - Vgrajeni indikatorji napadov (**abuse.ch ThreatFox IOC**) in zlonamerna omrežja (**StevenBlack Unified**).
-- **🔄 Brezprekinitvena Atomska Zamenjava (Atomic Swap)**:
-  - Ob posodobitvi seznamov v ozadju se zgradi novo drevo groženj in se atomsko zamenja (`swapThreatTrie`), s čimer se prepreči ohranjanje zastarelih lažnih zaznav.
-- **🔒 Zero-Bypass Pravilo**:
-  - Za nevarne C2/malware domene **ne veljajo nobene video ali embed izjeme**.
-- **🔑 Enokratni Kriptografski Žetoni za Obvoz (One-Time Token Interstitial)**:
-  - Ob poskusu obiska nevarne domene se prikaže opozorilni zaslon. Morebiten obvoz na lastno odgovornost (`safeer://bypass-threat`) je zaščiten z naključnim enokratnim žetonom (UUID), vezanim na točno določeno domeno in časovno veljavnost (5 min). Zunanje spletne strani ne morejo sprožiti neavtoriziranega odklepa.
-- **📝 Kriptografska Verifikacija & SHA-256 Revizija Feedov**:
-  - Ob vsakem prenosu varnostnih seznamov brskalnik preveri strukturne markerje avtentičnosti izdajatelja (`abuse.ch`, `Phishing Army`), meje veljavne velikosti ter prag minimalnega števila pravil. Preprečena je uveljavitev neveljavnih podatkov ali prestreženih HTML portalov. Izračunana kontrolna vsota SHA-256 se zabeleži v varnostni revizijski dnevnik in shrani v varovano lokalno shrambo.
+**Threat shield.** Botnet C2 servers, malware distribution hosts and phishing domains from
+abuse.ch (ThreatFox, URLhaus) and Phishing Army, plus a built-in seed list, matched locally in
+O(k) against a reverse-domain trie. Updated lists are built in the background and swapped in
+atomically, so a stale tree never lingers. Downloads are checked for the publisher's structural
+markers, a sane size and a minimum rule count before they are trusted, and the SHA-256 of each
+accepted feed is written to a local audit log. Signed bundles must pass their Ed25519 signature
+or they are not used at all.
 
-### 2. 🛡️ Stroga Zaščita Zasebnosti in Dovoljenj (Zero Auto-Grant)
-- **Brezkompromisna zapora mešanih vsebin (`MIXED_CONTENT_NEVER_ALLOW`)**:
-  - Dosledno upoštevanje priporočil Android Security: brskalnik popolnoma prepoveduje nalaganje nezaščitenih HTTP elementov na HTTPS povezavah.
-- **Izolacija Content Providerjev (`allowContentAccess = false`)**:
-  - Popolnoma onemogočen dostop do `content://` shem prek spletnih vsebin, kar odpravlja vektorje napadov na sistemske ponudnike podatkov.
-- **Pripravljenost na Android 16 (Target SDK 36)**:
-  - Polna usklajenost z najnovejšimi standardi Android varnostnega modela.
-- **Interaktivna privolitev za strojne vire**:
-  - Brskalnik **nikoli avtomatsko ne odobri** dostopa do mikrofona, kamere ali DRM zaščitenih medijev (`onPermissionRequest`). Uporabnik je vedno vprašan s potrditvenim oknom z jasnim izpisom gostitelja (`origin`). Ob preklicu se klic varno zavrne (`deny()`).
-- **Nadzor nad geolokacijo**:
-  - Dostop do geografske lokacije zahteva izrecno potrditev uporabnika. Ob zavrnitvi ali zaprtju dialoga je dostop blokiran.
-- **Popolna podpora za varno prijavo (OAuth 2.0 / SSO) & Zaščita pred popunderji**:
-  - Varno odpiranje avtentikacijskih oken (`onCreateWindow`) zgolj ob neposredni uporabniški interakciji (`isUserGesture`), kar popolnoma prepreči samodejne popunderje in hkrati zagotavlja nemoteno delovanje Google, GitHub in bančnih prijav.
-- **Kanonična zaščita pred Path Traversal**:
-  - `MobileFileProvider` preverja kanonične poti (`canonicalFile`), kar preprečuje pobeg iz predvidenih map prek `../` ali simbolnih povezav.
+**No bypass for the dangerous cases.** Video and embed exceptions never apply to C2 or malware
+domains. If you choose to continue past a threat warning anyway, that override is a one-time
+UUID token bound to that one domain for five minutes — a web page cannot forge it.
 
-### 3. 🧹 Kirurško Čiščenje Sledilnih Parametrov v URL-jih (Query Tracker Stripping)
-- **Avtomatska nevtralizacija sledilcev**:
-  - Ob kliku na povezave ali vnosu v naslovno vrstico se iz URL-jev kirurško odstranijo sledilni parametri za medstransko profiliranje:
-    `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `fbclid`, `gclid`, `msclkid`, `twclid`, `ttclid`, `yclid`, `mc_eid`, `gad_source`, `gbraid`, `wbraid`, `dclid`, `zanpid`, `igshid`.
-- **Ničelna kolateralna škoda (Zero UX Regression)**:
-  - Stroga zaščita avtentikacijskih parametrov (OAuth 2.0 / SSO: `code`, `state`, `token`, `session_state`, `access_token`, `client_id`, `redirect_uri`), plačilnih portalov (Stripe, bančni portali: `session_id`, `payment_id`, `amount`, `return_url`), iskalnih poizvedb (`q`, `query`, `search`) in multimedijskih parametrov (`v`, `t`, `list`).
+**Ad and tracker blocking.** An EasyList-compatible engine plus blocked-domain matching, with
+cosmetic filtering for what survives.
 
-### 4. 🌐 Global Privacy Control (W3C GPC) & Do Not Track (DNT)
-- **DOM / JavaScript API**:
-  - `navigator.globalPrivacyControl = true` in `navigator.doNotTrack = "1"` sta privzeto uveljavljena pred izvajanjem katerekoli spletne skripte, kar samodejno sporoči platformam za upravljanje soglasij (CMP: OneTrust, Cookiebot, Klaro itd.) zahtevo za prepoved prodaje ali deljenja osebnih podatkov.
-- **HTTP Zahtevki**:
-  - Samodejno pošiljanje privzetih HTTP glav `Sec-GPC: 1` in `DNT: 1` pri vseh navigacijskih zahtevkih.
+**BankGuard.** Real banking and payment sites are left alone by cosmetic filters and script
+injection, so the browser can never be the reason a payment fails.
 
-### 5. ⚡ Vrhunsko Blokiranje Oglasov & Proti-Clickjacking Zaščita
-- **Razširjen Suffix Trie ($O(k)$)**:
-  - Vgrajen obsežen register več kot 120 oglasnih borz, agresivnih popunder omrežij, lažnih potisnih obvestil ter vedenjske telemetrije.
-- **Nevtralizacija prosojnih celozaslonskih prevlek**:
-  - Zaznava in takojšnje brisanje nevidnih clickjacking slojev, ki jih spletna mesta uporabljajo za sprožitev oglasov ob prvem dotiku zaslona ali predvajalnika.
-- **1x1 Prozorni GIF Nadomestek**:
-  - Blokirane oglasne slike se nadomestijo z nevidnim 1x1 GIF-om, kar prepreči prikazovanje grdih zlomljenih okvirjev slik.
+**Tracking parameters stripped.** `utm_*`, `fbclid`, `gclid`, `msclkid`, `twclid`, `ttclid`,
+`yclid`, `mc_eid`, `gad_source`, `gbraid`, `wbraid`, `dclid`, `igshid` and friends are removed
+from links you open. Authentication parameters (`code`, `state`, `token`, `redirect_uri`, …),
+payment parameters, search queries and media parameters are explicitly protected, so sign-ins
+and checkouts keep working.
 
-### 6. 🎨 Vgrajeno Kozmetično Filtriranje & Optimizacija Medijev
-- Vgrajena CSS pravila za skrivanje oglasnih elementov (Element Hiding Rules po vzoru EasyList selektorjev), ki brez zunanjih odvisnosti odstranijo prazne oglasne okvirje (`.adsbygoogle`, `iframe[src*="doubleclick"]` ipd.).
-- Neaktivni zavihki se po 10 minutah lahko uspavajo; aktivna stran, zaznano predvajanje, urejeni obrazci in prijavne strani ostanejo naloženi. Ob pritisku se zavihek obnovi.
-- Brezkompromisen varnostni način `MIXED_CONTENT_NEVER_ALLOW`, ki onemogoča kakršnokoli nalaganje nešifriranih elementov na zaščitenih spletnih straneh.
+**Global Privacy Control and Do Not Track.** `Sec-GPC: 1` and `DNT: 1` on requests, and the
+matching JavaScript properties in the page.
 
-### 7. ⚙️ Uporabniške Nastavitve, Persistenca & Podpora za Intente (v1.1)
-- **Trajna hramba nastavitev (`PreferencesManager` / `SharedPreferences`)**:
-  - Samodejno shranjevanje stikal: AdBlock ščit, AMOLED Temni način, Piškotki 3. oseb, JavaScript.
-  - Možnost izbire privzetega iskalnika: **Google**, **DuckDuckGo** ali **Brave Search** z neposrednim iskanjem prek Omniboxa.
-  - Kumulativni števec preprečenih oglasov in groženj (se ne ponastavi ob ponovnem zagonu aplikacije).
-- **Prijavljeni prenosi s piškotki (`DownloadHandler`)**:
-  - Samodejno posredovanje `Cookie` in `Referer` glav v `DownloadManager`, kar preprečuje napake `403 Forbidden` pri prenosu datotek iz prijavljenih uporabniških računov (oblak, forumi, repozitoriji).
-- **Sistemska integracija Android (`ACTION_SEND` & `ACTION_WEB_SEARCH`)**:
-  - Brskalnik podpira sprejemanje deljenih povezav in besedil iz drugih aplikacij (WhatsApp, Telegram, e-pošta) ter obdelavo sistemskih iskalnih zahtevkov.
-- **Popolno čiščenje podatkov brskanja**:
-  - Vgrajeno orodje za takojšen izbris piškotkov (`removeAllCookies`), predpomnilnika (`clearCache`), spletne shrambe (`deleteAllData`) in zgodovine brskanja.
-- **Pristen User-Agent**:
-  - Uporaba naravnega sistemskega WebView User-Agenta namesto statičnih fiksnih nizov, kar preprečuje napačne bot-checke in zmanjšuje tveganje za zlom strani.
+**Encrypted DNS.** DNS-over-HTTPS with HTTP/2, without a silent fallback to plaintext DNS when
+it fails.
 
----
+**Strict defaults.** Mixed content is never allowed on HTTPS pages. `content://` access from web
+content is off. Camera, microphone, location and protected media are never granted
+automatically — you are asked, with the origin shown, and a dismissed dialog is a denial.
 
-## ⚡ Namestitev in Povezave (Installation & Verification)
+**Sign-in windows that work.** A popup is opened only on a real user gesture, which stops
+popunders; when its destination is an OAuth or sign-in URL, it becomes a real tab and keeps its
+`window.opener`, so Google, Facebook, X and bank logins complete normally.
 
-> [!IMPORTANT]
-> **Pomembno ob posodobitvi**: Različica v1.0.2 je podpisana z uradnim Safeer produkcijskim certifikatom (`CN=Safeer Mobile Browser`). Če imate na napravi še nameščeno staro razvojno (debug) različico, jo morate pred namestitvijo najprej odstraniti, saj Android zaradi varnosti ne dovoljuje neposredne nadgradnje aplikacije z drugačnim podpisnim certifikatom.
+**Tabs that do not eat the battery.** Inactive tabs sleep and their views are released; open
+tabs come back after a restart.
 
-### 📥 1. Uradne APK Datoteke in Preverjanje Celovitosti:
-* **Uradni Release APK**: [Safeer-Browser.apk](https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/Safeer-Browser.apk) ali [Safeer-Mobile.apk](https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/Safeer-Mobile.apk)
-* **Release Artefakt**: [safeer-browser-release.apk](https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/Release/Artifacts/safeer-browser-release.apk)
-* **Kontrolne vsote**: [SHA256SUMS](https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/SHA256SUMS)
+**Background playback** for music and podcasts, and **SponsorBlock** for YouTube.
 
-Preverjanje celovitosti prenesenega paketa v terminalu:
+## No per-site recipes
+
+Safeer contains no adaptation written for one named website. Everything above works by what a
+page *is*, not by who publishes it.
+
+## Install
+
+Download the APK from [Releases](../../releases/latest) and open it on the phone; Android will
+ask you to allow installation from this source. Verify it first if you like:
+
 ```bash
-# Preverjanje posameznega prenesenega paketa:
 sha256sum -c --ignore-missing SHA256SUMS
-
-# Ali preverjanje obeh paketov, če sta oba v mapi:
-sha256sum -c SHA256SUMS
 ```
 
-### 📲 2. Samodejna namestitev prek uradnega terminalskega ukaza:
-```bash
-curl -sL https://raw.githubusercontent.com/memelandfaner/-safeer-browser/main/install_safeer.sh | bash
-```
+## Requirements
 
-### 📱 3. Namestitev prek orodja ADB:
-```bash
-adb install -r Safeer-Browser.apk
-```
+Android 9 (API 28) or newer. Built against API 36.
 
----
-
-## 🛠️ Gradnja iz Izvorne Kode
+## Build from source
 
 ```bash
 ./build_mobile_apk.sh
 ```
 
-Regresijski testi zahtevajo **JDK 17 ali novejši**, Kotlin in Android SDK. `JAVA_HOME`, `KOTLINC` in `ANDROID_JAR` omogočajo izbiro orodij. Celotni paket se izvaja tudi v GitHub Actions:
+Release signing uses a keystore that is not in this repository; without it, build the debug
+variant. Tests:
 
 ```bash
 bash tests/run_tests.sh
 ```
 
-Skripta samostojno prevede vire z AAPT2, prevede Kotlin kodo s `kotlinc`, generira DEX z `D8`, podpiše paket z `uber-apk-signer` ter samodejno osveži kontrolne vsote `SHA256SUMS`. Lokacijo orodij je mogoče prilagoditi prek okoljske spremenljivke `ANDROID_BUILD_TOOLS`.
+## Fork it
 
----
+Whoever controls the browser sets the rules of the web. This project is Apache-2.0 so that you
+can take it, change the block lists, change the look, add what you need, and ship your own.
+That is not a footnote — it is the point.
 
-## ⚖️ Pravno Obvestilo in Omejitev Odgovornosti (Disclaimer)
+## Contributing
 
-- **Varnostna omejitev**: **Safeer is a security layer, not a guarantee against all online threats.** Noben spletni brskalnik ali varnostni filter ne more zagotoviti 100 % ali absolutne zaščite pred vsemi novimi, ciljanimi ali še neznanimi grožnjami (Zero-Day). Safeer deluje kot lokalni varnostni sloj, ki bistveno zmanjšuje tveganje in blokira znana škodljiva vozlišča, zlonamerne domene in sledilce.
-- **Vsebine in licence**: Kozmetično filtriranje oglasov uporablja odprta pravila skupnosti EasyList. Varnostne sezname zagotavljajo abuse.ch, Phishing Army in StevenBlack pod ustreznimi odprtimi pogoji uporabe.
-- **Licenca in Prilagajanje (Forking)**: Projekt je izdan pod licenco [Apache License 2.0](LICENSE). Prosto ga klonirajte, delite, predelujte in prilagajajte po lastnih željah in potrebah.
-- **Zasebnost**: Podrobnosti o ravnanju s podatki najdete v dokumentu [PRIVACY_POLICY.md](PRIVACY_POLICY.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues go through [SECURITY.md](SECURITY.md),
+privately.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
