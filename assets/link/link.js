@@ -9,7 +9,7 @@
  * (window.SafeerLink), ki ga aplikacija pripne samo temu pogledu. Odgovori pridejo
  * nazaj v window.safeerLinkOdziv, ker most ne sme cakati na omrezje.
  *
- * Nacela vmesnika (Matejeve smernice):
+ * Nacela vmesnika:
  *  - uporabnik ne vidi ne IP-jev ne vrat ne nastavitev,
  *  - stanje je barva: zelena povezano, siva ni Safeer Linka, rumena tezava,
  *  - imena naprav so cloveska, nikoli tehnicni ID,

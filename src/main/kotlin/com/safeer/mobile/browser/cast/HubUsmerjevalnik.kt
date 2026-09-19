@@ -216,7 +216,7 @@ class HubUsmerjevalnik(
 
     // ------------------------------------------------------------------ imena naprav
     //
-    // Uporabnik lahko napravo poimenuje po svoje ("Dnevna soba", "Matejeva tablica"). Ime
+    // Uporabnik lahko napravo poimenuje po svoje ("Dnevna soba", "Anina tablica"). Ime
     // hrani Hub, zato ga vidijo vse naprave enako, ne glede na to, kaj naprava trdi o sebi.
 
     private val vzdevki = HashMap<String, String>()

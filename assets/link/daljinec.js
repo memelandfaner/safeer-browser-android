@@ -428,26 +428,26 @@
     ukaz("launch_app", { package: a.package }, function (izid) { pokaziOdgovor(izid, t("odpiram", { ime: a.label || a.package })); });
   }
 
-  /** Aplikacija po (delu) imena: "youtube" najde SmartTube ali YouTube, "brskalnik" Safeer. */
+  /** Aplikacija po (delu) imena: "youtube" najde YouTube, "brskalnik" Safeer. */
   function najdiAplikacijo(ime) {
     var iskano = normaliziraj(ime);
     if (!iskano) return null;
     var kandidati = stanje.aplikacije.slice();
     // Sopomenke, ki jih ljudje uporabljajo namesto pravega imena aplikacije (prva ima prednost).
     var sopomenke = {
-      "youtube": ["smarttube", "smart tube", "youtube"],
-      "jutub": ["smarttube", "youtube"], "yutub": ["smarttube", "youtube"], "yt": ["smarttube", "youtube"],
+      "youtube": ["youtube"],
+      "jutub": ["youtube"], "yutub": ["youtube"], "yt": ["youtube"],
       "brskalnik": ["safeer", "browser", "chrome"], "browser": ["safeer", "browser"],
       "navegador": ["safeer", "browser"], "navigateur": ["safeer", "browser"],
-      "filmi": ["streamtv", "netflix"], "filme": ["streamtv", "netflix"],
-      "serije": ["streamtv", "netflix"], "movies": ["streamtv", "netflix"],
+      "filmi": ["netflix"], "filme": ["netflix"],
+      "serije": ["netflix"], "movies": ["netflix"],
       "televizija": ["xplore", "live tv", "tv"], "televizijo": ["xplore", "live tv", "tv"], "tv v zivo": ["xplore", "live tv"],
       "fernsehen": ["xplore", "live tv", "tv"], "television": ["xplore", "live tv", "tv"], "televisione": ["xplore", "live tv", "tv"],
-      "glasba": ["spotify", "youtube music", "smarttube"], "music": ["spotify", "youtube music"],
+      "glasba": ["spotify", "youtube music"], "music": ["spotify", "youtube music"],
       "nastavitve": ["settings", "nastavitve"], "settings": ["settings"], "einstellungen": ["settings"]
     };
-    // Sopomenke imajo prednost pred dobesednim imenom: "youtube" najprej poskusi SmartTube
-    // (brez oglasov), sele nato uradni YouTube. Kar nima sopomenk, se isce dobesedno.
+    // Sopomenke imajo prednost pred dobesednim imenom ("jutub" -> YouTube).
+    // Kar nima sopomenk, se isce dobesedno.
     var iskanja = (sopomenke[iskano] || [iskano]).slice();
     if (iskanja.indexOf(iskano) < 0) iskanja.push(iskano);
     // Tocke: tocno ime > ime se zacne z iskanim > iskano je beseda v imenu > del imena (>= 4 znaki)
@@ -503,7 +503,7 @@
       stranGor: ["stran gor", "drsi gor", "pomakni gor"], stranDol: ["stran dol", "drsi dol", "pomakni dol", "listaj"],
       odpri: ["odpri", "zazeni", "zagni", "pokazi", "vklopi", "prizgi"],
       program: ["program", "kanal", "preklopi na"],
-      youtube: ["youtube", "jutub", "yutub", "smarttube", "smart tube"],
+      youtube: ["youtube", "jutub", "yutub"],
       predvajajGlasbo: ["predvajaj", "zavrti", "poslusaj", "poslusal bi", "pesem", "komad", "glasbo", "glasba"],
       poisci: ["poisci", "isci", "najdi", "google", "kdo je", "kaj je", "kje je", "vreme"],
       posnetek: ["posnetek", "kaj je na zaslonu", "pokazi zaslon", "zaslon"],
@@ -526,7 +526,7 @@
       stranGor: ["page up", "scroll up"], stranDol: ["page down", "scroll down", "scroll"],
       odpri: ["open", "launch", "start", "show", "run", "go to"],
       program: ["channel", "program", "switch to"],
-      youtube: ["youtube", "smarttube", "smart tube"],
+      youtube: ["youtube"],
       predvajajGlasbo: ["play", "listen to", "put on", "song", "music"],
       poisci: ["search for", "search", "find", "google", "look up", "who is", "what is", "where is", "weather"],
       posnetek: ["screenshot", "show screen", "what is on the screen", "screen"],
@@ -545,7 +545,7 @@
       stranGor: ["seite hoch", "nach oben scrollen"], stranDol: ["seite runter", "nach unten scrollen", "scrollen"],
       odpri: ["offne", "offnen", "starte", "starten", "zeige", "zeig", "mach", "geh zu"],
       program: ["programm", "kanal", "sender", "schalte auf", "umschalten auf"],
-      youtube: ["youtube", "smarttube"], predvajajGlasbo: ["spiel", "spiele", "abspielen", "lied", "musik", "hore"],
+      youtube: ["youtube"], predvajajGlasbo: ["spiel", "spiele", "abspielen", "lied", "musik", "hore"],
       poisci: ["suche nach", "suche", "such", "finde", "google", "wer ist", "was ist", "wo ist", "wetter"],
       posnetek: ["screenshot", "bildschirm zeigen", "bildschirm"],
       znovaZazeni: ["neu starten", "neustart"], pocisti: ["cache leeren", "speicher freigeben"],
@@ -562,7 +562,7 @@
       stranGor: ["pagina arriba", "subir"], stranDol: ["pagina abajo", "bajar", "desplazar"],
       odpri: ["abre", "abrir", "inicia", "iniciar", "lanza", "muestra", "ve a"],
       program: ["canal", "programa", "cambia a", "pon el"],
-      youtube: ["youtube", "smarttube"], predvajajGlasbo: ["pon", "reproduce", "escuchar", "cancion", "musica"],
+      youtube: ["youtube"], predvajajGlasbo: ["pon", "reproduce", "escuchar", "cancion", "musica"],
       poisci: ["busca", "buscar", "encuentra", "google", "quien es", "que es", "donde esta", "tiempo"],
       posnetek: ["captura", "muestra la pantalla", "pantalla"],
       znovaZazeni: ["reiniciar", "reinicia"], pocisti: ["borrar cache", "limpiar cache", "liberar memoria"],
@@ -579,7 +579,7 @@
       stranGor: ["page haut", "defiler vers le haut", "monte"], stranDol: ["page bas", "defiler vers le bas", "descends", "defile"],
       odpri: ["ouvre", "ouvrir", "lance", "lancer", "demarre", "montre", "va sur", "va a"],
       program: ["chaine", "programme", "passe sur", "mets la"],
-      youtube: ["youtube", "smarttube"], predvajajGlasbo: ["joue", "mets", "ecouter", "ecoute", "chanson", "musique"],
+      youtube: ["youtube"], predvajajGlasbo: ["joue", "mets", "ecouter", "ecoute", "chanson", "musique"],
       poisci: ["cherche", "recherche", "trouve", "google", "qui est", "qu est ce que", "ou est", "meteo"],
       posnetek: ["capture", "montre l ecran", "ecran"],
       znovaZazeni: ["redemarre", "redemarrer"], pocisti: ["vide le cache", "vider le cache", "libere la memoire"],
@@ -596,7 +596,7 @@
       stranGor: ["pagina su", "scorri su"], stranDol: ["pagina giu", "scorri giu", "scorri"],
       odpri: ["apri", "aprire", "avvia", "lancia", "mostra", "vai su", "vai a"],
       program: ["canale", "programma", "metti il", "passa a"],
-      youtube: ["youtube", "smarttube"], predvajajGlasbo: ["metti", "riproduci", "ascolta", "ascoltare", "canzone", "musica"],
+      youtube: ["youtube"], predvajajGlasbo: ["metti", "riproduci", "ascolta", "ascoltare", "canzone", "musica"],
       poisci: ["cerca", "trova", "google", "chi e", "cos e", "dov e", "meteo"],
       posnetek: ["screenshot", "mostra lo schermo", "schermo"],
       znovaZazeni: ["riavvia", "riavviare"], pocisti: ["svuota la cache", "pulisci la cache", "libera la memoria"],
@@ -715,7 +715,7 @@
       return youtube(brezYt !== null ? (brezYt || glasbaOst) : glasbaOst);
     }
 
-    // Aplikacija samo po imenu ("smarttube", "netflix")
+    // Aplikacija samo po imenu ("netflix")
     var app2 = najdiAplikacijo(s);
     if (app2 && s.length <= 24) return { dejanje: "launch_app", parametri: { package: app2.package }, opis: t("odpiram", { ime: app2.label }) };
 

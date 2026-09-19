@@ -26,7 +26,7 @@ private fun preveriEnako(opis: String, pricakovano: Any?, dobljeno: Any?) {
 
 // ------------------------------------------------------------ pomozni odjemalec
 
-private class Lazni(override val naslov: String = "192.168.0.50") : HubUsmerjevalnik.Odjemalec {
+private class Lazni(override val naslov: String = "192.168.50.50") : HubUsmerjevalnik.Odjemalec {
     val prejeto = ArrayList<String>()
     var zaprt = false
     var zapriKodo = 0
@@ -66,7 +66,7 @@ private fun zahteva(
     metoda: String,
     pot: String,
     telo: String = "",
-    odjemalec: String = "192.168.0.50",
+    odjemalec: String = "192.168.50.50",
     glave: Map<String, String> = emptyMap(),
     poizvedba: Map<String, String> = emptyMap()
 ) = HubStreznik.Zahteva(metoda, pot, poizvedba, glave, telo, odjemalec)
@@ -132,8 +132,8 @@ private fun preizkusRegistra() {
     println("\n== register naprav in cast ==")
     val u = usmerjevalnik()
 
-    val tv = Lazni("192.168.0.20")
-    val telefon = Lazni("192.168.0.30")
+    val tv = Lazni("192.168.50.20")
+    val telefon = Lazni("192.168.50.30")
 
     preveriEnako("prejemnik se registrira", "cast.ack", tip(u.odgovorNa(tv, registracija("tv1", "receiver"))!!))
     preveriEnako("potrditev je sprejeta", "accepted", polje(u.odgovorNa(tv, registracija("tv1", "receiver"))!!, "status"))
@@ -207,8 +207,8 @@ private fun preizkusRegistra() {
 private fun preizkusSinhronizacije() {
     println("\n== sinhronizacija ==")
     val u = usmerjevalnik()
-    val a = Lazni("192.168.0.31")
-    val b = Lazni("192.168.0.32")
+    val a = Lazni("192.168.50.31")
+    val b = Lazni("192.168.50.32")
     u.odgovorNa(a, registracija("fonA", "sync-client", """["sync"]"""))
     u.odgovorNa(b, registracija("fonB", "sync-client", """["sync"]"""))
 
@@ -221,7 +221,7 @@ private fun preizkusSinhronizacije() {
     preveriEnako("kategorija je shranjena", listOf("bookmarks"), u.kategorijeSinhronizacije())
 
     // Naprava, ki je bila ugasnjena, dohiti
-    val c = Lazni("192.168.0.33")
+    val c = Lazni("192.168.50.33")
     u.odgovorNa(c, registracija("fonC", "sync-client", """["sync"]"""))
     c.pocisti()
     val zahtevek = """{"id":"z1","type":"sync.request","payload":{"category":"bookmarks"}}"""
@@ -259,7 +259,7 @@ private fun preizkusSinhronizacije() {
 
     // Starejsi zapis ne povozi novejsega
     u.odgovorNa(a, """{"id":"s1","type":"sync.data","payload":{"category":"bookmarks","version":1,"timestamp":50,"data":["staro"]}}""")
-    val d = Lazni("192.168.0.34")
+    val d = Lazni("192.168.50.34")
     u.odgovorNa(d, registracija("fonD", "sync-client", """["sync"]"""))
     d.pocisti()
     u.odgovorNa(d, """{"id":"z3","type":"sync.request","payload":{"category":"bookmarks"}}""")
@@ -274,7 +274,7 @@ private fun preizkusSinhronizacije() {
 
     // Brez druge naprave, ki sinhronizira
     val u2 = usmerjevalnik()
-    val sam = Lazni("192.168.0.35")
+    val sam = Lazni("192.168.50.35")
     u2.odgovorNa(sam, registracija("sam", "sync-client", """["sync"]"""))
     preveriEnako("sam s sabo ne sinhronizira", "rejected",
         polje(u2.odgovorNa(sam, """{"id":"x1","type":"sync.status","payload":{"a":1}}""")!!, "status"))
@@ -287,10 +287,10 @@ private fun preizkusSeznanjanja() {
     val pomnilnik = LazniPomnilnik()
     val u = usmerjevalnik(pomnilnik)
 
-    val (pairId, pin) = u.zacniSeznanitev("fon1", "Matejev telefon", "192.168.0.30")!!
+    val (pairId, pin) = u.zacniSeznanitev("fon1", "Anin telefon", "192.168.50.30")!!
     preveri("koda je sestmestna", pin.length == 6 && pin.all { it.isDigit() })
     preveriEnako("prijava caka", 1, u.cakajocePrijave().size)
-    preveriEnako("vmesnik vidi ime naprave", "Matejev telefon", u.cakajocePrijave().first().ime)
+    preveriEnako("vmesnik vidi ime naprave", "Anin telefon", u.cakajocePrijave().first().ime)
     preveriEnako("vmesnik vidi isto kodo", pin, u.cakajocePrijave().first().pin)
 
     preveri("pred potrditvijo ni zetona", u.prevzemiZeton(pairId) == null)
@@ -312,7 +312,7 @@ private fun preizkusSeznanjanja() {
     preveri("prazen zeton ne velja", !u2.jeVeljavenZeton(""))
 
     // Odvzem dostopa odklopi napravo
-    val naprava = Lazni("192.168.0.30")
+    val naprava = Lazni("192.168.50.30")
     u2.odgovorNa(naprava, registracija("fon1", "sender"))
     preveriEnako("dostop odvzet", 1, u2.prekliciNapravo("fon1"))
     preveri("naprava je odklopljena", naprava.zaprt)
@@ -320,18 +320,18 @@ private fun preizkusSeznanjanja() {
 
     // Ista naprava ne kopici prijav
     val u3 = usmerjevalnik()
-    u3.zacniSeznanitev("fon2", "A", "192.168.0.31")
-    u3.zacniSeznanitev("fon2", "A", "192.168.0.31")
+    u3.zacniSeznanitev("fon2", "A", "192.168.50.31")
+    u3.zacniSeznanitev("fon2", "A", "192.168.50.31")
     preveriEnako("ista naprava ne kopici prijav", 1, u3.cakajocePrijave().size)
 
     // Vec kot toliko cakajocih ne sprejmemo
-    for (i in 0 until HubUsmerjevalnik.NAJVEC_CAKAJOCIH + 3) u3.zacniSeznanitev("n$i", "N$i", "192.168.0.4$i")
+    for (i in 0 until HubUsmerjevalnik.NAJVEC_CAKAJOCIH + 3) u3.zacniSeznanitev("n$i", "N$i", "192.168.50.4$i")
     preveriEnako("cakajocih ni vec kot dovoljeno", HubUsmerjevalnik.NAJVEC_CAKAJOCIH, u3.cakajocePrijave().size)
-    preveri("nova prijava cez mejo je zavrnjena", u3.zacniSeznanitev("cez", "C", "192.168.0.99") == null)
+    preveri("nova prijava cez mejo je zavrnjena", u3.zacniSeznanitev("cez", "C", "192.168.50.99") == null)
 
     // Koda potece
     val u4 = usmerjevalnik()
-    val (star, _) = u4.zacniSeznanitev("fon3", "B", "192.168.0.32")!!
+    val (star, _) = u4.zacniSeznanitev("fon3", "B", "192.168.50.32")!!
     cas += HubUsmerjevalnik.PIN_VELJA_MS + 1000
     preveriEnako("potekla prijava izgine", 0, u4.cakajocePrijave().size)
     preveri("potekle prijave ni mogoce potrditi", !u4.potrdiPrijavo(star))
@@ -339,7 +339,7 @@ private fun preizkusSeznanjanja() {
 
     // Zavrnitev
     val u5 = usmerjevalnik()
-    val (zaZavreci, _) = u5.zacniSeznanitev("fon4", "C", "192.168.0.33")!!
+    val (zaZavreci, _) = u5.zacniSeznanitev("fon4", "C", "192.168.50.33")!!
     preveri("zavrnitev uspe", u5.zavrniPrijavo(zaZavreci))
     preveriEnako("po zavrnitvi ni prijave", 0, u5.cakajocePrijave().size)
     preveri("zavrnjene ni mogoce prevzeti", u5.prevzemiZeton(zaZavreci) == null)
@@ -454,7 +454,7 @@ private fun preizkusHttp() {
 
     // Dolzino zetona merimo na pravi nakljucnosti, ne na laznem generatorju iz preizkusa.
     val pravi = HubUsmerjevalnik(null, { cas })
-    val (praviPair, praviPin) = pravi.zacniSeznanitev("fon9", "Pravi", "192.168.0.60")!!
+    val (praviPair, praviPin) = pravi.zacniSeznanitev("fon9", "Pravi", "192.168.50.60")!!
     val o9 = Spake2.odjemalec(praviPin, "fon9", HubUsmerjevalnik.IDENTITETA_HUBA, ByteArray(0), praviPair.toByteArray())
     val i9 = pravi.spakeKorak1(praviPair, "fon9", o9.sporocilo())
     val praviZeton = pravi.spakeKorak2(praviPair, "fon9", o9.zakljuci(i9.pa!!)).zeton.orEmpty()
@@ -536,7 +536,7 @@ private fun preizkusMeja() {
         ?.niz("n").orEmpty()
     preveri("ime je porezano", ime.length <= HubUsmerjevalnik.NAJVEC_IMENA)
 
-    preveri("krajevni naslov je prepoznan", HubUsmerjevalnik.jeKrajevni("192.168.0.5"))
+    preveri("krajevni naslov je prepoznan", HubUsmerjevalnik.jeKrajevni("192.168.50.5"))
     preveri("10.x je krajevni", HubUsmerjevalnik.jeKrajevni("10.0.0.7"))
     preveri("172.16.x je krajevni", HubUsmerjevalnik.jeKrajevni("172.16.4.4"))
     preveri("localhost je krajevni", HubUsmerjevalnik.jeKrajevni("127.0.0.1"))
@@ -564,10 +564,10 @@ private fun preizkusDeljenjaPoHttp() {
     val glaveTablice = mapOf("x-safeer-token" to zetonTablice)
     val glavePc = mapOf("x-safeer-token" to zetonPc)
 
-    val tv = Lazni("192.168.0.20")
-    val tablica = Lazni("192.168.0.31")
-    val pc = Lazni("192.168.0.40")
-    val fon = Lazni("192.168.0.41")
+    val tv = Lazni("192.168.50.20")
+    val tablica = Lazni("192.168.50.31")
+    val pc = Lazni("192.168.50.40")
+    val fon = Lazni("192.168.50.41")
     u.odgovorNa(tv, registracija("tv-gostitelj", "receiver"))
     u.odgovorNa(tablica, registracija("tablica", "sender"))
     u.odgovorNa(pc, registracija("pc", "sender"))
@@ -669,12 +669,12 @@ private fun preizkusDeljenjaPoHttp() {
     preveri("tudi seznam seznanjenih kaze vzdevek", u.seznanjeneNaprave().any { it.deviceId == "tv-gostitelj" && it.ime == "Dnevna soba" })
     tv.pocisti()
     u.odgovori(zahteva("POST", "/cast/share/text", """{"target":"tv-gostitelj","text":"hej"}""", glave = glavePc))
-    u.odgovori(zahteva("POST", "/cast/devices/rename", """{"device_id":"pc","name":"Matejev racunalnik"}""", glave = glavePc))
+    u.odgovori(zahteva("POST", "/cast/devices/rename", """{"device_id":"pc","name":"Anin racunalnik"}""", glave = glavePc))
     tv.pocisti()
     u.odgovori(zahteva("POST", "/cast/share/text", """{"target":"tv-gostitelj","text":"hej"}""", glave = glavePc))
-    preveri("prejemnik vidi vzdevek posiljatelja", tv.zadnje().contains("\"sender_name\":\"Matejev racunalnik\""))
+    preveri("prejemnik vidi vzdevek posiljatelja", tv.zadnje().contains("\"sender_name\":\"Anin racunalnik\""))
     val u2 = usmerjevalnik(shramba)
-    preveriEnako("vzdevki prezivijo ponovni zagon Huba", "Matejev racunalnik", u2.imeNaprave("pc"))
+    preveriEnako("vzdevki prezivijo ponovni zagon Huba", "Anin racunalnik", u2.imeNaprave("pc"))
     u.odgovori(zahteva("POST", "/cast/devices/rename", """{"device_id":"pc","name":""}""", glave = glavePc))
     preveriEnako("prazno ime vzdevek odstrani", "Naprava pc", u.imeNaprave("pc"))
 

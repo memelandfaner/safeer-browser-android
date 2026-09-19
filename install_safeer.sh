@@ -6,7 +6,7 @@ set -e
 
 # Zadnja javna izdaja Safeer za Android: naslova APK in kontrolnih vsot preberemo iz GitHuba,
 # da skripta deluje tudi po novih izdajah, ko se ime datoteke spremeni.
-IZDAJA_API="https://api.github.com/repos/memelandfaner/safeer-browser-android/releases/latest"
+IZDAJA_API="https://api.github.com/repos/safeerOS/Mobile-android/releases/latest"
 IZDAJA_JSON="$(curl -L -s "$IZDAJA_API")"
 APK_URL="$(printf '%s' "$IZDAJA_JSON" | grep -o '"browser_download_url": *"[^"]*\.apk"' | head -n 1 | cut -d'"' -f4)"
 SHA_URL="$(printf '%s' "$IZDAJA_JSON" | grep -o '"browser_download_url": *"[^"]*SHA256SUMS"' | head -n 1 | cut -d'"' -f4)"

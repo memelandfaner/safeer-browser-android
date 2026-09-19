@@ -245,7 +245,7 @@ object Daljinec {
     }
 
     /**
-     * Povezavo odpre v izbrani aplikaciji (npr. iskanje na YouTubu v SmartTube). Ce je
+     * Povezavo odpre v izbrani aplikaciji (npr. iskanje v aplikaciji YouTube). Ce je
      * aplikacija ne zna sprejeti, vrne neuspeh in klicatelj jo odpre v Safeerju.
      */
     private fun odpriVAplikaciji(context: Context, paket: String, url: String): Izid {
