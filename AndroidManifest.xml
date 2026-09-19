@@ -45,7 +45,7 @@
         android:anyDensity="true" />
 
     <!-- Daljinec Safeer Linka (Safeer Control): seznam aplikacij, ki jih je mogoce zagnati,
-         in aplikacije, ki znajo odpreti spletno povezavo (npr. SmartTube za YouTube).
+         in aplikacije, ki znajo odpreti spletno povezavo (npr. YouTube).
          Brez tega Android 11+ seznam skrije in daljinec bi videl le sistemske aplikacije. -->
     <queries>
         <intent>

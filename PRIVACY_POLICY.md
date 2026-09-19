@@ -2,7 +2,7 @@
 
 **Zadnja posodobitev**: September 2026  
 **Projekt**: Safeer Browser (Mobile Security Edition)  
-**Koda**: [https://github.com/memelandfaner/safeer-browser-android](https://github.com/memelandfaner/safeer-browser-android)
+**Koda**: [https://github.com/safeerOS/Mobile-android](https://github.com/safeerOS/Mobile-android)
 
 ---
 
