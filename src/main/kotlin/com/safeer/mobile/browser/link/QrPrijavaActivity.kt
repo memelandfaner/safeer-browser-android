@@ -29,6 +29,36 @@ class QrPrijavaActivity : Activity() {
     companion object {
         private const val TAG = "SafeerQrPrijava"
 
+        /** Koda, ki jo pokaze sredisce (Safeer OS na televizorju): ta naprava se mu pridruzi. */
+        data class Pridruzitev(val id: String, val skrivnost: String, val odtis: String, val naslov: String)
+
+        /** Ali je povezava katera koli koda Safeer (prijava racunalnika ali pridruzitev srediscu). */
+        fun jeSafeerKoda(uri: Uri?): Boolean = razcleni(uri) != null || razcleniPridruzitev(uri) != null
+
+        private fun parametri(uri: Uri?): Map<String, String>? {
+            if (uri == null) return null
+            return when {
+                uri.scheme == "safeer" && uri.host == "link" && uri.path == "/qr" ->
+                    uri.queryParameterNames.associateWith { uri.getQueryParameter(it).orEmpty() }
+                uri.scheme == "https" && uri.host == "safeer.si" && (uri.path == "/p" || uri.path == "/p/") ->
+                    (uri.fragment ?: "").split("&").mapNotNull {
+                        val k = it.substringBefore("=", ""); if (k.isEmpty()) null else k to Uri.decode(it.substringAfter("="))
+                    }.toMap()
+                else -> null
+            }
+        }
+
+        fun razcleniPridruzitev(uri: Uri?): Pridruzitev? {
+            val p = parametri(uri) ?: return null
+            val id = p["j"].orEmpty()
+            val skrivnost = p["s"].orEmpty()
+            val odtis = p["f"].orEmpty().lowercase()
+            val naslov = p["a"].orEmpty()
+            if (!Regex("^[0-9a-f]{8,64}$").matches(id) || skrivnost.length !in 16..128 ||
+                !Regex("^[0-9a-f]{64}$").matches(odtis) || !Regex("^[0-9.]{7,15}:[0-9]{2,5}$").matches(naslov)) return null
+            return Pridruzitev(id, skrivnost, odtis, naslov)
+        }
+
         /** (qr_id, skrivnost, odtis16) iz povezave ali null, ce povezava ni prijava s QR. */
         fun razcleni(uri: Uri?): Triple<String, String, String>? {
             if (uri == null) return null
@@ -55,6 +85,7 @@ class QrPrijavaActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        razcleniPridruzitev(intent?.data)?.let { pridruzi(it); return }
         qr = razcleni(intent?.data)
         val koda = qr
         if (koda == null) { sporocilo(b("neveljavna")); return }
@@ -71,6 +102,31 @@ class QrPrijavaActivity : Activity() {
                 }
             }
         }.start()
+    }
+
+    /**
+     * Ta naprava se pridruzi srediscu, ki je pokazalo kodo (televizor). Uporabnik je kodo namenoma
+     * poskeniral, zato ni dodatnega vprasanja; odtis potrdila iz kode potrdi, da je to pravo sredisce.
+     */
+    private fun pridruzi(p: Pridruzitev) {
+        if (!HubPairing.token(this).isNullOrBlank() && HubTls.pripetiOdtis(this) == p.odtis) {
+            sporocilo(b("zePovezana")); return
+        }
+        val cakam = AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+            .setTitle(b("naslovPridruzi")).setMessage(b("povezujem")).setCancelable(false).show()
+        HubPairing.pridruziSQr(this, p.naslov, p.odtis, p.id, p.skrivnost, com.safeer.mobile.browser.cast.HubKrmilnik.lastniId(),
+            "Safeer (" + android.os.Build.MODEL + ")") { uspelo, razlog ->
+            try { cakam.dismiss() } catch (_: Throwable) { }
+            if (isFinishing) return@pridruziSQr
+            if (uspelo) {
+                LinkSprejemnik.zagotovi(this)
+                sporocilo(b("pridruzena"), b("naslovPridruzi"))
+            } else sporocilo(when (razlog) {
+                "qr_ne_obstaja", "prevec_poskusov" -> b("poteklaTv")
+                "prevec_naprav" -> b("prevecNaprav")
+                else -> b("niHuba")
+            }, b("naslovPridruzi"))
+        }
     }
 
     private fun vprasaj(ime: String) {
@@ -106,10 +162,10 @@ class QrPrijavaActivity : Activity() {
         else -> o.optString("detail").ifBlank { b("niHuba") }
     }
 
-    private fun sporocilo(besedilo: String) {
+    private fun sporocilo(besedilo: String, naslov: String = b("naslov")) {
         if (isFinishing) return
         AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-            .setTitle(b("naslov"))
+            .setTitle(naslov)
             .setMessage(besedilo)
             .setPositiveButton(android.R.string.ok) { _, _ -> finish() }
             .setOnCancelListener { finish() }
@@ -166,6 +222,10 @@ class QrPrijavaActivity : Activity() {
             "dovoli" -> if (sl) "Dovoli" else "Allow"
             "ne" -> if (sl) "Ne" else "No"
             "uspeh" -> if (sl) "Računalnik »{ime}« je prijavljen." else "The computer “{ime}” is signed in."
+            "naslovPridruzi" -> if (sl) "Safeer Link" else "Safeer Link"
+            "povezujem" -> if (sl) "Povezujem s televizorjem …" else "Connecting to the TV …"
+            "pridruzena" -> if (sl) "Povezano. Ta naprava je zdaj v tvojem Safeer Linku." else "Connected. This device is now in your Safeer Link."
+            "zePovezana" -> if (sl) "Ta naprava je že povezana s tem Safeer Linkom." else "This device is already connected to this Safeer Link."
             "neveljavna" -> if (sl) "Ta koda ni koda za prijavo v Safeer." else "This is not a Safeer sign-in code."
             "niPovezana" -> if (sl) "Ta naprava še ni v Safeer Linku. Najprej jo poveži, nato poskeniraj kodo znova."
                 else "This device is not in Safeer Link yet. Connect it first, then scan the code again."
@@ -175,6 +235,8 @@ class QrPrijavaActivity : Activity() {
                 else "This code is not for your Safeer Link. Sign-in was not allowed."
             "potekla" -> if (sl) "Koda je potekla. Na računalniku se je pokazala nova – poskeniraj jo."
                 else "The code has expired. The computer is showing a new one – scan that."
+            "poteklaTv" -> if (sl) "Koda je potekla. Televizor je že pokazal novo – poskeniraj jo."
+                else "The code has expired. The TV is already showing a new one – scan that."
             "prevecNaprav" -> if (sl) "V Safeer Linku je že preveč naprav. Odstrani katero, ki je ne uporabljaš."
                 else "Safeer Link already has too many devices. Remove one you no longer use."
             else -> kljuc
