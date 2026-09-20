@@ -11,6 +11,9 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.SynchronousQueue
+import java.util.concurrent.TimeUnit
 
 /**
  * Sistemsko vprasanje, kadar Android za brisanje ali spreminjanje fotografije zahteva privolitev.
@@ -52,13 +55,18 @@ class PotrditevActivity : Activity() {
         }
     }
 
-    override fun onActivityResult(zahteva: Int, izid: Int, podatki: Intent?) {
-        super.onActivityResult(zahteva, izid, podatki)
+    override fun onActivityResult(zahteva: Int, odziv: Int, podatki: Intent?) {
+        super.onActivityResult(zahteva, odziv, podatki)
         val cilj = uri
-        if (zahteva == ZAHTEVA && izid == RESULT_OK && cilj != null) {
-            // Privolitev je dana: dejanje dokoncamo tu, da ga uporabniku ni treba ponoviti.
-            // Brisanje je Android ob potrditvi ze opravil (Smeti), vrtenje pa moramo se mi.
-            if (dejanje != DEJANJE_BRISANJE) UrejanjeMedijev.zavrti(this, cilj, stopinje)
+        if (cilj != null) {
+            val izid = if (zahteva == ZAHTEVA && odziv == RESULT_OK) {
+                // Privolitev je dana: dejanje dokoncamo tu, da ga uporabniku ni treba ponoviti.
+                // Brisanje je Android ob potrditvi ze opravil (Smeti), vrtenje pa moramo se mi.
+                if (dejanje == DEJANJE_BRISANJE) UrejanjeMedijev.Izid(true)
+                else UrejanjeMedijev.zavrti(this, cilj, stopinje)
+            } else UrejanjeMedijev.Izid(false, "zavrnjeno")
+            // Streznik na ta odgovor morda se caka: tako televizor takoj pokaze izid.
+            javi(cilj, dejanje, izid)
         }
         finish()
     }
@@ -76,6 +84,36 @@ class PotrditevActivity : Activity() {
 
         const val DEJANJE_BRISANJE = "delete"
         const val DEJANJE_VRTENJE = "rotate"
+
+        /**
+         * Cakalnica med streznikom datotek in tem vprasanjem. Streznik zahtevo televizorja
+         * zadrzi, dokler lastnik ne odgovori (najvec [CAKANJE] sekund), da televizor takoj
+         * pokaze zavrteno ali izbrisano sliko. Ce nihce ne odgovori, streznik odgovori
+         * »potrebna_potrditev« kot prej - dejanje pa se vseeno dokonca, ko uporabnik potrdi.
+         */
+        const val CAKANJE = 25L
+        private val cakalnica = ConcurrentHashMap<String, SynchronousQueue<UrejanjeMedijev.Izid>>()
+
+        private fun kljuc(uri: Uri, dejanje: String) = dejanje + "|" + uri
+
+        /** Pocaka na lastnikov odgovor; null pomeni, da se ni odzval v [sekund] sekundah. */
+        fun pocakaj(uri: Uri, dejanje: String, sekund: Long): UrejanjeMedijev.Izid? {
+            val k = kljuc(uri, dejanje)
+            val vrsta = SynchronousQueue<UrejanjeMedijev.Izid>()
+            cakalnica[k] = vrsta
+            return try {
+                vrsta.poll(sekund, TimeUnit.SECONDS)
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt(); null
+            } finally {
+                cakalnica.remove(k, vrsta)
+            }
+        }
+
+        /** Odda izid cakajocemu strezniku; ce nihce ne caka, se tiho izgubi. */
+        private fun javi(uri: Uri, dejanje: String, izid: UrejanjeMedijev.Izid) {
+            try { cakalnica[kljuc(uri, dejanje)]?.offer(izid) } catch (_: Throwable) { }
+        }
 
         private const val KLJUC_URI = "uri"
         private const val KLJUC_DEJANJE = "dejanje"
