@@ -61,6 +61,18 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
 
     fun jeClan(id: String): Boolean = clan(id) != null
 
+    /**
+     * Clan za [id], tudi kadar je id izpeljan iz kljuca (`n-…`, [idIzKljuca]) in je ta kljuc v krogu pod
+     * drugim (starejsim) id-jem: id iz kljuca dokazuje isti kljuc, zato naprava ostane ista. Pripona za
+     * sorodnika (`n-…-os`, `n-…-control`) ne moti - kljuc je isti.
+     */
+    fun clanZaId(id: String): Clan? {
+        clan(id)?.let { return it }
+        if (!jeIdIzKljuca(id)) return null
+        val jedro = id.take(DOLZINA_ID_IZ_KLJUCA)
+        return clani().firstOrNull { idIzKljuca(it.kljuc) == jedro }
+    }
+
     fun stevilo(): Int = clani().size
 
     /** Doda ali osvezi clana. Vrne true, ce se je krog spremenil. */
@@ -197,5 +209,13 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
             val izvlecek = java.security.MessageDigest.getInstance("SHA-256").digest(Base64.getDecoder().decode(kljucB64))
             return "n-" + izvlecek.joinToString("") { "%02x".format(it) }.take(16)
         }
+
+        /** Dolzina id-ja iz kljuca brez pripone sorodnika: "n-" + 16 znakov. */
+        const val DOLZINA_ID_IZ_KLJUCA = 18
+
+        /** Ali je [id] izpeljan iz kljuca (`n-<16 hex>`, po zelji s pripono `-os`, `-control` ...). */
+        fun jeIdIzKljuca(id: String): Boolean =
+            id.length >= DOLZINA_ID_IZ_KLJUCA && id.startsWith("n-") && id.substring(2, DOLZINA_ID_IZ_KLJUCA).all { it in '0'..'9' || it in 'a'..'f' } &&
+                (id.length == DOLZINA_ID_IZ_KLJUCA || id[DOLZINA_ID_IZ_KLJUCA] == '-')
     }
 }

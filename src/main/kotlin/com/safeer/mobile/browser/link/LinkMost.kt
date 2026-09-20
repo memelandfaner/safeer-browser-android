@@ -157,8 +157,8 @@ class LinkMost(
         }
     }
 
-    private fun ime(): String =
-        "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
+    /** Id telefona iz njegovega kljuca (HubKrmilnik.lastniId). */
+    private fun ime(): String = com.safeer.mobile.browser.cast.HubKrmilnik.lastniId()
 
     private fun imeNaprave(): String = "Safeer (" + android.os.Build.MODEL + ")"
 

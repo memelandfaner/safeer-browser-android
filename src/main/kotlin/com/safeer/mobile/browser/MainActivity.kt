@@ -1221,7 +1221,7 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         var okno: AlertDialog? = null
         com.safeer.mobile.browser.cast.HubPairing.pair(
             this, castHubUrl(),
-            "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase(),
+            com.safeer.mobile.browser.cast.HubKrmilnik.lastniId(),
             "Safeer (" + android.os.Build.MODEL + ")",
             { nacin, koda ->
                 okno?.dismiss()
@@ -1238,7 +1238,7 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
                         .setPositiveButton(I18n.t(this, "pair_connect")) { _, _ ->
                             com.safeer.mobile.browser.cast.HubPairing.potrdiKodo(
                                 this, vnos.text.toString(),
-                                "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
+                                com.safeer.mobile.browser.cast.HubKrmilnik.lastniId()
                             ) { uspelo, _ ->
                                 if (!uspelo) {
                                     Toast.makeText(this, I18n.t(this, "pair_wrong_code"), Toast.LENGTH_LONG).show()

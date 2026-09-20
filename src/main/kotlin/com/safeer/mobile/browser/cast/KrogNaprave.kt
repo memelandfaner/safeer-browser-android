@@ -37,6 +37,26 @@ object KrogNaprave {
         return try { clan.kljuc == HubTls.javniKljucB64() } catch (_: Throwable) { false }
     }
 
+    /**
+     * Ali se naprava s tem [id] lahko prijavi s podpisom: id je v krogu z nasim kljucem, ali pa je nas kljuc
+     * v krogu pod drugim id-jem (stari id pred prehodom na id iz kljuca, sorodnik) - hub tak podpis sprejme
+     * in nov id vpise kot alias.
+     */
+    fun lahkoSPodpisom(context: Context, id: String): Boolean =
+        jeVpisana(context, id) || znaniIdZaNasKljuc(context, razen = id) != null
+
+    /**
+     * Id te naprave iz njenega kljuca (`n-<16 hex>`, KrogZaupanja.idIzKljuca) s pripono sorodnika
+     * ("" za zaslon/hub, "-os" za Safeer OS ...). Isti kljuc -> isti id na vseh hubih; ce kljuca ni mogoce
+     * dobiti, [nadomestni] (stari id po modelu naprave), da naprava ne ostane brez imena.
+     */
+    fun lastniId(pripona: String = "", nadomestni: () -> String): String =
+        try { KrogZaupanja.idIzKljuca(HubTls.javniKljucB64()) + pripona } catch (_: Throwable) { nadomestni() + pripona }
+
+    /** Kljuc huba [hub] iz kroga za pripenjanje potrdila (po id-ju ali, pri id-ju iz kljuca, po kljucu), ali null. */
+    fun kljucHuba(context: Context, hubId: String): String? =
+        if (hubId.isBlank()) null else krog(context).clanZaId(hubId)?.kljuc
+
     /** Kateri koli id (razen [razen]), pod katerim je nas kljuc ze v krogu (ista naprava, drug id), ali null. */
     fun znaniIdZaNasKljuc(context: Context, razen: String = ""): String? {
         val kljuc = try { HubTls.javniKljucB64() } catch (_: Throwable) { return null }
