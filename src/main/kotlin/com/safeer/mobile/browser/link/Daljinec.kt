@@ -34,7 +34,10 @@ object Daljinec {
     /** Vsa dejanja, ki jih ta naprava razume; Control jih dobi v odgovoru na `status`. */
     val DEJANJA = listOf(
         "key", "scroll", "open_url", "volume", "launch_app", "open_in_app", "apps",
-        "restart", "clear_cache", "status", "screenshot"
+        "restart", "clear_cache", "status", "screenshot",
+        // Protocol v1: ista imena kot pri ponudniku na racunalniku (Safeer Control), da odjemalec
+        // (Safeer OS, Control) aplikacije katere koli naprave nasteje in zazene na en nacin.
+        "apps.list", "apps.launch"
     )
 
     /** Izid ukaza: `ok`, kratko sporocilo za uporabnika in neobvezni podatki. */
@@ -100,6 +103,11 @@ object Daljinec {
     ): Izid {
         val d = dejanje.trim().lowercase()
         if (d !in DEJANJA) return Izid(false, "Neznano dejanje: $d", koda = "neznano_dejanje")
+        // Protocol v1: apps.list / apps.launch sta enotni imeni; `app` je id iz kataloga (tu ime paketa).
+        if (d == "apps.list") return seznamV1(context, parametri)
+        if (d == "apps.launch") {
+            return zazeniAplikacijo(context, parametri.optString("app", "").ifBlank { parametri.optString("package", "") })
+        }
         try {
             // Najprej dejavnost: tipke, drsenje, posnetek in tudi status z odprto stranjo.
             if (ospredje != null) {
@@ -293,6 +301,25 @@ object Daljinec {
             polje.put(zapis)
         }
         return polje
+    }
+
+    /**
+     * Odgovor na `apps.list` v obliki, ki jo pozna tudi ponudnik na racunalniku:
+     * {"enabled": true, "items": [{"id", "name", "icon"?}], "total", "offset"}. `icon` je data URL.
+     */
+    private fun seznamV1(context: Context, parametri: JSONObject): Izid {
+        val zIkonami = parametri.optBoolean("icons", false)
+        val polje = aplikacije(context, zIkonami)
+        val elementi = JSONArray()
+        for (i in 0 until polje.length()) {
+            val z = polje.optJSONObject(i) ?: continue
+            val e = JSONObject().put("id", z.optString("package")).put("name", z.optString("label"))
+            if (z.has("icon")) e.put("icon", z.optString("icon"))
+            elementi.put(e)
+        }
+        val podatki = JSONObject().put("enabled", true).put("items", elementi)
+            .put("total", elementi.length()).put("offset", 0)
+        return Izid(true, "Seznam aplikacij", podatki)
     }
 
     /** Ikona aplikacije kot data URL (WebP, 48 px); null, ce je ni mogoce narisati. */
