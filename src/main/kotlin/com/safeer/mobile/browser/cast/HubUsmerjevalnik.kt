@@ -54,24 +54,6 @@ class HubUsmerjevalnik(
         fun zapri(koda: Int, razlog: String)
     }
 
-    private class Naprava(
-        val id: String,
-        var ime: String,
-        var vloga: String,
-        var zmoznosti: List<String>,
-        var naslov: String,
-        var zadnjic: Double,
-        var povezava: Odjemalec?,
-        // Protocol v1: model naprave. Prazno pri odjemalcih protokola 0.2.
-        var protokol: String = "",
-        var platforma: String = "",
-        var vrsta: String = "",
-        var razlicica: String = "",
-        var prioriteta: Int = 0,
-        /** Katalog aplikacij naprave: JSON objekt {"<id>": {"name": ..., "kind": ...}} ali prazno. */
-        var aplikacije: String = ""
-    )
-
     private class Prijava(
         val pairId: String,
         val deviceId: String,
@@ -126,8 +108,12 @@ class HubUsmerjevalnik(
 
     private val kljucnica = Any()
 
-    private val naprave = LinkedHashMap<String, Naprava>()
-    private val posiljatelji = LinkedHashSet<Odjemalec>()
+    /**
+      * Kdo je povezan in kaj o sebi pove (RegisterNaprav). Kljucavnica je ista kot tu: register
+      * je del istega stanja, le da je prijava in odklop naprav zdaj na enem mestu, ne razsuto po
+      * dveh tisoc vrsticah.
+      */
+    private val register = RegisterNaprav(kljucnica, { ura() }, NAJVEC_NAPRAV, NAJVEC_IMENA)
     private val prijave = LinkedHashMap<String, Prijava>()
     private val zetoni = LinkedHashMap<String, SeznanjenaNaprava>()
     /** Vstopnica za WebSocket: kdaj je bila izdana in kateri napravi (zeton ali podpis), ce je znano. */
@@ -167,7 +153,7 @@ class HubUsmerjevalnik(
             field = vrednost
             vrednost?.naDatoteko = { d -> datotekaPrispela(d) }
             vrednost?.naKonecZaslona = { id, _ -> zaslonKoncan(id) }
-            vrednost?.jeCiljPovezan = { cilj -> synchronized(kljucnica) { naprave[cilj]?.povezava != null } }
+            vrednost?.jeCiljPovezan = { cilj -> register.povezavaOd(cilj) != null }
             vrednost?.napravaZeZetona = { zeton -> napravaZeZetona(zeton) }
             vrednost?.zasediCilj = { cilj, posiljatelj -> zasedi(cilj, posiljatelj, "file") }
             vrednost?.sprostiCilj = { cilj, posiljatelj -> sprosti(cilj, posiljatelj) }
@@ -255,7 +241,7 @@ class HubUsmerjevalnik(
 
     /** Ime, kot ga vidi uporabnik: njegov vzdevek, sicer ime, ki ga je naprava povedala o sebi. */
     fun imeNaprave(id: String): String = synchronized(kljucnica) {
-        vzdevki[id] ?: naprave[id]?.ime ?: zetoni.values.firstOrNull { it.deviceId == id }?.ime ?: id
+        vzdevki[id] ?: register.najdi(id)?.ime ?: zetoni.values.firstOrNull { it.deviceId == id }?.ime ?: id
     }
 
     /** Preimenuje napravo; prazno ime vzdevek odstrani. Vrne false pri neveljavnem imenu. */
@@ -293,8 +279,7 @@ class HubUsmerjevalnik(
 
     private fun objaviKrog() {
         val sporocilo = sporociloKroga()
-        val kopija = synchronized(kljucnica) { naprave.values.mapNotNull { it.povezava } }
-        for (povezava in kopija) posljiVarno(povezava, sporocilo)
+        for (povezava in register.povezanePovezave()) posljiVarno(povezava, sporocilo)
     }
 
     private fun sporociloKroga(): String = ovojnica("trust.update").surovo("payload", krog.json()).toString()
@@ -849,7 +834,7 @@ class HubUsmerjevalnik(
             for (kljuc in odvzeti) zetoni.remove(kljuc)
             koliko = odvzeti.size
             if (koliko > 0) shraniZetone()
-            naprave[deviceId]?.povezava?.let { odklopi.add(it) }
+            register.povezavaOd(deviceId)?.let { odklopi.add(it) }
         }
         for (povezava in odklopi) {
             try {
@@ -936,11 +921,10 @@ class HubUsmerjevalnik(
         // Vse povezane naprave, z vlogo zraven: "zaslon" (receiver) sprejema strani in videe,
         // deliti (besedilo, datoteka, zaslon) pa je mogoce s katerokoli. Kdo je kaj, odloci
         // vmesnik po polju role, ne Hub s filtriranjem.
-        val povezane = naprave.values.filter { it.povezava != null }
-        return povezane.joinToString(",", "[", "]") { napravaJson(it) }
+        return register.povezane().joinToString(",", "[", "]") { napravaJson(it) }
     }
 
-    private fun napravaJson(naprava: Naprava): String {
+    private fun napravaJson(naprava: RegisterNaprav.Naprava): String {
         val zapis = JsonLahki.Zapis()
             .niz("id", naprava.id)
             .niz("name", vzdevki[naprava.id] ?: naprava.ime)
@@ -960,7 +944,7 @@ class HubUsmerjevalnik(
         val z = zasedeno[naprava.id]
         if (z != null) {
             zapis.niz("busy_by", z.posiljatelj)
-                .niz("busy_by_name", vzdevki[z.posiljatelj] ?: naprave[z.posiljatelj]?.ime ?: z.posiljatelj)
+                .niz("busy_by_name", vzdevki[z.posiljatelj] ?: register.najdi(z.posiljatelj)?.ime ?: z.posiljatelj)
                 .niz("busy_kind", z.vrsta)
         }
         return zapis.toString()
@@ -969,35 +953,14 @@ class HubUsmerjevalnik(
     /** Seznam povezanih prejemnikov za vmesnik in za koncno tocko /cast/devices. */
     fun povezaniPrejemniki(): String = synchronized(kljucnica) { napraveJson() }
 
-    fun steviloNaprav(): Int = synchronized(kljucnica) { naprave.count { it.value.povezava != null } }
+    fun steviloNaprav(): Int = register.steviloPovezanih()
 
-    private fun idPovezave(povezava: Odjemalec): String? =
-        naprave.entries.firstOrNull { it.value.povezava === povezava }?.key
+    private fun idPovezave(povezava: Odjemalec): String? = register.idPovezave(povezava)
 
     fun odklopi(povezava: Odjemalec) {
-        var spremenjeno = false
-        synchronized(kljucnica) {
-            val odklopljeni = naprave.filterValues { it.povezava === povezava }.keys.toList()
-            for (id in odklopljeni) {
-                val naprava = naprave[id] ?: continue
-                naprava.povezava = null
-                spremenjeno = true
-                // Naprave ne pozabimo takoj: ime in zmoznosti so uporabni, ko se vrne.
-                // Ce jih je prevec, pade ven najstarejsa odklopljena.
-                pocistiRegister()
-            }
-            posiljatelji.remove(povezava)
-        }
-        if (spremenjeno) {
+        if (register.odklopi(povezava)) {
             objaviNaprave()
             naSpremembeNaprav?.invoke()
-        }
-    }
-
-    private fun pocistiRegister() {
-        while (naprave.size > NAJVEC_NAPRAV) {
-            val odvecna = naprave.entries.firstOrNull { it.value.povezava == null } ?: break
-            naprave.remove(odvecna.key)
         }
     }
 
@@ -1029,8 +992,7 @@ class HubUsmerjevalnik(
 
         if (tip == "sync.ack") {
             val cilj = sporocilo.niz("target")
-            val povezava = synchronized(kljucnica) { naprave[cilj]?.povezava }
-            povezava?.poslji(surovo)
+            register.povezavaOd(cilj)?.poslji(surovo)
             return null
         }
 
@@ -1038,11 +1000,10 @@ class HubUsmerjevalnik(
             val cilj = sporocilo.niz("target")
             // Stran (cast.url) sme na vsako napravo, ki jo zna odpreti - tudi na telefon ali
             // racunalnik, ko jo poslje televizor. Predvajanje in nadzor ostaneta za zaslone.
-            val prejemnik = synchronized(kljucnica) {
-                naprave[cilj]?.takeIf {
-                    it.vloga == "receiver" || (tip == "cast.url" && it.zmoznosti.contains("url"))
-                }?.takeIf { it.povezava !== od }?.povezava
-            } ?: return potrditev(id, "rejected", "Ciljna naprava '${cilj ?: ""}' ni povezana ali ne obstaja.", koda = "naprava_ni_povezana")
+            val prejemnik = register.najdi(cilj)?.takeIf {
+                it.vloga == "receiver" || (tip == "cast.url" && it.zmoznosti.contains("url"))
+            }?.takeIf { it.povezava !== od }?.povezava
+                ?: return potrditev(id, "rejected", "Ciljna naprava '${cilj ?: ""}' ni povezana ali ne obstaja.", koda = "naprava_ni_povezana")
             return if (posljiVarno(prejemnik, surovo)) potrditev(id, "accepted")
             else potrditev(id, "error", "Napaka pri posredovanju prejemniku.", koda = "posredovanje_ni_uspelo")
         }
@@ -1052,8 +1013,8 @@ class HubUsmerjevalnik(
             // povezana naprava, ne le "zaslon" - telefon poslje telefonu, tablica racunalniku.
             // Hub vsebine ne odpira; posreduje jo napravi, ki jo je uporabnik izbral.
             val cilj = sporocilo.niz("target") ?: ""
-            val posiljatelj = synchronized(kljucnica) { idPovezave(od) } ?: ""
-            val prejemnik = synchronized(kljucnica) { naprave[cilj]?.povezava }
+            val posiljatelj = idPovezave(od) ?: ""
+            val prejemnik = register.povezavaOd(cilj)
                 ?: return potrditev(id, "rejected", "Ciljna naprava '$cilj' ni povezana ali ne obstaja.", "share", "naprava_ni_povezana")
             if (prejemnik === od) return potrditev(id, "rejected", "Naprava ne more deliti sama s sabo.", "share", "isti_naprava")
             zasedenOd(cilj)?.let { kdo ->
@@ -1069,11 +1030,8 @@ class HubUsmerjevalnik(
             // zmoznost "remote", odgovor pa nazaj posiljatelju ukaza. Hub ukaza ne izvaja in
             // ga ne razlaga; posiljatelja vpise sam, da se ga ne da ponarediti.
             val cilj = sporocilo.niz("target") ?: ""
-            val posiljatelj = synchronized(kljucnica) { idPovezave(od) } ?: ""
-            val (prejemnik, zmoznosti) = synchronized(kljucnica) {
-                val n = naprave[cilj]
-                Pair(n?.povezava, n?.zmoznosti ?: emptyList())
-            }
+            val posiljatelj = idPovezave(od) ?: ""
+            val (prejemnik, zmoznosti) = register.najdi(cilj).let { Pair(it?.povezava, it?.zmoznosti ?: emptyList()) }
             if (prejemnik == null) {
                 return potrditev(id, "rejected", "Ciljna naprava '$cilj' ni povezana ali ne obstaja.", "control", "naprava_ni_povezana")
             }
@@ -1099,10 +1057,7 @@ class HubUsmerjevalnik(
         }
 
         if (tip == "cast.status") {
-            val deviceId = sporocilo.niz("device_id")
-            synchronized(kljucnica) {
-                naprave[deviceId]?.zadnjic = ura() / 1000.0
-            }
+            register.osveziZadnjic(sporocilo.niz("device_id"))
             objaviPosiljateljem(surovo)
             return null
         }
@@ -1116,7 +1071,7 @@ class HubUsmerjevalnik(
                 ?: return potrditev(id, "rejected", "Manjka apps.", "apps", "manjka_apps")
             val preverjen = preveriKatalog(katalog)
             val spremenjeno = synchronized(kljucnica) {
-                val n = idPovezave(od)?.let { naprave[it] } ?: return potrditev(id, "rejected", "Naprava ni prijavljena.", "apps", "ni_prijavljena")
+                val n = register.najdi(idPovezave(od)) ?: return potrditev(id, "rejected", "Naprava ni prijavljena.", "apps", "ni_prijavljena")
                 if (n.aplikacije == preverjen) false else { n.aplikacije = preverjen; true }
             }
             if (spremenjeno) { objaviNaprave(); naSpremembeNaprav?.invoke() }
@@ -1151,38 +1106,23 @@ class HubUsmerjevalnik(
 
         val vloga = tovor.niz("role") ?: "receiver"
         val zmoznosti = tovor.nizi("capabilities").ifEmpty { listOf("url", "control") }
-        // Ista naprava z novo povezavo (po izpadu, ponovnem zagonu): nova zamenja staro, stara se zapre.
-        // Sicer bi ob zaprtju stare vpis naprave izgubil povezavo, nova pa bi ostala odprta in nevidna.
-        val stara = synchronized(kljucnica) { naprave[deviceId]?.povezava?.takeIf { it !== od } }
-        if (stara != null) {
-            synchronized(kljucnica) { posiljatelji.remove(stara) }
-            try { stara.zapri(1000, "nova povezava iste naprave") } catch (_: Throwable) { }
-        }
-        synchronized(kljucnica) {
-            if (!naprave.containsKey(deviceId) && naprave.size >= NAJVEC_NAPRAV) {
-                pocistiRegister()
-                if (naprave.size >= NAJVEC_NAPRAV) {
-                    return potrditev(id, "rejected", "Preveč naprav; odklopite katero od prejšnjih.", koda = "prevec_naprav")
-                }
-            }
-            val naprava = naprave.getOrPut(deviceId) {
-                Naprava(deviceId, deviceId, vloga, zmoznosti, od.naslov, ura() / 1000.0, null)
-            }
-            naprava.ime = (tovor.niz("name")?.takeIf { it.isNotBlank() } ?: deviceId).take(NAJVEC_IMENA)
-            naprava.vloga = vloga
-            naprava.zmoznosti = zmoznosti
-            // Protocol v1: model naprave (odjemalec 0.2 teh polj nima - ostanejo prazna).
-            naprava.protokol = tovor.nizAli("protocol").take(8)
-            naprava.platforma = tovor.nizAli("platform").take(16)
-            naprava.vrsta = tovor.nizAli("kind").take(16)
-            naprava.razlicica = tovor.nizAli("version").take(32)
-            naprava.prioriteta = (tovor.stevilo("priority") ?: 0.0).toInt().coerceIn(0, 1000)
-            tovor.surovo("apps")?.let { naprava.aplikacije = preveriKatalog(it) }
-            // Naslov vzamemo iz vticnice, ne iz tega, kar naprava trdi o sebi.
-            naprava.naslov = od.naslov
-            naprava.zadnjic = ura() / 1000.0
-            naprava.povezava = od
-            if (vloga != "receiver") posiljatelji.add(od)
+        // Ista naprava z novo povezavo (po izpadu, ponovnem zagonu): nova zamenja staro, stara se
+        // zapre - za to poskrbi register.
+        val izid = register.registriraj(
+            od = od,
+            deviceId = deviceId,
+            ime = tovor.nizAli("name"),
+            vloga = vloga,
+            zmoznosti = zmoznosti,
+            protokol = tovor.nizAli("protocol"),
+            platforma = tovor.nizAli("platform"),
+            vrsta = tovor.nizAli("kind"),
+            razlicica = tovor.nizAli("version"),
+            prioriteta = (tovor.stevilo("priority") ?: 0.0).toInt(),
+            aplikacije = tovor.surovo("apps")?.let { preveriKatalog(it) }
+        )
+        if (!izid.sprejeta) {
+            return potrditev(id, "rejected", "Preveč naprav; odklopite katero od prejšnjih.", koda = izid.koda)
         }
         // Vsaka nova naprava spremeni seznam za vse: tudi posiljatelj je zdaj mozen cilj deljenja.
         objaviNaprave()
@@ -1252,18 +1192,15 @@ class HubUsmerjevalnik(
 
         val cilj = sporocilo.niz("target")
         if (!cilj.isNullOrEmpty() && cilj != VSEM) {
-            val povezava = synchronized(kljucnica) { naprave[cilj]?.povezava }
+            val povezava = register.povezavaOd(cilj)
                 ?: return potrditev(id, "rejected", "Naprava '$cilj' ni povezana ali ne obstaja.", "sync", "naprava_ni_povezana")
             return if (posljiVarno(povezava, surovo)) potrditev(id, "accepted", null, "sync")
             else potrditev(id, "error", "Napaka pri posredovanju.", "sync", "posredovanje_ni_uspelo")
         }
 
-        val prejemniki = synchronized(kljucnica) {
-            naprave.values.filter {
-                it.povezava != null && it.id != posiljatelj &&
-                    (it.zmoznosti.contains(ZMOZNOST_SYNC) || it.vloga == "sync-client")
-            }.mapNotNull { it.povezava }
-        }
+        val prejemniki = register.povezane().filter {
+            it.id != posiljatelj && (it.zmoznosti.contains(ZMOZNOST_SYNC) || it.vloga == "sync-client")
+        }.mapNotNull { it.povezava }
         if (prejemniki.isEmpty()) {
             return potrditev(id, "rejected", "Nobena druga naprava ne sinhronizira.", "sync", "nobena_ne_sinhronizira")
         }
@@ -1305,15 +1242,13 @@ class HubUsmerjevalnik(
         val sporocilo = ovojnica("cast.devices").surovo("devices", povezaniPrejemniki()).toString()
         // Seznam dobijo vsi povezani, ne le posiljatelji: tudi zaslon mora vedeti, komu lahko
         // kaj poslje, ker je deljenje dvosmerno.
-        val kopija = synchronized(kljucnica) { naprave.values.mapNotNull { it.povezava } }
-        for (povezava in kopija) posljiVarno(povezava, sporocilo)
+        for (povezava in register.povezanePovezave()) posljiVarno(povezava, sporocilo)
     }
 
     private fun objaviPosiljateljem(sporocilo: String) {
-        val kopija = synchronized(kljucnica) { posiljatelji.toList() }
-        for (posiljatelj in kopija) {
+        for (posiljatelj in register.posiljateljiKopija()) {
             if (!posljiVarno(posiljatelj, sporocilo)) {
-                synchronized(kljucnica) { posiljatelji.remove(posiljatelj) }
+                register.odstraniPosiljatelja(posiljatelj)
             }
         }
     }
@@ -1323,7 +1258,7 @@ class HubUsmerjevalnik(
      * ime posiljatelja vzame iz registra, ce ga pozna. Vrne false, ce cilj ni povezan.
      */
     private fun posredujDeljenje(tip: String, posiljatelj: String, cilj: String, tovor: String?, id: String = novId()): Boolean {
-        val prejemnik = synchronized(kljucnica) { naprave[cilj]?.povezava } ?: return false
+        val prejemnik = register.povezavaOd(cilj) ?: return false
         val naprej = JsonLahki.Zapis()
             .niz("id", id)
             .niz("type", tip)
@@ -1587,7 +1522,7 @@ class HubUsmerjevalnik(
             if (posiljatelj.isEmpty()) return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
             if (cilj.isEmpty()) return HubStreznik.Odgovor(400, napakaJson("Manjka target.", "manjka_target"))
             if (cilj == posiljatelj) return HubStreznik.Odgovor(400, napakaJson("Naprava ne more deliti sama s sabo.", "isti_naprava"))
-            if (synchronized(kljucnica) { naprave[cilj]?.povezava } == null) {
+            if (register.povezavaOd(cilj) == null) {
                 return HubStreznik.Odgovor(404, napakaJson("Ciljna naprava '$cilj' ni povezana.", "naprava_ni_povezana"))
             }
             zasedi(cilj, posiljatelj, "screen")?.let { kdo -> return odgovorZasedeno(cilj, kdo) }
@@ -1793,11 +1728,10 @@ class HubUsmerjevalnik(
                 JsonLahki.Zapis()
                     .niz("status", "ok")
                     .niz("protocol", RAZLICICA_PROTOKOLA)
-                    .stevilo("receivers", naprave.count { it.value.vloga == "receiver" && it.value.povezava != null }.toDouble())
-                    .stevilo("senders", posiljatelji.size.toDouble())
-                    .stevilo("sync_peers", naprave.count {
-                        it.value.povezava != null &&
-                            (it.value.zmoznosti.contains(ZMOZNOST_SYNC) || it.value.vloga == "sync-client")
+                    .stevilo("receivers", register.stevilo { it.vloga == "receiver" && it.povezava != null }.toDouble())
+                    .stevilo("senders", register.steviloPosiljateljev().toDouble())
+                    .stevilo("sync_peers", register.stevilo {
+                        it.povezava != null && (it.zmoznosti.contains(ZMOZNOST_SYNC) || it.vloga == "sync-client")
                     }.toDouble())
                     // Samo imena kategorij, nikoli vsebina.
                     .seznamNizov("sync_categories", sinhronizacija.keys.sorted())
