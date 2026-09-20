@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#090d15">
+<title>Safeer Link</title>
+<link rel="stylesheet" href="/web/web.css">
+</head>
+<body>
+<header class="glava">
+  <div class="znak"><span class="logo" aria-hidden="true">S</span><div><h1>Safeer Link</h1><p id="podnaslov"></p></div></div>
+  <div class="stanjeVrstica"><i class="pika siva" id="pika"></i><span id="stanjeBesedilo"></span></div>
+</header>
+
+<!-- Pridruzitev: koda je v #; brez nje povemo, kje jo dobiti. -->
+<section class="zaslon" id="zPridruzi" hidden>
+  <div class="panel sredina">
+    <h2 id="pridruziNaslov"></h2>
+    <p class="pojasnilo" id="pridruziOpis"></p>
+    <label class="polje"><span id="imeNapis"></span><input id="ime" type="text" maxlength="40" autocomplete="off"></label>
+    <button class="glavni" id="gumbPridruzi"></button>
+    <p class="opomba" id="opombaPridruzi"></p>
+    <a class="drugotni gumbPovezava" id="gumbOdpriSafeer" hidden></a>
+  </div>
+</section>
+
+<section class="zaslon" id="zBrezKode" hidden>
+  <div class="panel sredina">
+    <h2 id="brezKodeNaslov"></h2>
+    <p class="pojasnilo" id="brezKodeOpis"></p>
+  </div>
+</section>
+
+<!-- Povezan: naprave in dejanja. -->
+<section class="zaslon" id="zNaprave" hidden>
+  <div class="panel">
+    <h2 id="napraveNaslov"></h2>
+    <ul class="seznam" id="seznamNaprav"></ul>
+    <p class="opomba" id="opombaNaprav"></p>
+  </div>
+
+  <div class="panel" id="panelDejanja" hidden>
+    <h2 id="dejanjaNaslov"></h2>
+    <div class="zavihki">
+      <button class="zavihek izbran" data-z="daljinec" id="zavDaljinec"></button>
+      <button class="zavihek" data-z="poslji" id="zavPoslji"></button>
+    </div>
+
+    <div id="tDaljinec">
+      <div class="dpad">
+        <button data-k="up" aria-label="gor">▲</button>
+        <button data-k="left" aria-label="levo">◀</button>
+        <button data-k="ok" class="ok">OK</button>
+        <button data-k="right" aria-label="desno">▶</button>
+        <button data-k="down" aria-label="dol">▼</button>
+      </div>
+      <div class="vrstaGumbov">
+        <button data-k="back" id="tBack"></button>
+        <button data-k="home" id="tHome"></button>
+        <button data-k="menu" id="tMenu"></button>
+      </div>
+      <div class="vrstaGumbov">
+        <button data-k="previous">⏮</button>
+        <button data-k="play_pause">⏯</button>
+        <button data-k="next">⏭</button>
+        <button data-v="down" id="tGlasMinus">🔉 −</button>
+        <button data-v="up" id="tGlasPlus">🔊 +</button>
+      </div>
+    </div>
+
+    <div id="tPoslji" hidden>
+      <label class="polje"><span id="urlNapis"></span><input id="url" type="url" inputmode="url" placeholder="https://" autocomplete="off"></label>
+      <button class="glavni" id="gumbPosljiUrl"></button>
+      <label class="polje"><span id="besediloNapis"></span><textarea id="besedilo" rows="3" maxlength="4000"></textarea></label>
+      <button class="drugotni" id="gumbPosljiBesedilo"></button>
+    </div>
+    <p class="opomba" id="opombaDejanj"></p>
+  </div>
+
+  <div class="panel" id="panelPrejeto" hidden>
+    <h2 id="prejetoNaslov"></h2>
+    <ul class="seznam" id="seznamPrejeto"></ul>
+  </div>
+
+  <p class="drobno" id="drobno"></p>
+  <button class="drobniGumb" id="gumbPozabi"></button>
+</section>
+
+<script src="/web/web.js"></script>
+</body>
+</html>

@@ -1877,7 +1877,9 @@ class HubUsmerjevalnik(
                 if (qrId.isNotEmpty()) prekliciPridruzitev(qrId)
                 val (id, s) = ustvariPridruzitev()
                 return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("qr_id", id).niz("secret", s).niz("fp", lastniOdtis)
-                    .stevilo("expires_in_seconds", (PIN_VELJA_MS / 1000).toDouble()).toString())
+                    .stevilo("expires_in_seconds", (PIN_VELJA_MS / 1000).toDouble())
+                    // Spletni odjemalec: naprava, ki pokaze kodo, jo zgradi kot http://<sredisce>:<web_port>/#...
+                    .stevilo("web_port", spletnaVrata.toDouble()).toString())
             }
             "/cast/pair/qr/invite/status" -> {
                 napravaZeZetona(zahteva.glave["x-safeer-token"])
@@ -1900,6 +1902,42 @@ class HubUsmerjevalnik(
         return HubStreznik.Odgovor(404, napakaJson("Ni te poti.", "ni_poti"))
     }
 
+
+    // ------------------------------------------------------------------ spletni odjemalec (naprava brez Safeerja)
+
+    /** Datoteke spletnega odjemalca (assets/link-web/...); nastavi krmilnik. Brez tega spletna vrata vracajo 404. */
+    @Volatile var beriSredstvo: ((String) -> String?)? = null
+
+    /** Vrata spletnega odjemalca, kot jih je odprl krmilnik (0 = ni na voljo); gredo v vabilo za novo napravo. */
+    @Volatile var spletnaVrata: Int = 0
+
+    /**
+     * Zahteve na spletnih vratih (goli HTTP, samo domace omrezje): stran spletnega odjemalca in ozek izbor
+     * poti huba, ki jih ta potrebuje. Telefon brez Safeerja tako iz navadnega brskalnika poslje povezavo
+     * ali besedilo in upravlja televizor. Datotek, zaslona in kroga zaupanja po tej poti ni - to je
+     * namenoma samo za tisto, kar sme teci brez sifriranja v domacem omrezju.
+     */
+    fun odgovoriSplet(zahteva: HubStreznik.Zahteva): HubStreznik.Odgovor? {
+        if (!jeKrajevni(zahteva.odjemalec)) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
+        val pot = zahteva.pot
+        if (zahteva.metoda == "GET" && (pot == "/" || pot == "/index.html" || pot.startsWith("/web/"))) {
+            val ime = if (pot == "/" || pot == "/index.html") "index.html" else pot.removePrefix("/web/")
+            if (ime.isBlank() || ime.contains("..") || ime.contains('/')) return HubStreznik.Odgovor(404, napakaJson("Ni te poti.", "ni_poti"))
+            val vsebina = beriSredstvo?.invoke(ime) ?: return HubStreznik.Odgovor(404, napakaJson("Ni te poti.", "ni_poti"))
+            val vrsta = when (ime.substringAfterLast('.', "")) {
+                "html" -> "text/html; charset=utf-8"
+                "js" -> "application/javascript; charset=utf-8"
+                "css" -> "text/css; charset=utf-8"
+                "svg" -> "image/svg+xml"
+                "json" -> "application/json; charset=utf-8"
+                else -> "text/plain; charset=utf-8"
+            }
+            return HubStreznik.Odgovor(200, vsebina, vrsta)
+        }
+        if (pot in SPLETNE_POTI) return odgovori(zahteva)
+        return HubStreznik.Odgovor(404, napakaJson("Ni te poti.", "ni_poti"))
+    }
+
     /**
      * Nadgradnja v WebSocket je dovoljena samo iz krajevnega omrezja in samo z veljavno
      * enokratno vstopnico. Vrne razlog zavrnitve ali null, ce je vse v redu.
@@ -1917,6 +1955,10 @@ class HubUsmerjevalnik(
     companion object {
         const val RAZLICICA_PROTOKOLA = "0.2"
         const val VSEM = "all"
+        /** Vrata spletnega odjemalca (goli HTTP; ce so zasedena, jih streznik izbere sam in QR koda nosi prava). */
+        const val SPLETNA_VRATA = 8991
+        /** Poti huba, ki jih spletni odjemalec sme klicati: pridruzitev, vstopnica, naprave, besedilo, odhod. */
+        val SPLETNE_POTI = setOf("/cast/pair/qr/join", "/cast/ticket", "/cast/devices", "/cast/share/text", "/cast/health", "/cast/devices/leave")
         const val ZMOZNOST_SYNC = "sync"
 
         private const val KLJUC_ZETONOV = "cast_naprave"
