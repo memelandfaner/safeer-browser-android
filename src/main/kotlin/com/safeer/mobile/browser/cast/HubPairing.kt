@@ -237,6 +237,45 @@ object HubPairing {
     fun cakaNaKodo(): Boolean = tece && odprta != null
 
     /**
+     * Pridruzitev s QR kodo, ki jo pokaze sredisce (prijavno okno Safeer OS na televizorju). V kodi je
+     * celoten odtis potrdila sredisca, zato ze prva zahteva govori samo s tem potrdilom - vsiljivec v
+     * sredini pade kot pri 6-mestni kodi. [naslov] = "ip:vrata" iz kode. `izid(true, null)` ali
+     * (false, koda napake: qr_ne_obstaja, prevec_poskusov, prevec_naprav, povezava_ni_uspela).
+     */
+    fun pridruziSQr(
+        context: Context, naslov: String, odtis: String, qrId: String, skrivnost: String,
+        deviceId: String, ime: String, izid: (Boolean, String?) -> Unit
+    ) {
+        val app = context.applicationContext
+        Thread {
+            try {
+                val osnova = "https://$naslov"
+                val (koda, json) = post(odjemalecPripet(odtis.lowercase()), "$osnova/cast/pair/qr/join", JSONObject().apply {
+                    put("qr_id", qrId)
+                    put("secret", skrivnost)
+                    put("device_id", deviceId)
+                    put("name", ime)
+                })
+                val zeton = json?.optString("token").orEmpty()
+                if (koda != 200 || zeton.isBlank()) {
+                    val razlog = json?.optString("code").orEmpty().ifBlank { "povezava_ni_uspela" }
+                    glavna.post { izid(false, razlog) }
+                    return@Thread
+                }
+                app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+                    .putString("hub_url", "wss://$naslov/cast/ws").putString("hub_ticket_path", "/cast/ticket").apply()
+                shraniZeton(app, zeton, odtis.lowercase())
+                zadnjaSeznanitev = Izid(HubUsmerjevalnik.IDENTITETA_HUBA, odtis.lowercase(), zeton)
+                Log.i(TAG, "Naprava se je pridruzila srediscu s QR kodo; odtis potrdila pripet.")
+                glavna.post { izid(true, null) }
+            } catch (e: Exception) {
+                Log.w(TAG, "Pridruzitev s QR kodo ni uspela: ${e.message}")
+                glavna.post { izid(false, "povezava_ni_uspela") }
+            }
+        }.start()
+    }
+
+    /**
      * Uporabnik je vnos kode opustil. Sredisce to izve, da koda na njegovem zaslonu ne visi do
      * poteka (starejse sredisce te poti ne pozna - takrat koda potece sama kot doslej).
      */

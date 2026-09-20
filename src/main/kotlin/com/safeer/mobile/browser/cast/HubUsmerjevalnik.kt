@@ -766,6 +766,66 @@ class HubUsmerjevalnik(
         return true
     }
 
+    // ------------------------------------------------------------------ pridruzitev s QR kodo sredisca
+
+    /**
+     * QR, ki ga pokaze SREDISCE (prijavno okno Safeer OS na televizorju): telefon ali tablica ga poskenira
+     * in se pridruzi. Velja enako kot 6-mestna koda: pridruzi se lahko samo, kdor vidi zaslon sredisca.
+     * V kodi je celoten odtis potrdila sredisca, zato telefon ze prvo povezavo pripne nanj (vsiljivec v
+     * sredini z drugim potrdilom pade). Skrivnost ima 128 bitov, velja PIN_VELJA_MS, porabi se enkrat,
+     * ugibanje je omejeno. Kodo ustvari samo proces sredisca (zaslon), nikoli zahteva po omrezju.
+     */
+    private class Pridruzitev(val id: String, val odtisSkrivnosti: String, val nastala: Long, var poskusov: Int = 0)
+
+    private val pridruzitve = LinkedHashMap<String, Pridruzitev>()
+
+    /** Sredisce izve, kdo se je pridruzil (device_id, ime) - zaslon pokaze »povezano« in novo kodo. */
+    @Volatile
+    var naPridruzitev: ((String, String) -> Unit)? = null
+
+    private fun pocistiPridruzitve() {
+        val zdaj = ura()
+        pridruzitve.entries.removeAll { zdaj - it.value.nastala > PIN_VELJA_MS }
+    }
+
+    /** Nova koda za zaslon sredisca: (id, skrivnost). Klice se samo v procesu. */
+    fun ustvariPridruzitev(): Pair<String, String> = synchronized(kljucnica) {
+        pocistiPridruzitve()
+        while (pridruzitve.size >= NAJVEC_CAKAJOCIH) pridruzitve.remove(pridruzitve.keys.first())
+        val id = nakljucni(12)
+        val skrivnost = nakljucni(16)
+        pridruzitve[id] = Pridruzitev(id, sha256Hex(skrivnost), ura())
+        id to skrivnost
+    }
+
+    /** Zaslon je kodo zamenjal ali zaprl. */
+    fun prekliciPridruzitev(id: String): Unit = synchronized(kljucnica) { pridruzitve.remove(id) }
+
+    /** Naprava s skrivnostjo iz QR se pridruzi: (zeton, null) ali (null, napaka). Koda velja enkrat. */
+    fun pridruzi(id: String, skrivnost: String, deviceId: String, ime: String): Pair<String?, String?> {
+        val zeton = synchronized(kljucnica) {
+            pocistiPridruzitve()
+            val p = pridruzitve[id] ?: return null to "qr_ne_obstaja"
+            if (!enaka(sha256Hex(skrivnost), p.odtisSkrivnosti)) {
+                p.poskusov += 1
+                if (p.poskusov >= NAJVEC_POSKUSOV) {
+                    pridruzitve.remove(id)
+                    return null to "prevec_poskusov"
+                }
+                return null to "qr_ne_obstaja"
+            }
+            if (jePolno(deviceId)) return null to "prevec_naprav"
+            pridruzitve.remove(id)
+            val nov = "saf_tv_" + nakljucni(24)
+            vpisiZeton(nov, SeznanjenaNaprava(deviceId, if (ime.isBlank()) deviceId else ime, ura() / 1000.0))
+            shraniZetone()
+            nov
+        }
+        naSpremembeNaprav?.invoke()
+        try { naPridruzitev?.invoke(deviceId, ime) } catch (_: Throwable) { }
+        return zeton to null
+    }
+
     private fun sha256Hex(niz: String): String =
         java.security.MessageDigest.getInstance("SHA-256").digest(niz.toByteArray(Charsets.UTF_8))
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
@@ -1757,6 +1817,16 @@ class HubUsmerjevalnik(
                 if (zeton != null) z.niz("token", zeton).niz("hub_id", IDENTITETA_HUBA).niz("fp", lastniOdtis)
                 return HubStreznik.Odgovor(200, z.toString())
             }
+            "/cast/pair/qr/join" -> {
+                // Pridruzitev s QR kodo sredisca: skrivnost iz kode je dovolj (kot koda z zaslona).
+                if (deviceId.isEmpty()) return HubStreznik.Odgovor(400, napakaJson("Manjka device_id.", "manjka_device_id"))
+                if (qrId.isEmpty() || skrivnost.isEmpty()) return napaka("qr_ne_obstaja")
+                val ime = (telo?.niz("name") ?: "").trim().take(NAJVEC_IMENA)
+                val (zeton, n) = pridruzi(qrId, skrivnost, deviceId, ime)
+                if (zeton == null) return napaka(n)
+                return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("approved", true).niz("token", zeton)
+                    .niz("hub_id", IDENTITETA_HUBA).niz("fp", lastniOdtis).toString())
+            }
             "/cast/pair/qr/cancel" -> {
                 return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("cancelled", prekliciQr(qrId, deviceId, prevzem)).toString())
             }
@@ -1789,7 +1859,8 @@ class HubUsmerjevalnik(
         private val ZNANE_POTI = setOf(
             "/cast/pair/start", "/cast/pair/claim", "/cast/pair/sibling", "/cast/ticket", "/cast/devices", "/cast/health",
             "/cast/trust/enroll", "/cast/trust/ring", "/cast/trust/alias", "/cast/auth/challenge", "/cast/auth/ticket",
-            "/cast/pair/qr/start", "/cast/pair/qr/info", "/cast/pair/qr/approve", "/cast/pair/qr/status", "/cast/pair/qr/cancel"
+            "/cast/pair/qr/start", "/cast/pair/qr/info", "/cast/pair/qr/approve", "/cast/pair/qr/status", "/cast/pair/qr/cancel",
+            "/cast/pair/qr/join"
         )
         /** Izziv za prijavo s podpisom velja minuto: dovolj za en krog po omrezju, premalo za zbiranje. */
         private const val IZZIV_VELJA_MS = 60_000L
