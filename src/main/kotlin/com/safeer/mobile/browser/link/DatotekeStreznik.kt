@@ -35,6 +35,8 @@ object DatotekeStreznik {
     const val ZMOZNOST = "files"
     private const val NAJVEC = 500
     private const val PREDPONA = "media:"
+    /** Zgornja meja telesa ukaza: ukaz je nekaj deset bajtov JSON. */
+    private const val NAJVEC_TELESA = 64 * 1024
 
     private val tece = AtomicBoolean(false)
     @Volatile private var vticnica: ServerSocket? = null
@@ -106,6 +108,8 @@ object DatotekeStreznik {
             }
         }
         o.put("items", vnosi).put("shared", true)
+        // Urejanje (brisanje, vrtenje slik) je mogoce v zbirkah, ne v korenu, kjer so same mape.
+        o.put("edit", !(mapa.isBlank() || mapa == "root"))
         if (datotek) {
             val naslov = krajevniNaslov()
             if (zazeni() && naslov != null) {
@@ -202,7 +206,9 @@ object DatotekeStreznik {
                 if (i > 0) glave[v.substring(0, i).trim().lowercase()] = v.substring(i + 1).trim()
             }
             val deli = prva.split(" ")
-            if (deli.size < 2 || (deli[0] != "GET" && deli[0] != "HEAD")) { napaka(izhod, 405, "samo GET"); return }
+            if (deli.size < 2 || (deli[0] != "GET" && deli[0] != "HEAD" && deli[0] != "POST")) {
+                napaka(izhod, 405, "samo GET ali POST"); return
+            }
             val cilj = deli[1]
             val pot = cilj.substringBefore('?')
             val poizvedba = cilj.substringAfter('?', "")
@@ -213,6 +219,7 @@ object DatotekeStreznik {
             if (!zetonVelja(zeton)) { napaka(izhod, 401, "manjka ali napacen zeton"); return }
             val ctx = appContext ?: run { napaka(izhod, 503, "ni pripravljeno"); return }
             val uri = uriIz(URLDecoder.decode(pot.substring(3), "UTF-8")) ?: run { napaka(izhod, 404, "datoteke ni"); return }
+            if (deli[0] == "POST") { uredi(ctx, uri, glave, vhod, izhod); return }
             val opis = try { ctx.contentResolver.openAssetFileDescriptor(uri, "r") } catch (_: Throwable) { null }
                 ?: run { napaka(izhod, 404, "datoteke ni"); return }
             opis.use { o ->
@@ -301,4 +308,56 @@ object DatotekeStreznik {
             .firstOrNull { it is java.net.Inet4Address && !it.isLoopbackAddress && it.isSiteLocalAddress }
             ?.hostAddress
     } catch (_: Throwable) { null }
+
+    // ------------------------------------------------------------------ urejanje
+
+    /**
+     * `POST /d/<oznaka>` z JSON telesom - ista pogodba kot pri Safeer Controlu na racunalniku, zato
+     * televizorju ni treba loceno znati za naprave. Brisanje gre v Smeti naprave, vrtenje slike JPEG
+     * pa spremeni samo oznako EXIF.
+     *
+     * Kadar Android zahteva privolitev uporabnika (fotografija, ki je Safeer ni ustvaril), odgovorimo
+     * z oznako `potrebna_potrditev` in na tej napravi pokazemo sistemsko vprasanje. Televizor to
+     * izpise kot »Potrdi na napravi«.
+     */
+    private fun uredi(ctx: Context, uri: Uri, glave: Map<String, String>, vhod: InputStream, izhod: OutputStream) {
+        val dolzina = glave["content-length"]?.toIntOrNull() ?: 0
+        if (dolzina <= 0 || dolzina > NAJVEC_TELESA) { napaka(izhod, 400, "telo je prazno ali preveliko"); return }
+        val telo = ByteArray(dolzina)
+        var brano = 0
+        while (brano < dolzina) {
+            val n = vhod.read(telo, brano, dolzina - brano)
+            if (n < 0) break
+            brano += n
+        }
+        if (brano < dolzina) { napaka(izhod, 400, "telo ni celo"); return }
+        val j = try { JSONObject(String(telo, Charsets.UTF_8)) } catch (_: Throwable) {
+            napaka(izhod, 400, "telo ni JSON"); return
+        }
+        val izid = when (val op = j.optString("op")) {
+            "delete" -> UrejanjeMedijev.izbrisi(ctx, uri)
+            "rotate" -> UrejanjeMedijev.zavrti(ctx, uri, j.optInt("degrees", 90))
+            // Preimenovanja in premikanja v zbirki (MediaStore) namenoma ne ponujamo: mape so
+            // sistemske, ime pa je del zapisa v zbirki. Televizor teh moznosti ne kaze.
+            "rename", "move" -> UrejanjeMedijev.Izid(false, "ni_mogoce_na_napravi")
+            else -> UrejanjeMedijev.Izid(false, if (op.isBlank()) "manjka_op" else "neznan_op")
+        }
+        if (izid.potrditev) {
+            val dejanje = if (j.optString("op") == "delete") PotrditevActivity.DEJANJE_BRISANJE
+                          else PotrditevActivity.DEJANJE_VRTENJE
+            PotrditevActivity.pokazi(ctx, uri, dejanje, j.optInt("degrees", 90))
+        }
+        val odgovor = JSONObject().put("ok", izid.ok)
+        if (!izid.ok) odgovor.put("napaka", izid.napaka)
+        posljiJson(izhod, if (izid.ok) 200 else 409, odgovor.toString())
+    }
+
+    private fun posljiJson(izhod: OutputStream, koda: Int, telo: String) {
+        val b = telo.toByteArray(Charsets.UTF_8)
+        izhod.write(("HTTP/1.1 $koda ${if (koda == 200) "OK" else "Conflict"}\r\n" +
+                "Content-Type: application/json; charset=utf-8\r\nContent-Length: ${b.size}\r\n" +
+                "Cache-Control: no-store\r\nConnection: close\r\n\r\n").toByteArray())
+        izhod.write(b)
+        izhod.flush()
+    }
 }
