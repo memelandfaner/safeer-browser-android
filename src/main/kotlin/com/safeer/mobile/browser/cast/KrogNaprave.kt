@@ -37,6 +37,12 @@ object KrogNaprave {
         return try { clan.kljuc == HubTls.javniKljucB64() } catch (_: Throwable) { false }
     }
 
+    /** Kateri koli id (razen [razen]), pod katerim je nas kljuc ze v krogu (ista naprava, drug id), ali null. */
+    fun znaniIdZaNasKljuc(context: Context, razen: String = ""): String? {
+        val kljuc = try { HubTls.javniKljucB64() } catch (_: Throwable) { return null }
+        return krog(context).clani().firstOrNull { it.kljuc == kljuc && it.id != razen }?.id
+    }
+
     /** Zdruzi krog, ki ga je poslal hub (trust.update ali odgovor na prijavo). */
     fun sprejmi(context: Context, json: String?): Boolean {
         if (json.isNullOrBlank()) return false

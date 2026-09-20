@@ -112,6 +112,66 @@ object HubDiscovery {
         !context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getString("control_token", null).isNullOrBlank()
 
+    /** Hub, ki se oglasa v omrezju, kot ga vidi izvolitev: naslov, odtis, id in prioriteta iz oglasa. */
+    data class NajdeniHub(val naslov: String, val odtis: String, val id: String, val prioriteta: Int, val ime: String)
+
+    /**
+     * Zbere VSE hube, ki se oglasajo in so zivi (mDNS, [timeoutMs]), brez spreminjanja nastavitev.
+     * Za izvolitev huba: klicatelj kandidate prefiltrira po krogu zaupanja in izbere najboljsega.
+     * Klic na glavni niti, natanko enkrat.
+     */
+    fun poisciVse(context: Context, timeoutMs: Long = 2500L, naprej: (List<NajdeniHub>) -> Unit) {
+        val app = context.applicationContext
+        val glavna = Handler(Looper.getMainLooper())
+        val nsd = app.getSystemService(Context.NSD_SERVICE) as? NsdManager
+        if (nsd == null) { glavna.post { naprej(emptyList()) }; return }
+        val najdeni = java.util.Collections.synchronizedList(ArrayList<NajdeniHub>())
+        val koncano = AtomicBoolean(false)
+        val multicast = try {
+            (app.getSystemService(Context.WIFI_SERVICE) as? WifiManager)
+                ?.createMulticastLock("safeer-hub-izvolitev")?.apply { setReferenceCounted(false); acquire() }
+        } catch (_: Exception) { null }
+        var listener: NsdManager.DiscoveryListener? = null
+        fun zakljuci() {
+            if (!koncano.compareAndSet(false, true)) return
+            try { listener?.let { nsd.stopServiceDiscovery(it) } } catch (_: Exception) {}
+            try { multicast?.release() } catch (_: Exception) {}
+            val kopija = synchronized(najdeni) { najdeni.distinctBy { it.naslov } }
+            glavna.post { naprej(kopija) }
+        }
+        fun razresevalec(): NsdManager.ResolveListener = object : NsdManager.ResolveListener {
+            override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {}
+            override fun onServiceResolved(info: NsdServiceInfo) {
+                val gostitelj = info.host?.hostAddress ?: return
+                val l = info.attributes ?: emptyMap<String, ByteArray>()
+                if (l["tls"]?.toString(Charsets.UTF_8) != "1") return
+                val wsPot = l["ws"]?.toString(Charsets.UTF_8) ?: "/cast/ws"
+                val hub = NajdeniHub(
+                    naslov = "wss://$gostitelj:${info.port}$wsPot",
+                    odtis = l["fp"]?.toString(Charsets.UTF_8)?.lowercase().orEmpty(),
+                    id = l[IzvolitevHuba.TXT_ID]?.toString(Charsets.UTF_8).orEmpty(),
+                    prioriteta = IzvolitevHuba.prioritetaIzOglasa(l[IzvolitevHuba.TXT_PRIORITETA]?.toString(Charsets.UTF_8)),
+                    ime = l["name"]?.toString(Charsets.UTF_8).orEmpty(),
+                )
+                // Zapis v mDNS prezivi hub, ki ga ni vec: steje samo ziv hub.
+                preveriHub("https://$gostitelj:${info.port}", null) { ziv -> if (ziv && !koncano.get()) najdeni.add(hub) }
+            }
+        }
+        listener = object : NsdManager.DiscoveryListener {
+            override fun onDiscoveryStarted(serviceType: String) {}
+            override fun onServiceFound(info: NsdServiceInfo) {
+                if (koncano.get()) return
+                try { @Suppress("DEPRECATION") nsd.resolveService(info, razresevalec()) } catch (_: Exception) {}
+            }
+            override fun onServiceLost(info: NsdServiceInfo) {}
+            override fun onDiscoveryStopped(serviceType: String) {}
+            override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) { zakljuci() }
+            override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
+        }
+        try { nsd.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener) } catch (_: Exception) { zakljuci(); return }
+        glavna.postDelayed({ zakljuci() }, timeoutMs)
+    }
+
     /** Zadnji znani naslov Huba; prazen, dokler ga naprava ni nikoli videla. */
     fun knownHubUrl(context: Context): String =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

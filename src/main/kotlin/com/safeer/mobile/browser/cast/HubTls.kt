@@ -138,9 +138,14 @@ object HubTls {
     // Lastni zaupnik je namen: Hub ima samopodpisano potrdilo, zaupamo samo pripetemu odtisu
     // (med seznanitvijo pa SPAKE2 veze odtis na kodo, zato napadalec v sredini pade).
     @Suppress("CustomX509TrustManager")
-    class Zaupnik(private val pripeti: String?) : X509TrustManager {
+    class Zaupnik(private val pripeti: String?, private val pripetiKljuc: String? = null) : X509TrustManager {
         @Volatile
         var videni: String? = null
+            private set
+
+        /** Javni kljuc potrdila, ki smo ga videli (base64 SPKI) - za primerjavo s krogom zaupanja. */
+        @Volatile
+        var videniKljuc: String? = null
             private set
 
         override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {
@@ -151,8 +156,14 @@ object HubTls {
             if (chain.isEmpty()) throw CertificateException("Hub ni poslal potrdila")
             val o = odtis(chain[0])
             videni = o
+            val k = android.util.Base64.encodeToString(chain[0].publicKey.encoded, android.util.Base64.NO_WRAP)
+            videniKljuc = k
             if (pripeti != null && !MessageDigest.isEqual(o.toByteArray(), pripeti.toByteArray())) {
                 throw CertificateException("Safeer Link: Hub ima drugo potrdilo, kot je bilo ob seznanitvi (odtis se ne ujema)")
+            }
+            // Izvoljeni hub (drug clan kroga): njegovo potrdilo mora nositi kljuc, ki ga ima v krogu zaupanja.
+            if (pripetiKljuc != null && !MessageDigest.isEqual(k.toByteArray(), pripetiKljuc.toByteArray())) {
+                throw CertificateException("Safeer Link: potrdilo huba ne nosi kljuca iz kroga zaupanja")
             }
         }
 
@@ -160,8 +171,8 @@ object HubTls {
     }
 
     /** Odjemalska tovarna + zaupnik za dani (ali se neznani) odtis. */
-    fun odjemalec(pripeti: String?): Pair<SSLSocketFactory, Zaupnik> {
-        val z = Zaupnik(pripeti)
+    fun odjemalec(pripeti: String?, pripetiKljuc: String? = null): Pair<SSLSocketFactory, Zaupnik> {
+        val z = Zaupnik(pripeti, pripetiKljuc)
         val ctx = SSLContext.getInstance("TLS")
         ctx.init(null, arrayOf(z), SecureRandom())
         return ctx.socketFactory to z
@@ -203,8 +214,8 @@ object HubTls {
      * samo pred seznanitvijo - s katerimkoli, ki si ga zapomni. Vrne zaupnika, da lahko
      * klicatelj po prvem odgovoru prebere `videni`.
      */
-    fun okhttp(graditelj: okhttp3.OkHttpClient.Builder, pripeti: String?): Pair<okhttp3.OkHttpClient.Builder, Zaupnik> {
-        val (tovarna, z) = odjemalec(pripeti)
+    fun okhttp(graditelj: okhttp3.OkHttpClient.Builder, pripeti: String?, pripetiKljuc: String? = null): Pair<okhttp3.OkHttpClient.Builder, Zaupnik> {
+        val (tovarna, z) = odjemalec(pripeti, pripetiKljuc)
         graditelj.sslSocketFactory(tovarna, z)
         graditelj.hostnameVerifier { _, _ -> true }
         return graditelj to z
