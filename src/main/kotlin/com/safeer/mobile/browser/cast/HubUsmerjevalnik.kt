@@ -1151,6 +1151,13 @@ class HubUsmerjevalnik(
 
         val vloga = tovor.niz("role") ?: "receiver"
         val zmoznosti = tovor.nizi("capabilities").ifEmpty { listOf("url", "control") }
+        // Ista naprava z novo povezavo (po izpadu, ponovnem zagonu): nova zamenja staro, stara se zapre.
+        // Sicer bi ob zaprtju stare vpis naprave izgubil povezavo, nova pa bi ostala odprta in nevidna.
+        val stara = synchronized(kljucnica) { naprave[deviceId]?.povezava?.takeIf { it !== od } }
+        if (stara != null) {
+            synchronized(kljucnica) { posiljatelji.remove(stara) }
+            try { stara.zapri(1000, "nova povezava iste naprave") } catch (_: Throwable) { }
+        }
         synchronized(kljucnica) {
             if (!naprave.containsKey(deviceId) && naprave.size >= NAJVEC_NAPRAV) {
                 pocistiRegister()
