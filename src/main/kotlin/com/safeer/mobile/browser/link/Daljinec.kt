@@ -37,8 +37,13 @@ object Daljinec {
         "restart", "clear_cache", "status", "screenshot",
         // Protocol v1: ista imena kot pri ponudniku na racunalniku (Safeer Control), da odjemalec
         // (Safeer OS, Control) aplikacije katere koli naprave nasteje in zazene na en nacin.
-        "apps.list", "apps.launch"
+        "apps.list", "apps.launch",
+        // Zvok racunalnika na tej napravi (Safeer OS za racunalnik: Zvok -> Predvajaj tukaj).
+        "audio.play", "audio.stop"
     )
+
+    /** Zmoznost, s katero se naprava javi, da zna predvajati zvok racunalnika ([ZvokSprejemnik]). */
+    const val ZMOZNOST_ZVOK = "audio"
 
     /** Izid ukaza: `ok`, kratko sporocilo za uporabnika in neobvezni podatki. */
     class Izid(val ok: Boolean, val sporocilo: String, val podatki: JSONObject? = null, val koda: String = "") {
@@ -108,6 +113,9 @@ object Daljinec {
         if (d == "apps.launch") {
             return zazeniAplikacijo(context, parametri.optString("app", "").ifBlank { parametri.optString("package", "") })
         }
+        // Zvok z racunalnika igra ne glede na to, kaj je na zaslonu.
+        if (d == "audio.play") return ZvokSprejemnik.zacni(context, parametri)
+        if (d == "audio.stop") return ZvokSprejemnik.ustavi()
         try {
             // Najprej dejavnost: tipke, drsenje, posnetek in tudi status z odprto stranjo.
             if (ospredje != null) {
