@@ -2,7 +2,7 @@ package com.safeer.mobile.browser.cast
 
 // Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
 // gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
-// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2 (vir); kopijo naredi tools/link-core-sync.sh.
 
 import android.content.Context
 import android.net.http.SslCertificate
@@ -135,6 +135,9 @@ object HubTls {
      * Zaupnik, ki Hub prepozna po odtisu. `pripeti` = null pomeni "se ne poznam" (samo
      * med seznanitvijo); takrat sprejme katerokoli potrdilo in si zapomni njegov odtis.
      */
+    // Lastni zaupnik je namen: Hub ima samopodpisano potrdilo, zaupamo samo pripetemu odtisu
+    // (med seznanitvijo pa SPAKE2 veze odtis na kodo, zato napadalec v sredini pade).
+    @Suppress("CustomX509TrustManager")
     class Zaupnik(private val pripeti: String?) : X509TrustManager {
         @Volatile
         var videni: String? = null

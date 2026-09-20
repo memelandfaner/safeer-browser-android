@@ -2,7 +2,7 @@ package com.safeer.mobile.browser.cast
 
 // Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
 // gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
-// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2 (vir); kopijo naredi tools/link-core-sync.sh.
 
 import java.math.BigInteger
 import java.security.MessageDigest

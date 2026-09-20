@@ -33,6 +33,17 @@ if grep -rqs '"safeer-test-' "$DIR/src/main/kotlin" --include=SignedThreatIntel.
     exit 1
 fi
 
+# 🔗 Link Core: gostitelj/odjemalec Safeer Linka (cast/*) ima en sam vir v tv-browser-2; tu je kopija.
+# Ce je vir na tem racunalniku, mora biti kopija enaka - sicer se protokol med napravami razide.
+LINK_CORE_SYNC="$DIR/../tv-browser-2/tools/link-core-sync.sh"
+if [ -x "$LINK_CORE_SYNC" ]; then
+    if ! bash "$LINK_CORE_SYNC" --preveri "$DIR"; then
+        echo "❌ Link Core na telefonu se razlikuje od vira v tv-browser-2."
+        echo "👉 Pozeni: bash \"$LINK_CORE_SYNC\" \"$DIR\"   (kopira vir na telefon), nato gradi znova."
+        exit 1
+    fi
+fi
+
 KOTLINC="$TOOLS_DIR/kotlinc/bin/kotlinc"
 KOTLIN_LIB="$TOOLS_DIR/kotlinc/lib/kotlin-stdlib.jar"
 LIB_CLASSPATH=""

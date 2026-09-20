@@ -91,6 +91,10 @@ object HubKrmilnik {
             return false
         }
         u.lastniOdtis = HubTls.lastniOdtis()
+        // Hub je prvi clan kroga zaupanja: njegov kljuc je kljuc potrdila TLS.
+        try { u.vpisiLastniKljuc(lastniId(), imeHuba(), HubTls.javniKljucB64(), "phone") } catch (e: Throwable) {
+            Log.w(TAG, "Kljuca huba ni bilo mogoce vpisati v krog: ${e.message}")
+        }
         u.naSpremembePrijav = {
             try { naSpremembePrijav?.invoke() } catch (_: Throwable) { }
             try { naPrijavoZaZaslon?.invoke() } catch (_: Throwable) { }
@@ -225,6 +229,7 @@ object HubKrmilnik {
     private fun povezi(u: HubUsmerjevalnik, povezava: HubStreznik.Povezava) {
         val odjemalec = object : HubUsmerjevalnik.Odjemalec {
             override val naslov: String = povezava.naslov
+            override val vstopnica: String? = povezava.zahteva.poizvedba["ticket"]
             override fun poslji(besedilo: String) = povezava.poslji(besedilo)
             override fun zapri(koda: Int, razlog: String) = povezava.zapri(koda, razlog)
         }

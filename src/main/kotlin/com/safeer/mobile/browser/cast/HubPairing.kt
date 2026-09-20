@@ -2,7 +2,7 @@ package com.safeer.mobile.browser.cast
 
 // Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
 // gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
-// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2 (vir); kopijo naredi tools/link-core-sync.sh.
 
 import android.content.Context
 import android.os.Handler
@@ -46,7 +46,15 @@ object HubPairing {
     private var tece = false
 
     /** Odprta prijava: caka na vnos kode. */
-    private class Prijava(val osnova: String, val pairId: String, val hubId: String, val odtis: String)
+    private class Prijava(val osnova: String, val pairId: String, val hubId: String, val odtis: String,
+                          val deviceId: String = "")
+
+    /** Kaj je prinesla zadnja uspesna seznanitev (za klicatelja, ki si mora poverilnice shraniti sam). */
+    class Izid(val hubId: String, val odtis: String, val zeton: String)
+
+    @Volatile
+    var zadnjaSeznanitev: Izid? = null
+        private set
 
     @Volatile
     private var odprta: Prijava? = null
@@ -140,7 +148,7 @@ object HubPairing {
                     glavna.post { koncano(false) }
                     return@Thread
                 }
-                odprta = Prijava(osnova, pairId, hubId, odtis)
+                odprta = Prijava(osnova, pairId, hubId, odtis, deviceId)
                 Log.i(TAG, "Cakam, da uporabnik vtipka kodo z gostitelja (odtis ${odtis.take(12)}…).")
                 glavna.post { nacinZnan(NACIN_KODA_NA_GOSTITELJU, "") }
             } catch (e: Exception) {
@@ -213,6 +221,7 @@ object HubPairing {
                     return@Thread
                 }
                 shraniZeton(app, zeton, p.odtis)
+                zadnjaSeznanitev = Izid(p.hubId, p.odtis, zeton)
                 tece = false
                 odprta = null
                 Log.i(TAG, "Naprava je seznanjena s Safeer Hubom; odtis potrdila pripet.")
@@ -224,9 +233,27 @@ object HubPairing {
         }.start()
     }
 
-    /** Uporabnik je vnos kode opustil. */
+    /** Seznanitev tece in caka na kodo z gostitelja (uporabnik je sel po kodo in se vrnil). */
+    fun cakaNaKodo(): Boolean = tece && odprta != null
+
+    /**
+     * Uporabnik je vnos kode opustil. Sredisce to izve, da koda na njegovem zaslonu ne visi do
+     * poteka (starejse sredisce te poti ne pozna - takrat koda potece sama kot doslej).
+     */
     fun prekini() {
+        val p = odprta
         tece = false
         odprta = null
+        if (p == null || p.deviceId.isBlank()) return
+        Thread {
+            try {
+                post(odjemalecPripet(p.odtis), "${p.osnova}/cast/pair/cancel", JSONObject().apply {
+                    put("pair_id", p.pairId)
+                    put("device_id", p.deviceId)
+                })
+            } catch (e: Exception) {
+                Log.i(TAG, "Preklica prijave ni bilo mogoce sporociti: ${e.message}")
+            }
+        }.start()
     }
 }

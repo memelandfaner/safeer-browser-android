@@ -1,5 +1,9 @@
 package com.safeer.mobile.browser.cast
 
+// Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
+// gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2 (vir); kopijo naredi tools/link-core-sync.sh.
+
 import java.security.KeyFactory
 import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
@@ -7,9 +11,6 @@ import java.util.Base64
 
 /**
  * Krog zaupanja: naprave, ki si zaupajo med seboj, ne samo hubu.
- *
- * Kopija si.safeer.tv.cast.KrogZaupanja iz brskalnika TV (tv-browser-2); s korakom 3 (Link Core)
- * bo ena sama v skupnem modulu. Do takrat naj spremembe gredo v obe.
  *
  * Danes je zaupanje hubovsko: hub izda zeton, naprava si zapomni odtis huba in zeton. Drug hub
  * pomeni novo seznanitev za vsako napravo. Krog to obrne: vsaka naprava ima svoj kljuc (EC P-256,
@@ -161,7 +162,7 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
     fun preveriPodpis(id: String, podatki: ByteArray, podpisB64: String): Boolean {
         val clan = clan(id) ?: return false
         // Izrecno funkcija spremljevalca: ta metoda ima isti podpis in bi sicer poklicala samo sebe
-        // (kljuc kot id -> ni clana -> false).
+        // (kljuc kot id -> ni clana -> false). Zato je JVM preizkus nekoc padel s 401.
         return preveriPodpisSKljucem(clan.kljuc, podatki, podpisB64)
     }
 
