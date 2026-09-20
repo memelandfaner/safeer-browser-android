@@ -260,7 +260,8 @@ class LinkMost(
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(dejavnost),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST)
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST),
+            context = dejavnost.applicationContext
         )
         nov.onShare = { sporocilo -> prejmiDeljenje(sporocilo) }
         nov.onControlOdziv = { json -> ukazOdziv(json) }
