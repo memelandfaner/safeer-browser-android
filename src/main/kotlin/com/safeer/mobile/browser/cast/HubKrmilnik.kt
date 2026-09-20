@@ -210,8 +210,15 @@ object HubKrmilnik {
         Log.i(TAG, "Safeer Hub ustavljen.")
     }
 
-    /** Isti id, s katerim se ta telefon prijavlja Hubu (LinkMost.ime()). */
-    fun lastniId(): String = "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
+    /**
+     * Id te naprave: iz njenega kljuca (`n-…`, KrogNaprave.lastniId) - isti na vseh hubih. Isti id uporabi
+     * telefon kot posiljatelj (LinkMost/LinkSprejemnik) in kot hub (krog, oglas mDNS). Stari `phone-<model>`
+     * ostane v krogih kot alias; hub ga ob prvi prijavi s podpisom sam poveze z novim.
+     */
+    fun lastniId(): String = KrogNaprave.lastniId(nadomestni = { stariId() })
+
+    /** Id po modelu naprave, kot je veljal pred prehodom na id iz kljuca (nadomestek in alias). */
+    fun stariId(): String = "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
 
     /**
      * Mapa za datoteke, ki jih telefon prejme prek Safeer Linka: ista, kot jo je uporabnik

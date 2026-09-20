@@ -884,6 +884,16 @@ class HubUsmerjevalnik(
         return potrditev(id, "error", "Neznan tip sporočila: '$tip'", prostor, koda = "neznan_tip")
     }
 
+    /**
+     * Ista naprava pod dvema id-jema (stari id in id iz kljuca, ali sorodnika z istim kljucem): vstopnica,
+     * izdana enemu, velja za prijavo drugega. Kljuc je identiteta, id je le ime zanjo.
+     */
+    private fun istiKljuc(a: String, b: String): Boolean {
+        val ka = krog.clanZaId(a)?.kljuc ?: return false
+        val kb = krog.clanZaId(b)?.kljuc ?: return false
+        return ka == kb
+    }
+
     private fun registriraj(od: Odjemalec, sporocilo: JsonLahki.Pogled, id: String): String {
         val tovor = sporocilo.objekt("payload")
         val deviceId = tovor?.niz("device_id")
@@ -891,7 +901,7 @@ class HubUsmerjevalnik(
         // Vstopnica je bila izdana znani napravi (po zetonu ali podpisu): prijava pod drugim id ne velja.
         // Tako je device_id vezan na zeton oz. kljuc, ne le na to, kar naprava trdi o sebi.
         val vezana = napravaVstopnice(od.vstopnica)
-        if (vezana != null && vezana != deviceId) {
+        if (vezana != null && vezana != deviceId && !istiKljuc(vezana, deviceId)) {
             return potrditev(id, "rejected", "device_id se ne ujema z napravo, ki ji je bila izdana vstopnica.", koda = "napacen_device_id")
         }
         od.vstopnica?.let { v -> synchronized(kljucnica) { vezaneVstopnice.keys.firstOrNull { enaka(it, v) }?.let { vezaneVstopnice.remove(it) } } }
@@ -1412,7 +1422,8 @@ class HubUsmerjevalnik(
         if (pot == "/cast/auth/challenge" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
             val deviceId = (JsonLahki.objekt(zahteva.telo)?.niz("device_id") ?: "").trim()
-            if (deviceId.isEmpty() || !krog.jeClan(deviceId)) {
+            // Id iz kljuca (n-...) velja tudi, ce je ta kljuc v krogu pod starim id-jem: naprava je ista.
+            if (deviceId.isEmpty() || krog.clanZaId(deviceId) == null) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni v krogu zaupanja.", "naprava_ni_v_krogu"))
             }
             val nonce = nakljucni(24)
@@ -1435,8 +1446,16 @@ class HubUsmerjevalnik(
             if (izziv == null || izziv.first != deviceId) {
                 return HubStreznik.Odgovor(401, napakaJson("Izziv ni veljaven ali je potekel.", "neveljaven_izziv"))
             }
-            if (!krog.preveriPodpis(deviceId, podatkiZaPodpis(deviceId, nonce), podpis)) {
+            val clan = krog.clanZaId(deviceId)
+            if (clan == null || !KrogZaupanja.preveriPodpisSKljucem(clan.kljuc, podatkiZaPodpis(deviceId, nonce), podpis)) {
                 return HubStreznik.Odgovor(401, napakaJson("Podpis se ne ujema s ključem naprave.", "napacen_podpis"))
+            }
+            if (clan.id != deviceId) {
+                // Prehod na id iz kljuca: podpis dokazuje isti kljuc, zato nov id vpisemo kot alias starega.
+                // Seznanitev prezivi - nic novega ne vstopi v krog.
+                val ime = (telo?.niz("name")?.takeIf { it.isNotBlank() } ?: clan.ime).take(NAJVEC_IMENA)
+                val platforma = telo?.nizAli("platform")?.take(16)?.ifBlank { clan.platforma } ?: clan.platforma
+                krog.dodaj(KrogZaupanja.Clan(deviceId, clan.kljuc, ime, platforma, KrogZaupanja.zdaj(), clan.id))
             }
             return HubStreznik.Odgovor(200, JsonLahki.Zapis()
                 .niz("ticket", izdajVstopnico(deviceId))

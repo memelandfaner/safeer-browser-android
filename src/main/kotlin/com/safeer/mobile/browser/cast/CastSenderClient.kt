@@ -130,7 +130,8 @@ class CastSenderClient(
         }
         Log.i(TAG, "Povezujem se na Safeer Cast Hub: $hubWsUrl")
         val ctx = context
-        val vpisana = ctx != null && try { KrogNaprave.jeVpisana(ctx, senderId) } catch (_: Throwable) { false }
+        // S podpisom tudi, ce je nas kljuc v krogu pod starim id-jem (phone-...): hub nov id sam vpise kot alias.
+        val vpisana = ctx != null && try { KrogNaprave.lahkoSPodpisom(ctx, senderId) } catch (_: Throwable) { false }
         if (vpisana) {
             zVstopnicoSPodpisom(hubWsUrl) { naslov -> odpriPovezavo(naslov) }
         } else {
@@ -238,7 +239,9 @@ class CastSenderClient(
             val podpis = try { KrogNaprave.podpisPrijave(senderId, odtisHuba, nonce) } catch (e: Throwable) {
                 Log.w(TAG, "Podpisa ni bilo mogoce narediti: ${e.message}"); zVstopnico(wsUrl, controlToken, naprej); return@klic
             }
-            klic("/cast/auth/ticket", JSONObject().put("device_id", senderId).put("nonce", nonce).put("signature", podpis), null) { koda2, telo2 ->
+            val zahteva = JSONObject().put("device_id", senderId).put("nonce", nonce).put("signature", podpis)
+                .put("name", deviceName).put("platform", platforma)
+            klic("/cast/auth/ticket", zahteva, null) { koda2, telo2 ->
                 val j2 = try { JSONObject(telo2) } catch (_: Throwable) { JSONObject() }
                 val vstopnica = j2.optString("ticket")
                 if (koda2 != 200 || vstopnica.isBlank()) {
