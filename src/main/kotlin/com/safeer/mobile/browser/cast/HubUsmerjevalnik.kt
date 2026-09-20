@@ -1957,8 +1957,9 @@ class HubUsmerjevalnik(
         const val VSEM = "all"
         /** Vrata spletnega odjemalca (goli HTTP; ce so zasedena, jih streznik izbere sam in QR koda nosi prava). */
         const val SPLETNA_VRATA = 8991
-        /** Poti huba, ki jih spletni odjemalec sme klicati: pridruzitev, vstopnica, naprave, besedilo, odhod. */
-        val SPLETNE_POTI = setOf("/cast/pair/qr/join", "/cast/ticket", "/cast/devices", "/cast/share/text", "/cast/health", "/cast/devices/leave")
+        /** Poti huba, ki jih spletni odjemalec sme klicati: pridruzitev, vstopnica, naprave, besedilo, odhod, preimenovanje. */
+        val SPLETNE_POTI = setOf("/cast/pair/qr/join", "/cast/ticket", "/cast/devices", "/cast/share/text", "/cast/health", "/cast/devices/leave",
+            "/cast/devices/rename")
         const val ZMOZNOST_SYNC = "sync"
 
         private const val KLJUC_ZETONOV = "cast_naprave"

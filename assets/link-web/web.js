@@ -15,6 +15,7 @@
       url: "Povezava (odpre se na napravi)", posljiUrl: "Odpri na napravi", besedilo: "Besedilo", posljiBesedilo: "Pošlji besedilo",
       prejeto: "Prejeto", pozabi: "Odklopi to napravo", poslano: "Poslano.", napaka: "Ni uspelo: ", brezDaljinca: "Te naprave ni mogoče upravljati.",
       kodaPotekla: "Koda je potekla ali ni prava. Na zaslonu se pokaže nova.", drobno: "Podatki ostanejo v domačem omrežju. Povezava je brez šifriranja (samo za daljinec, povezave in besedila); za datoteke in zaslon uporabi Safeer Browser.",
+      preimenuj: "Preimenuj", shraniIme: "Shrani", vnesiIme: "Ime naprave …", preimenovano: "Ime je shranjeno – vidijo ga vse naprave.", napPreimenovanje: "Imena ni bilo mogoče shraniti.", taNaprava: "Ta naprava",
       vloga: { receiver: "zaslon", sender: "naprava", hub: "središče" } },
     en: { podnaslov: "No install, home network only", povezujem: "Connecting …", povezano: "Connected", niPovezave: "Not connected",
       pridruziNaslov: "Connect this device", pridruziOpis: "The code from the screen is here. Enter a name other devices will see and confirm.",
@@ -25,6 +26,7 @@
       url: "Link (opens on the device)", posljiUrl: "Open on device", besedilo: "Text", posljiBesedilo: "Send text",
       prejeto: "Received", pozabi: "Disconnect this device", poslano: "Sent.", napaka: "Failed: ", brezDaljinca: "This device cannot be controlled.",
       kodaPotekla: "The code expired or is wrong. A new one appears on the screen.", drobno: "Data stays in your home network. This connection is unencrypted (remote, links and text only); use Safeer Browser for files and screen.",
+      preimenuj: "Rename", shraniIme: "Save", vnesiIme: "Device name …", preimenovano: "Name saved – all devices see it.", napPreimenovanje: "The name could not be saved.", taNaprava: "This device",
       vloga: { receiver: "screen", sender: "device", hub: "hub" } },
     de: { podnaslov: "Ohne Installation, nur Heimnetz", povezujem: "Verbinde …", povezano: "Verbunden", niPovezave: "Nicht verbunden",
       pridruziNaslov: "Dieses Gerät verbinden", pridruziOpis: "Der Code vom Bildschirm ist da. Gib einen Namen ein, den andere Geräte sehen, und bestätige.",
@@ -35,6 +37,7 @@
       url: "Link (öffnet sich auf dem Gerät)", posljiUrl: "Auf Gerät öffnen", besedilo: "Text", posljiBesedilo: "Text senden",
       prejeto: "Empfangen", pozabi: "Dieses Gerät trennen", poslano: "Gesendet.", napaka: "Fehlgeschlagen: ", brezDaljinca: "Dieses Gerät lässt sich nicht steuern.",
       kodaPotekla: "Der Code ist abgelaufen oder falsch. Auf dem Bildschirm erscheint ein neuer.", drobno: "Daten bleiben im Heimnetz. Diese Verbindung ist unverschlüsselt (nur Fernbedienung, Links und Text); für Dateien und Bildschirm nutze Safeer Browser.",
+      preimenuj: "Umbenennen", shraniIme: "Speichern", vnesiIme: "Gerätename …", preimenovano: "Name gespeichert – alle Geräte sehen ihn.", napPreimenovanje: "Der Name konnte nicht gespeichert werden.", taNaprava: "Dieses Gerät",
       vloga: { receiver: "Bildschirm", sender: "Gerät", hub: "Zentrale" } },
     es: { podnaslov: "Sin instalar, solo red doméstica", povezujem: "Conectando…", povezano: "Conectado", niPovezave: "Sin conexión",
       pridruziNaslov: "Conectar este dispositivo", pridruziOpis: "El código de la pantalla está aquí. Escribe un nombre que verán los demás dispositivos y confirma.",
@@ -45,6 +48,7 @@
       url: "Enlace (se abre en el dispositivo)", posljiUrl: "Abrir en el dispositivo", besedilo: "Texto", posljiBesedilo: "Enviar texto",
       prejeto: "Recibido", pozabi: "Desconectar este dispositivo", poslano: "Enviado.", napaka: "No se pudo: ", brezDaljinca: "Este dispositivo no se puede controlar.",
       kodaPotekla: "El código caducó o no es correcto. En la pantalla aparece uno nuevo.", drobno: "Los datos se quedan en la red doméstica. Esta conexión no está cifrada (solo mando, enlaces y texto); para archivos y pantalla usa Safeer Browser.",
+      preimenuj: "Renombrar", shraniIme: "Guardar", vnesiIme: "Nombre del dispositivo…", preimenovano: "Nombre guardado: lo ven todos los dispositivos.", napPreimenovanje: "No se pudo guardar el nombre.", taNaprava: "Este dispositivo",
       vloga: { receiver: "pantalla", sender: "dispositivo", hub: "central" } },
     fr: { podnaslov: "Sans installation, réseau domestique seulement", povezujem: "Connexion…", povezano: "Connecté", niPovezave: "Non connecté",
       pridruziNaslov: "Connecter cet appareil", pridruziOpis: "Le code de l'écran est là. Saisis un nom que verront les autres appareils et confirme.",
@@ -55,6 +59,7 @@
       url: "Lien (s'ouvre sur l'appareil)", posljiUrl: "Ouvrir sur l'appareil", besedilo: "Texte", posljiBesedilo: "Envoyer le texte",
       prejeto: "Reçu", pozabi: "Déconnecter cet appareil", poslano: "Envoyé.", napaka: "Échec : ", brezDaljinca: "Cet appareil ne peut pas être contrôlé.",
       kodaPotekla: "Le code a expiré ou est incorrect. Un nouveau s'affiche à l'écran.", drobno: "Les données restent dans le réseau domestique. Cette connexion n'est pas chiffrée (télécommande, liens et texte seulement) ; pour les fichiers et l'écran, utilise Safeer Browser.",
+      preimenuj: "Renommer", shraniIme: "Enregistrer", vnesiIme: "Nom de l'appareil…", preimenovano: "Nom enregistré : tous les appareils le voient.", napPreimenovanje: "Le nom n'a pas pu être enregistré.", taNaprava: "Cet appareil",
       vloga: { receiver: "écran", sender: "appareil", hub: "centre" } },
     it: { podnaslov: "Senza installazione, solo rete di casa", povezujem: "Connessione…", povezano: "Connesso", niPovezave: "Non connesso",
       pridruziNaslov: "Collega questo dispositivo", pridruziOpis: "Il codice dello schermo è qui. Inserisci un nome che gli altri dispositivi vedranno e conferma.",
@@ -65,6 +70,7 @@
       url: "Link (si apre sul dispositivo)", posljiUrl: "Apri sul dispositivo", besedilo: "Testo", posljiBesedilo: "Invia testo",
       prejeto: "Ricevuto", pozabi: "Scollega questo dispositivo", poslano: "Inviato.", napaka: "Non riuscito: ", brezDaljinca: "Questo dispositivo non può essere controllato.",
       kodaPotekla: "Il codice è scaduto o non è giusto. Sullo schermo ne compare uno nuovo.", drobno: "I dati restano nella rete di casa. Questa connessione non è cifrata (solo telecomando, link e testo); per file e schermo usa Safeer Browser.",
+      preimenuj: "Rinomina", shraniIme: "Salva", vnesiIme: "Nome del dispositivo…", preimenovano: "Nome salvato: lo vedono tutti i dispositivi.", napPreimenovanje: "Impossibile salvare il nome.", taNaprava: "Questo dispositivo",
       vloga: { receiver: "schermo", sender: "dispositivo", hub: "centro" } }
   };
   var jezik = (navigator.language || "en").slice(0, 2).toLowerCase();
@@ -142,6 +148,7 @@
   function sporocilo(m) {
     if (m.type === "cast.ping") { poslji({ id: m.id, type: "cast.pong" }); return; }
     if (m.type === "cast.devices") {
+      (m.devices || []).forEach(function (d) { if (d.id === seja.device_id && d.name) mojeIme = d.name; });
       naprave = (m.devices || []).filter(function (d) { return d.id !== seja.device_id; });
       if (izbrana && !naprave.some(function (d) { return d.id === izbrana; })) izbrana = null;
       narisiNaprave(); return;
@@ -168,8 +175,44 @@
 
   function ikona(d) { return d.platform === "tv" ? "📺" : d.platform === "tablet" ? "📱" : d.platform === "phone" ? "📱" : d.platform === "web" ? "🌐" : "💻"; }
 
-  function narisiNaprave() {
+  // Preimenovanje: ime hrani sredisce, zato ga vidijo vse naprave (tudi ime te naprave).
+  var preimenujem = null, mojeIme = "";
+  function vrsticaImena(li, d, jaz) {
+    if (preimenujem !== d.id) {
+      var g = document.createElement("button");
+      g.className = "drobniGumb pero"; g.textContent = "✎"; g.title = t("preimenuj"); g.setAttribute("aria-label", t("preimenuj"));
+      g.addEventListener("click", function (e) { e.stopPropagation(); preimenujem = d.id; narisiNaprave(); });
+      li.appendChild(g);
+      return;
+    }
+    var okvir = document.createElement("div"); okvir.className = "preimenuj";
+    var vnos = document.createElement("input"); vnos.type = "text"; vnos.maxLength = 64; vnos.placeholder = t("vnesiIme"); vnos.value = d.name || "";
+    var shrani = document.createElement("button"); shrani.className = "glavni tanek"; shrani.textContent = t("shraniIme");
+    function posljiIme() {
+      zahteva("/cast/devices/rename", { device_id: d.id, name: vnos.value }, seja.token).then(function (r) {
+        preimenujem = null;
+        if (r._koda === 200) { if (jaz) { mojeIme = r.name || ""; } opomba("opombaNaprav", t("preimenovano")); }
+        else opomba("opombaNaprav", t("napPreimenovanje"), true);
+        if (jaz) d.name = r.name || d.name;
+        narisiNaprave(true);
+      }, function () { opomba("opombaNaprav", t("niPovezave"), true); });
+    }
+    shrani.addEventListener("click", function (e) { e.stopPropagation(); posljiIme(); });
+    vnos.addEventListener("keydown", function (e) { if (e.key === "Enter") posljiIme(); if (e.key === "Escape") { preimenujem = null; narisiNaprave(); } });
+    vnos.addEventListener("click", function (e) { e.stopPropagation(); });
+    okvir.appendChild(vnos); okvir.appendChild(shrani);
+    li.appendChild(okvir);
+    setTimeout(function () { vnos.focus(); vnos.select(); }, 0);
+  }
+
+  function narisiNaprave(brezOpombe) {
     var ul = $("seznamNaprav"); ul.innerHTML = "";
+    // Ta naprava: ime, kot ga vidijo druge; ✎ ga spremeni.
+    var jaz = document.createElement("li");
+    jaz.className = "jaz";
+    jaz.innerHTML = '<span class="ikona">🌐</span><div><div class="ime">' + ubezi(mojeIme || (seja && seja.name) || "") + '</div><div class="pod">' + ubezi(t("taNaprava")) + "</div></div>";
+    vrsticaImena(jaz, { id: seja.device_id, name: mojeIme || (seja && seja.name) || "" }, true);
+    ul.appendChild(jaz);
     naprave.forEach(function (d) {
       var li = document.createElement("li");
       li.className = d.id === izbrana ? "izbrana" : "";
@@ -179,9 +222,10 @@
       li.innerHTML = '<span class="ikona">' + ikona(d) + '</span><div><div class="ime">' + ubezi(d.name || d.id) + '</div><div class="pod">' +
         ubezi(zna.join(" · ") || (T.vloga[d.role] || d.role || "")) + "</div></div>";
       li.addEventListener("click", function () { izbrana = d.id; narisiNaprave(); });
+      vrsticaImena(li, d, false);
       ul.appendChild(li);
     });
-    opomba("opombaNaprav", naprave.length ? (izbrana ? "" : t("izberi")) : t("niNaprav"));
+    if (!brezOpombe) opomba("opombaNaprav", naprave.length ? (izbrana ? "" : t("izberi")) : t("niNaprav"));
     var d = naprave.filter(function (x) { return x.id === izbrana; })[0];
     pokazi("panelDejanja", !!d);
     if (d) {
