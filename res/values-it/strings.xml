@@ -83,4 +83,10 @@
     <string name="toast_popup_block_off">Le finestre pop-up sono consentite</string>
     <string name="menu_shield_active">Scudo attivo</string>
     <string name="menu_shield_active_count">Scudo attivo · %1$d bloccate</string>
+    <!-- Safeer Link: potrditev brisanja ali vrtenja slike na tej napravi. -->
+    <string name="os_ur_kanal">Safeer: conferma</string>
+    <string name="os_ur_kanal_opis">Richieste da confermare su questo dispositivo.</string>
+    <string name="os_ur_obv_brisanje">Conferma l\'eliminazione della foto</string>
+    <string name="os_ur_obv_vrtenje">Conferma la rotazione della foto</string>
+    <string name="os_ur_obv_opis">La richiesta arriva da Safeer Link. Tocca per confermare.</string>
 </resources>

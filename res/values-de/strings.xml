@@ -83,4 +83,10 @@
     <string name="toast_popup_block_off">Pop-up-Fenster sind erlaubt</string>
     <string name="menu_shield_active">Schutz aktiv</string>
     <string name="menu_shield_active_count">Schutz aktiv · %1$d blockiert</string>
+    <!-- Safeer Link: potrditev brisanja ali vrtenja slike na tej napravi. -->
+    <string name="os_ur_kanal">Safeer: Bestätigung</string>
+    <string name="os_ur_kanal_opis">Anfragen, die auf diesem Gerät bestätigt werden müssen.</string>
+    <string name="os_ur_obv_brisanje">Löschen des Fotos bestätigen</string>
+    <string name="os_ur_obv_vrtenje">Drehen des Fotos bestätigen</string>
+    <string name="os_ur_obv_opis">Die Anfrage kommt von Safeer Link. Zum Bestätigen tippen.</string>
 </resources>

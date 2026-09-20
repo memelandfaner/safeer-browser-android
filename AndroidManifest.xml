@@ -125,6 +125,14 @@
         </activity>
 
         <!-- 🎵 Predvajanje v ozadju (YouTube, YouTube Music, radio): obvestilo s premorom, proces ostane živ -->
+        <!-- Sistemsko vprasanje, kadar Android za brisanje ali vrtenje fotografije zahteva
+             privolitev uporabnika. Brez svojega vmesnika: prosojno, brez zgodovine, ni v nedavnih. -->
+        <activity
+            android:name="com.safeer.mobile.browser.link.PotrditevActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"
+            android:noHistory="true" />
         <!-- Safeer Link: prijava racunalnika s QR kodo. Kamera odpre kodo iz prijavnega okna Safeer OS /
              Safeer Control; telefon (ze v Safeer Linku) po uporabnikovem »Dovoli« prijavo potrdi. -->
         <activity

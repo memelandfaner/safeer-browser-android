@@ -83,4 +83,10 @@
     <string name="toast_popup_block_off">Pojavna okna so dovoljena</string>
     <string name="menu_shield_active">Ščit aktiven</string>
     <string name="menu_shield_active_count">Ščit aktiven · %1$d blokiranih</string>
+    <!-- Safeer Link: potrditev brisanja ali vrtenja slike na tej napravi. -->
+    <string name="os_ur_kanal">Safeer: potrditev</string>
+    <string name="os_ur_kanal_opis">Vprašanja, ki jih mora uporabnik potrditi na tej napravi.</string>
+    <string name="os_ur_obv_brisanje">Potrdi izbris slike</string>
+    <string name="os_ur_obv_vrtenje">Potrdi vrtenje slike</string>
+    <string name="os_ur_obv_opis">Ukaz prihaja iz Safeer Linka. Dotakni se za potrditev.</string>
 </resources>

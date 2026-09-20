@@ -107,6 +107,9 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
             window.setDecorFitsSystemWindows(false)
         }
         setContentView(R.layout.activity_main)
+        // Brez dovoljenja za obvestila telefon ne more vprasati lastnika, kadar Android za
+        // brisanje ali vrtenje fotografije zahteva njegovo privolitev (PotrditevActivity).
+        com.safeer.mobile.browser.link.Obvestila.zaprosiEnkrat(this)
 
         applyAppTheme(PreferencesManager.getTheme(this))
 
