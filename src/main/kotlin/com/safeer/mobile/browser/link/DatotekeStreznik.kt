@@ -334,7 +334,7 @@ object DatotekeStreznik {
         val j = try { JSONObject(String(telo, Charsets.UTF_8)) } catch (_: Throwable) {
             napaka(izhod, 400, "telo ni JSON"); return
         }
-        val izid = when (val op = j.optString("op")) {
+        var izid = when (val op = j.optString("op")) {
             "delete" -> UrejanjeMedijev.izbrisi(ctx, uri)
             "rotate" -> UrejanjeMedijev.zavrti(ctx, uri, j.optInt("degrees", 90))
             // Preimenovanja in premikanja v zbirki (MediaStore) namenoma ne ponujamo: mape so
@@ -346,6 +346,10 @@ object DatotekeStreznik {
             val dejanje = if (j.optString("op") == "delete") PotrditevActivity.DEJANJE_BRISANJE
                           else PotrditevActivity.DEJANJE_VRTENJE
             PotrditevActivity.pokazi(ctx, uri, dejanje, j.optInt("degrees", 90))
+            // Zahtevo zadrzimo, dokler lastnik ne odgovori: televizor tako takoj pokaze
+            // zavrteno ali izbrisano sliko. Ce se ne odzove, odgovorimo kot prej in dejanje
+            // se vseeno dokonca, ko potrdi - seznam se osvezi ob vrnitvi nanj.
+            PotrditevActivity.pocakaj(uri, dejanje, PotrditevActivity.CAKANJE)?.let { izid = it }
         }
         val odgovor = JSONObject().put("ok", izid.ok)
         if (!izid.ok) odgovor.put("napaka", izid.napaka)
