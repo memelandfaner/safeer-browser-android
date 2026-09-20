@@ -1,5 +1,9 @@
 package com.safeer.mobile.browser.cast
 
+// Preneseno iz brskalnika za televizor (si.safeer.tv.cast) brez sprememb v logiki:
+// gostitelj Safeer Linka mora biti enak na vseh napravah, sicer se protokol razide.
+// Ce se tu kaj spremeni, mora ista sprememba v tv-browser-2 (vir); kopijo naredi tools/link-core-sync.sh.
+
 import android.content.Context
 
 /**
@@ -8,10 +12,10 @@ import android.content.Context
  * potrebuje, da ga prepozna in se mu prijavi s podpisom.
  *
  * Kljuc naprave je kljuc iz AndroidKeyStore (HubTls): isti, s katerim bi ta naprava, ce bi bila
- * hub, podpisala svoje potrdilo TLS. (Kopija iz brskalnika TV; s korakom 3 ena sama.)
+ * hub, podpisala svoje potrdilo TLS.
  */
 object KrogNaprave {
-    private const val PREFS = "safeer_link_krog"
+    private const val PREFS = "safeer_cast_prefs"
 
     private class Shramba(private val context: Context) : HubUsmerjevalnik.Shramba {
         override fun beri(kljuc: String): String? =
