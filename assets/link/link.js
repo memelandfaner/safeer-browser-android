@@ -138,6 +138,12 @@
       mapeOdstrani: "Odstrani",
       mapeStandardne: "Deli Videi, Glasba in Slike",
       syncPrivzeto: "Sinhronizacija se vklopi, ko jo potrdiš — do takrat se ne pošlje nič.",
+      datoteke: "Videi, glasba in slike",
+      datotekeDeljeno: "Deljeno",
+      datotekeNiDeljeno: "Ni deljeno",
+      datotekeOpisDeli: "Druge naprave v Safeer Linku jih vidijo v Datotekah in predvajajo naravnost s te naprave.",
+      datotekeOpisDovoli: "Dotakni se in dovoli dostop do medijev – šele nato jih druge naprave vidijo.",
+      datotekeOpisIzklop: "Dotakni se, da jih deliš z napravami v Safeer Linku.",
       zaznamki: "Zaznamki",
       syncVklopljena: "Vklopljeno",
       syncIzklopljena: "Izklopljeno",
@@ -250,6 +256,12 @@
       mapeOdstrani: "Remove",
       mapeStandardne: "Share Videos, Music and Pictures",
       syncPrivzeto: "Sync starts once you confirm it — until then nothing is sent.",
+      datoteke: "Videos, music and photos",
+      datotekeDeljeno: "Shared",
+      datotekeNiDeljeno: "Not shared",
+      datotekeOpisDeli: "Other devices in Safeer Link see them in Files and play them straight from this device.",
+      datotekeOpisDovoli: "Tap to allow access to media – only then can other devices see them.",
+      datotekeOpisIzklop: "Tap to share them with the devices in Safeer Link.",
       zaznamki: "Bookmarks",
       syncVklopljena: "On",
       syncIzklopljena: "Off",
@@ -362,6 +374,12 @@
       mapeOdstrani: "Entfernen",
       mapeStandardne: "Videos, Musik und Bilder freigeben",
       syncPrivzeto: "Die Synchronisierung startet, sobald du sie bestätigst — bis dahin wird nichts gesendet.",
+      datoteke: "Videos, Musik und Fotos",
+      datotekeDeljeno: "Freigegeben",
+      datotekeNiDeljeno: "Nicht freigegeben",
+      datotekeOpisDeli: "Andere Geräte im Safeer Link sehen sie unter Dateien und spielen sie direkt von diesem Gerät ab.",
+      datotekeOpisDovoli: "Antippen und Zugriff auf Medien erlauben – erst dann sehen andere Geräte sie.",
+      datotekeOpisIzklop: "Antippen, um sie mit den Geräten im Safeer Link zu teilen.",
       zaznamki: "Lesezeichen",
       syncVklopljena: "Ein",
       syncIzklopljena: "Aus",
@@ -474,6 +492,12 @@
       mapeOdstrani: "Quitar",
       mapeStandardne: "Compartir Vídeos, Música e Imágenes",
       syncPrivzeto: "La sincronización empieza cuando la confirmes; hasta entonces no se envía nada.",
+      datoteke: "Vídeos, música y fotos",
+      datotekeDeljeno: "Compartido",
+      datotekeNiDeljeno: "No compartido",
+      datotekeOpisDeli: "Los demás dispositivos de Safeer Link los ven en Archivos y los reproducen directamente desde este dispositivo.",
+      datotekeOpisDovoli: "Toca y permite el acceso a los medios; solo entonces los verán los demás dispositivos.",
+      datotekeOpisIzklop: "Toca para compartirlos con los dispositivos de Safeer Link.",
       zaznamki: "Marcadores",
       syncVklopljena: "Activada",
       syncIzklopljena: "Desactivada",
@@ -586,6 +610,12 @@
       mapeOdstrani: "Retirer",
       mapeStandardne: "Partager Vidéos, Musique et Images",
       syncPrivzeto: "La synchronisation démarre dès que tu la confirmes — jusque-là rien n\'est envoyé.",
+      datoteke: "Vidéos, musique et photos",
+      datotekeDeljeno: "Partagé",
+      datotekeNiDeljeno: "Non partagé",
+      datotekeOpisDeli: "Les autres appareils du Safeer Link les voient dans Fichiers et les lisent directement depuis cet appareil.",
+      datotekeOpisDovoli: "Touchez et autorisez l\'accès aux médias : ce n\'est qu\'ensuite que les autres appareils les voient.",
+      datotekeOpisIzklop: "Touchez pour les partager avec les appareils du Safeer Link.",
       zaznamki: "Favoris",
       syncVklopljena: "Activée",
       syncIzklopljena: "Désactivée",
@@ -698,6 +728,12 @@
       mapeOdstrani: "Rimuovi",
       mapeStandardne: "Condividi Video, Musica e Immagini",
       syncPrivzeto: "La sincronizzazione parte quando la confermi: fino ad allora non viene inviato nulla.",
+      datoteke: "Video, musica e foto",
+      datotekeDeljeno: "Condiviso",
+      datotekeNiDeljeno: "Non condiviso",
+      datotekeOpisDeli: "Gli altri dispositivi del Safeer Link li vedono in File e li riproducono direttamente da questo dispositivo.",
+      datotekeOpisDovoli: "Tocca e consenti l\'accesso ai media: solo allora gli altri dispositivi li vedono.",
+      datotekeOpisIzklop: "Tocca per condividerli con i dispositivi del Safeer Link.",
       zaznamki: "Preferiti",
       syncVklopljena: "Attiva",
       syncIzklopljena: "Disattivata",
@@ -1543,6 +1579,20 @@
       } : null
     ));
 
+    // Videi, glasba in slike te naprave za druge naprave v Linku (Datoteke na televizorju).
+    // Deli sele, ko uporabnik dovoli dostop do medijev; dotik na vrstico vklopi/izklopi.
+    if (most && most.datotekeStanje) {
+      var dat = { deli: false, vklopljeno: true, dovoljenje: false };
+      try { dat = JSON.parse(most.datotekeStanje()) || dat; } catch (e) {}
+      var datPod = dat.deli ? t("datotekeOpisDeli")
+                 : (dat.vklopljeno ? t("datotekeOpisDovoli") : t("datotekeOpisIzklop"));
+      seznam.appendChild(vrstica(
+        "mapa", t("datoteke"), datPod, dat.deli ? t("datotekeDeljeno") : t("datotekeNiDeljeno"),
+        dat.deli ? "zivo" : "",
+        function () { if (most.nastaviDatoteke) most.nastaviDatoteke(!dat.deli); }
+      ));
+    }
+
     [
       { ikona: "nastavitve", ime: t("nastavitve"), pod: t("nastavitveOpis") },
       { ikona: "scit", ime: t("filtri"), pod: t("filtriOpis") }
@@ -1878,6 +1928,8 @@
         stanje.seznanjen = false;
         stanje.povezan = false;
         narisiVse();
+      } else if (vrsta === "datoteke") {
+        narisiSync();
       } else if (vrsta === "sinhronizacija") {
         narisiSync();
         if (podatki && podatki.vklopljena) {

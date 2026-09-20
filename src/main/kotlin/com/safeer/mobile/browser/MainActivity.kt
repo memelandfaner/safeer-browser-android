@@ -290,6 +290,8 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Stran Linka je vprasala za dovoljenje za medije; naj se izrise s pravim stanjem.
+        linkMost?.naDovoljenje(requestCode)
         when (requestCode) {
             REQ_CODE_PERMISSIONS -> {
                 val req = pendingPermissionRequest
