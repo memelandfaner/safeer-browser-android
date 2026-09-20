@@ -1,0 +1,61 @@
+/* Safeer Link – spletni odjemalec (telefon brez Safeerja). Iste barve kot Safeer: temna podlaga, zelena poteza. */
+:root {
+  --ozadje: #090d15; --plosca: #111924; --ploscaSvetla: #151e2a; --crta: #29333d;
+  --besedilo: #f0f4f3; --medlo: #b0bdc4; --zelena: #54d6a5; --zelenaTemna: #06231a;
+  --rumena: #f5b642; --siva: #5c6b80; --rdeca: #f87171;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; padding: 0; background: var(--ozadje); color: var(--besedilo);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.5; }
+body { padding: 0 0 32px; max-width: 640px; margin: 0 auto; }
+.glava { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 16px 10px; }
+.znak { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.logo { width: 38px; height: 38px; border-radius: 11px; background: var(--zelena); color: var(--zelenaTemna); font-weight: 800;
+  display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.glava h1 { font-size: 20px; margin: 0; }
+.glava p { margin: 0; font-size: 13px; color: var(--medlo); }
+.stanjeVrstica { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--medlo); white-space: nowrap; }
+.pika { width: 9px; height: 9px; border-radius: 50%; background: var(--siva); flex: none; }
+.pika.zelena { background: var(--zelena); box-shadow: 0 0 8px var(--zelena); }
+.pika.rumena { background: var(--rumena); }
+.pika.rdeca { background: var(--rdeca); }
+.zaslon { padding: 0 12px; }
+.panel { background: var(--plosca); border: 1px solid var(--crta); border-radius: 18px; padding: 16px; margin: 12px 0; }
+.panel h2 { font-size: 17px; margin: 0 0 8px; }
+.pojasnilo { color: var(--medlo); margin: 0 0 14px; font-size: 14px; }
+.opomba { color: var(--medlo); font-size: 13px; margin: 10px 0 0; min-height: 1.2em; }
+.opomba.napaka { color: var(--rdeca); }
+.drobno { color: var(--siva); font-size: 12px; margin: 14px 4px 6px; }
+.polje { display: block; margin: 0 0 12px; }
+.polje span { display: block; font-size: 13px; color: var(--medlo); margin-bottom: 4px; }
+input, textarea { width: 100%; background: var(--ploscaSvetla); border: 1px solid var(--crta); border-radius: 12px; color: var(--besedilo);
+  padding: 12px 14px; font: inherit; }
+input:focus, textarea:focus { outline: none; border-color: var(--zelena); }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
+.glavni { width: 100%; padding: 14px; background: var(--zelena); color: var(--zelenaTemna); font-weight: 700; font-size: 16px; }
+.drugotni { width: 100%; padding: 13px; background: var(--ploscaSvetla); color: var(--besedilo); border: 1px solid var(--crta); margin-top: 8px; }
+.gumbPovezava { display: block; text-align: center; text-decoration: none; }
+.drobniGumb { background: none; color: var(--siva); font-size: 13px; padding: 8px 12px; margin: 0 4px; }
+.seznam { list-style: none; margin: 0; padding: 0; }
+.seznam li { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 12px; border: 1px solid transparent; cursor: pointer; }
+.seznam li.izbrana { background: var(--ploscaSvetla); border-color: var(--zelena); }
+.seznam li .ikona { width: 36px; height: 36px; border-radius: 10px; background: var(--ploscaSvetla); display: flex; align-items: center; justify-content: center; font-size: 18px; flex: none; }
+.seznam li .ime { font-weight: 600; }
+.seznam li .pod { font-size: 13px; color: var(--medlo); }
+.seznam li.sporocilo { cursor: default; display: block; }
+.seznam li.sporocilo .pod { word-break: break-word; white-space: pre-wrap; color: var(--besedilo); }
+.zavihki { display: flex; gap: 8px; margin: 4px 0 14px; }
+.zavihek { flex: 1; padding: 10px; background: var(--ploscaSvetla); color: var(--medlo); border: 1px solid var(--crta); }
+.zavihek.izbran { color: var(--zelenaTemna); background: var(--zelena); border-color: var(--zelena); font-weight: 700; }
+.dpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 280px; margin: 0 auto 14px; }
+.dpad button { height: 64px; background: var(--ploscaSvetla); color: var(--besedilo); font-size: 20px; border: 1px solid var(--crta); }
+.dpad button:active, .vrstaGumbov button:active { background: var(--zelena); color: var(--zelenaTemna); }
+.dpad button[data-k="up"] { grid-column: 2; }
+.dpad button[data-k="left"] { grid-column: 1; grid-row: 2; }
+.dpad button.ok { grid-column: 2; grid-row: 2; background: var(--zelena); color: var(--zelenaTemna); font-weight: 800; }
+.dpad button[data-k="right"] { grid-column: 3; grid-row: 2; }
+.dpad button[data-k="down"] { grid-column: 2; grid-row: 3; }
+.vrstaGumbov { display: flex; gap: 8px; margin-bottom: 10px; }
+.vrstaGumbov button { flex: 1; padding: 13px 6px; background: var(--ploscaSvetla); color: var(--besedilo); border: 1px solid var(--crta); font-size: 15px; }
+.sredina { text-align: left; }

@@ -44,9 +44,17 @@ class QrPrijavaActivity : Activity() {
                     (uri.fragment ?: "").split("&").mapNotNull {
                         val k = it.substringBefore("=", ""); if (k.isEmpty()) null else k to Uri.decode(it.substringAfter("="))
                     }.toMap()
+                // Koda sredisca s stranjo spletnega odjemalca: http://<zasebni naslov>:<vrata>/#j=...
+                uri.scheme == "http" && jeZasebniNaslov(uri.host) && (uri.path.isNullOrEmpty() || uri.path == "/") && !uri.fragment.isNullOrEmpty() ->
+                    (uri.fragment ?: "").split("&").mapNotNull {
+                        val k = it.substringBefore("=", ""); if (k.isEmpty()) null else k to Uri.decode(it.substringAfter("="))
+                    }.toMap()
                 else -> null
             }
         }
+
+        private fun jeZasebniNaslov(h: String?): Boolean =
+            h != null && (h.startsWith("10.") || h.startsWith("192.168.") || Regex("^172\\.(1[6-9]|2[0-9]|3[01])\\.").containsMatchIn(h))
 
         fun razcleniPridruzitev(uri: Uri?): Pridruzitev? {
             val p = parametri(uri) ?: return null
