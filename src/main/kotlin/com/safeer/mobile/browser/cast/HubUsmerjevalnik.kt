@@ -1337,11 +1337,30 @@ class HubUsmerjevalnik(
      * Koncne tocke, ki jih televizor ponuja po omrezju. Namenoma jih je malo:
      * prijava, prevzem zetona, vstopnica, seznam naprav in stanje. Potrjevanje in odvzem
      * dostopa se dogajata samo na televizorju, zato ju tu ni.
+     *
+     * Poti so razdeljene po skupinah (seznanitev, deljenje, naprave, zaupanje, prijava, stanje).
+     * Vsaka skupina je svoja metoda: doda se nova pot na enem mestu, preizkusi pa se lahko skupina
+     * zase. Vrstni red skupin ne vpliva na vedenje - poti se ne prekrivajo.
      */
     fun odgovori(zahteva: HubStreznik.Zahteva): HubStreznik.Odgovor? {
         val pot = zahteva.pot
         val krajevni = jeKrajevni(zahteva.odjemalec)
+        odgovoriSeznanitev(zahteva, pot, krajevni)?.let { return it }
+        odgovoriDeljenje(zahteva, pot, krajevni)?.let { return it }
+        odgovoriNaprave(zahteva, pot, krajevni)?.let { return it }
+        odgovoriZaupanje(zahteva, pot, krajevni)?.let { return it }
+        odgovoriPrijava(zahteva, pot, krajevni)?.let { return it }
+        odgovoriStanje(zahteva, pot, krajevni)?.let { return it }
+        // Znana pot z napacnim glagolom ni "ni te poti": naprava, ki isce Hub, prav po tem
+        // loci Safeer Hub od poljubnega streznika na istih vratih.
+        if (pot in ZNANE_POTI) {
+            return HubStreznik.Odgovor(405, napakaJson("Ta način za to pot ni dovoljen.", "metoda_ni_dovoljena"))
+        }
+        return null
+    }
 
+    /** Seznanitev naprave: koda (SPAKE2), preklic, sorodna naprava, QR. */
+    private fun odgovoriSeznanitev(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/pair/start" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
             val telo = JsonLahki.objekt(zahteva.telo)
@@ -1509,7 +1528,11 @@ class HubUsmerjevalnik(
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
             return odgovorQr(pot, zahteva)
         }
+        return null
+    }
 
+    /** Deljenje zaslona in besedila. */
+    private fun odgovoriDeljenje(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/share/screen/start" && zahteva.metoda == "POST") {
             if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
@@ -1572,6 +1595,20 @@ class HubUsmerjevalnik(
             else HubStreznik.Odgovor(404, napakaJson("Ciljna naprava '$cilj' ni povezana.", "naprava_ni_povezana"))
         }
 
+        if (pot == "/cast/share/screen/stop" && zahteva.metoda == "POST") {
+            if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
+                return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
+            }
+            val id = (JsonLahki.objekt(zahteva.telo)?.niz("id") ?: "").trim()
+            // koncajZaslon poklice nazaj zaslonKoncan, ki obvesti cilj.
+            tokovi?.koncajZaslon(id)
+            return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("stopped", true).toString())
+        }
+        return null
+    }
+
+    /** Seznam naprav, preimenovanje in odhod z Huba. */
+    private fun odgovoriNaprave(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/devices/leave" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
             // Odide lahko samo naprava sama: kdo je, pove njen zeton, ne telo zahteve.
@@ -1594,16 +1631,17 @@ class HubUsmerjevalnik(
             return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("id", id).niz("name", imeNaprave(id)).toString())
         }
 
-        if (pot == "/cast/share/screen/stop" && zahteva.metoda == "POST") {
+        if (pot == "/cast/devices" && zahteva.metoda == "GET") {
             if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
             }
-            val id = (JsonLahki.objekt(zahteva.telo)?.niz("id") ?: "").trim()
-            // koncajZaslon poklice nazaj zaslonKoncan, ki obvesti cilj.
-            tokovi?.koncajZaslon(id)
-            return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("stopped", true).toString())
+            return HubStreznik.Odgovor(200, povezaniPrejemniki())
         }
+        return null
+    }
 
+    /** Krog zaupanja: vpis kljuca, vzdevek, branje kroga. */
+    private fun odgovoriZaupanje(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/trust/enroll" && zahteva.metoda == "POST") {
             // Prehod z zetona na kljuc: naprava z veljavnim zetonom vpise svoj kljuc v krog.
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
@@ -1619,6 +1657,45 @@ class HubUsmerjevalnik(
             return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("device_id", deviceId).surovo("ring", krog.json()).toString())
         }
 
+        if (pot == "/cast/trust/alias" && zahteva.metoda == "POST") {
+            // Ista naprava, drug id (TV brskalnik + Safeer OS, tablica + njen zaslon, Control + brskalnik):
+            // clan kroga s podpisom svojega kljuca (izziv za znani id) vpise se svoj drugi id z istim kljucem.
+            // Nic novega ne vstopi v krog - le se eno ime za kljuc, ki mu ze zaupamo.
+            if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
+            val telo = JsonLahki.objekt(zahteva.telo)
+            val deviceId = (telo?.niz("device_id") ?: "").trim()
+            val nonce = (telo?.niz("nonce") ?: "").trim()
+            val podpis = (telo?.niz("signature") ?: "").trim()
+            val alias = (telo?.niz("alias") ?: "").trim().take(NAJVEC_IMENA)
+            if (alias.isEmpty() || alias == deviceId) return HubStreznik.Odgovor(400, napakaJson("Manjka alias.", "manjka_alias"))
+            val izziv = synchronized(kljucnica) { pocistiIzzive(); if (nonce.isEmpty()) null else izzivi.remove(nonce) }
+            if (izziv == null || izziv.first != deviceId) {
+                return HubStreznik.Odgovor(401, napakaJson("Izziv ni veljaven ali je potekel.", "neveljaven_izziv"))
+            }
+            if (!krog.preveriPodpis(deviceId, podatkiZaPodpis(deviceId, nonce), podpis)) {
+                return HubStreznik.Odgovor(401, napakaJson("Podpis se ne ujema s ključem naprave.", "napacen_podpis"))
+            }
+            val clan = krog.clan(deviceId) ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni v krogu zaupanja.", "naprava_ni_v_krogu"))
+            val obstojeci = krog.clan(alias)
+            if (obstojeci != null && obstojeci.kljuc != clan.kljuc) {
+                return HubStreznik.Odgovor(409, napakaJson("Ta id ima v krogu drug ključ.", "alias_zaseden"))
+            }
+            val ime = (telo?.niz("name")?.takeIf { it.isNotBlank() } ?: alias).take(NAJVEC_IMENA)
+            krog.dodaj(KrogZaupanja.Clan(alias, clan.kljuc, ime, telo?.nizAli("platform")?.ifBlank { clan.platforma } ?: clan.platforma, KrogZaupanja.zdaj(), deviceId))
+            return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("device_id", alias).surovo("ring", krog.json()).toString())
+        }
+
+        if (pot == "/cast/trust/ring" && zahteva.metoda == "GET") {
+            if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
+                return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
+            }
+            return HubStreznik.Odgovor(200, krog.json())
+        }
+        return null
+    }
+
+    /** Prijava s podpisom in vstopnice. */
+    private fun odgovoriPrijava(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/auth/challenge" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
             val deviceId = (JsonLahki.objekt(zahteva.telo)?.niz("device_id") ?: "").trim()
@@ -1665,41 +1742,6 @@ class HubUsmerjevalnik(
                 .toString())
         }
 
-        if (pot == "/cast/trust/alias" && zahteva.metoda == "POST") {
-            // Ista naprava, drug id (TV brskalnik + Safeer OS, tablica + njen zaslon, Control + brskalnik):
-            // clan kroga s podpisom svojega kljuca (izziv za znani id) vpise se svoj drugi id z istim kljucem.
-            // Nic novega ne vstopi v krog - le se eno ime za kljuc, ki mu ze zaupamo.
-            if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
-            val telo = JsonLahki.objekt(zahteva.telo)
-            val deviceId = (telo?.niz("device_id") ?: "").trim()
-            val nonce = (telo?.niz("nonce") ?: "").trim()
-            val podpis = (telo?.niz("signature") ?: "").trim()
-            val alias = (telo?.niz("alias") ?: "").trim().take(NAJVEC_IMENA)
-            if (alias.isEmpty() || alias == deviceId) return HubStreznik.Odgovor(400, napakaJson("Manjka alias.", "manjka_alias"))
-            val izziv = synchronized(kljucnica) { pocistiIzzive(); if (nonce.isEmpty()) null else izzivi.remove(nonce) }
-            if (izziv == null || izziv.first != deviceId) {
-                return HubStreznik.Odgovor(401, napakaJson("Izziv ni veljaven ali je potekel.", "neveljaven_izziv"))
-            }
-            if (!krog.preveriPodpis(deviceId, podatkiZaPodpis(deviceId, nonce), podpis)) {
-                return HubStreznik.Odgovor(401, napakaJson("Podpis se ne ujema s ključem naprave.", "napacen_podpis"))
-            }
-            val clan = krog.clan(deviceId) ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni v krogu zaupanja.", "naprava_ni_v_krogu"))
-            val obstojeci = krog.clan(alias)
-            if (obstojeci != null && obstojeci.kljuc != clan.kljuc) {
-                return HubStreznik.Odgovor(409, napakaJson("Ta id ima v krogu drug ključ.", "alias_zaseden"))
-            }
-            val ime = (telo?.niz("name")?.takeIf { it.isNotBlank() } ?: alias).take(NAJVEC_IMENA)
-            krog.dodaj(KrogZaupanja.Clan(alias, clan.kljuc, ime, telo?.nizAli("platform")?.ifBlank { clan.platforma } ?: clan.platforma, KrogZaupanja.zdaj(), deviceId))
-            return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("device_id", alias).surovo("ring", krog.json()).toString())
-        }
-
-        if (pot == "/cast/trust/ring" && zahteva.metoda == "GET") {
-            if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
-                return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
-            }
-            return HubStreznik.Odgovor(200, krog.json())
-        }
-
         if (pot == "/cast/ticket" && zahteva.metoda == "POST") {
             if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
             val lastnikZetona = napravaZeZetona(zahteva.glave["x-safeer-token"])
@@ -1712,14 +1754,11 @@ class HubUsmerjevalnik(
                     .toString()
             )
         }
+        return null
+    }
 
-        if (pot == "/cast/devices" && zahteva.metoda == "GET") {
-            if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
-                return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
-            }
-            return HubStreznik.Odgovor(200, povezaniPrejemniki())
-        }
-
+    /** Stanje Huba za diagnostiko. */
+    private fun odgovoriStanje(zahteva: HubStreznik.Zahteva, pot: String, krajevni: Boolean): HubStreznik.Odgovor? {
         if (pot == "/cast/health" && zahteva.metoda == "GET") {
             if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
@@ -1739,14 +1778,9 @@ class HubUsmerjevalnik(
             }
             return HubStreznik.Odgovor(200, stanje)
         }
-
-        // Znana pot z napacnim glagolom ni "ni te poti": naprava, ki isce Hub, prav po tem
-        // loci Safeer Hub od poljubnega streznika na istih vratih.
-        if (pot in ZNANE_POTI) {
-            return HubStreznik.Odgovor(405, napakaJson("Ta način za to pot ni dovoljen.", "metoda_ni_dovoljena"))
-        }
         return null
     }
+
 
     /** Prijava s QR kodo po HTTP (glej [zacniQr]); klicatelj je ze preveril, da je zahteva krajevna. */
     private fun odgovorQr(pot: String, zahteva: HubStreznik.Zahteva): HubStreznik.Odgovor {
