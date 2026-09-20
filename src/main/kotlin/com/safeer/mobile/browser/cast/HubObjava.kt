@@ -43,7 +43,7 @@ object HubObjava {
      * Objavi Hub na danih vratih. Povratni klic pove, ali je objava uspela; ce ne, Hub
      * vseeno dela - naprava ga lahko najde po zadnjem znanem naslovu.
      */
-    fun objavi(context: Context, vrata: Int, ime: String, koncano: (Boolean) -> Unit = {}) {
+    fun objavi(context: Context, vrata: Int, ime: String, prioriteta: Int = 0, id: String = "", koncano: (Boolean) -> Unit = {}) {
         if (poslusalec != null) {
             koncano(true)
             return
@@ -73,6 +73,9 @@ object HubObjava {
             // Hub govori samo TLS; odtis je informativen (zaupanje vzpostavi seznanitev).
             setAttribute("tls", "1")
             setAttribute("fp", try { HubTls.lastniOdtis() } catch (_: Throwable) { "" })
+            // Izvolitev huba: prioriteta in id, da vsi v hisi enako izracunajo, kdo gosti (IzvolitevHuba).
+            if (prioriteta > 0) setAttribute(IzvolitevHuba.TXT_PRIORITETA, prioriteta.toString())
+            if (id.isNotBlank()) setAttribute(IzvolitevHuba.TXT_ID, id.take(63))
         }
 
         val novi = object : NsdManager.RegistrationListener {

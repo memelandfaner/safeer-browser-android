@@ -1384,6 +1384,34 @@ class HubUsmerjevalnik(
                 .toString())
         }
 
+        if (pot == "/cast/trust/alias" && zahteva.metoda == "POST") {
+            // Ista naprava, drug id (TV brskalnik + Safeer OS, tablica + njen zaslon, Control + brskalnik):
+            // clan kroga s podpisom svojega kljuca (izziv za znani id) vpise se svoj drugi id z istim kljucem.
+            // Nic novega ne vstopi v krog - le se eno ime za kljuc, ki mu ze zaupamo.
+            if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Samo v krajevnem omrežju.", "samo_krajevno"))
+            val telo = JsonLahki.objekt(zahteva.telo)
+            val deviceId = (telo?.niz("device_id") ?: "").trim()
+            val nonce = (telo?.niz("nonce") ?: "").trim()
+            val podpis = (telo?.niz("signature") ?: "").trim()
+            val alias = (telo?.niz("alias") ?: "").trim().take(NAJVEC_IMENA)
+            if (alias.isEmpty() || alias == deviceId) return HubStreznik.Odgovor(400, napakaJson("Manjka alias.", "manjka_alias"))
+            val izziv = synchronized(kljucnica) { pocistiIzzive(); if (nonce.isEmpty()) null else izzivi.remove(nonce) }
+            if (izziv == null || izziv.first != deviceId) {
+                return HubStreznik.Odgovor(401, napakaJson("Izziv ni veljaven ali je potekel.", "neveljaven_izziv"))
+            }
+            if (!krog.preveriPodpis(deviceId, podatkiZaPodpis(deviceId, nonce), podpis)) {
+                return HubStreznik.Odgovor(401, napakaJson("Podpis se ne ujema s ključem naprave.", "napacen_podpis"))
+            }
+            val clan = krog.clan(deviceId) ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni v krogu zaupanja.", "naprava_ni_v_krogu"))
+            val obstojeci = krog.clan(alias)
+            if (obstojeci != null && obstojeci.kljuc != clan.kljuc) {
+                return HubStreznik.Odgovor(409, napakaJson("Ta id ima v krogu drug ključ.", "alias_zaseden"))
+            }
+            val ime = (telo?.niz("name")?.takeIf { it.isNotBlank() } ?: alias).take(NAJVEC_IMENA)
+            krog.dodaj(KrogZaupanja.Clan(alias, clan.kljuc, ime, telo?.nizAli("platform")?.ifBlank { clan.platforma } ?: clan.platforma, KrogZaupanja.zdaj(), deviceId))
+            return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("device_id", alias).surovo("ring", krog.json()).toString())
+        }
+
         if (pot == "/cast/trust/ring" && zahteva.metoda == "GET") {
             if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
@@ -1464,7 +1492,7 @@ class HubUsmerjevalnik(
 
         private val ZNANE_POTI = setOf(
             "/cast/pair/start", "/cast/pair/claim", "/cast/pair/sibling", "/cast/ticket", "/cast/devices", "/cast/health",
-            "/cast/trust/enroll", "/cast/trust/ring", "/cast/auth/challenge", "/cast/auth/ticket"
+            "/cast/trust/enroll", "/cast/trust/ring", "/cast/trust/alias", "/cast/auth/challenge", "/cast/auth/ticket"
         )
         /** Izziv za prijavo s podpisom velja minuto: dovolj za en krog po omrezju, premalo za zbiranje. */
         private const val IZZIV_VELJA_MS = 60_000L

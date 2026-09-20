@@ -125,7 +125,7 @@ object HubKrmilnik {
         usmerjevalnik = u
         tokovi = t
 
-        HubObjava.objavi(app, s.vrata, imeHuba()) { uspelo ->
+        HubObjava.objavi(app, s.vrata, imeHuba(), IzvolitevHuba.privzetaPrioriteta("phone"), lastniId()) { uspelo ->
             if (!uspelo) {
                 // Brez oglasa Hub se vedno dela; naprava, ki ga je ze videla, pozna naslov.
                 Log.i(TAG, "Hub tece, oglas v omrezju pa ni uspel.")
