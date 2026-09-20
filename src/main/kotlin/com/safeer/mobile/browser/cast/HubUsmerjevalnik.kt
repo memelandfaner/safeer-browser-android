@@ -384,7 +384,41 @@ class HubUsmerjevalnik(
         synchronized(kljucnica) {
             for (znani in zetoni.keys) if (enaka(znani, zeton)) return true
         }
-        return false
+        return napravaSeje(zeton) != null
+    }
+
+    // ------------------------------------------------------------------ seje (krog zaupanja)
+
+    /** Sejni zeton -> (naprava, potece). Izda ga prijava s podpisom; velja za HTTP kot zeton seznanitve. */
+    private val seje = LinkedHashMap<String, Pair<String, Long>>()
+
+    /**
+     * Sejni zeton za napravo, ki se je prijavila s podpisom kljuca (krog zaupanja). Brez njega bi
+     * naprava, ki se je umaknila izvoljenemu hubu, lahko odprla WebSocket, ne pa poslala datoteke ali
+     * deliti zaslona (te gredo po HTTP z zetonom). Zeton zivi v pomnilniku huba: ob novem hubu se
+     * naprava prijavi znova in dobi novega.
+     */
+    fun izdajSejo(deviceId: String): String = synchronized(kljucnica) {
+        pocistiSeje()
+        while (seje.size >= NAJVEC_SEJ) seje.remove(seje.keys.first())
+        val zeton = "saf_seja_" + nakljucni(24)
+        seje[zeton] = Pair(deviceId, ura() + SEJA_VELJA_MS)
+        zeton
+    }
+
+    private fun pocistiSeje() {
+        val zdaj = ura()
+        val potekle = seje.filterValues { it.second < zdaj }.keys.toList()
+        for (k in potekle) seje.remove(k)
+    }
+
+    /** Naprava sejnega zetona, ce je zeton veljaven in je naprava se v krogu (umik iz kroga sejo ubije). */
+    private fun napravaSeje(zeton: String): String? {
+        val naprava = synchronized(kljucnica) {
+            pocistiSeje()
+            seje.entries.firstOrNull { enaka(it.key, zeton) }?.value?.first
+        } ?: return null
+        return if (krog.clanZaId(naprava) != null) naprava else null
     }
 
     /**
@@ -396,7 +430,7 @@ class HubUsmerjevalnik(
         synchronized(kljucnica) {
             for ((znani, naprava) in zetoni) if (enaka(znani, zeton)) return naprava.deviceId
         }
-        return null
+        return napravaSeje(zeton)
     }
 
     // ------------------------------------------------------------------ seznanjanje
@@ -1459,6 +1493,7 @@ class HubUsmerjevalnik(
             }
             return HubStreznik.Odgovor(200, JsonLahki.Zapis()
                 .niz("ticket", izdajVstopnico(deviceId))
+                .niz("session_token", izdajSejo(deviceId))
                 .stevilo("expires_in_seconds", (VSTOPNICA_VELJA_MS / 1000).toDouble())
                 .surovo("ring", krog.json())
                 .toString())
@@ -1600,6 +1635,9 @@ class HubUsmerjevalnik(
         const val NAJVEC_KATALOG_BAJTOV = 32 * 1024
         /** Razlicica protokola, ki jo odjemalci v1 povedo v cast.register (`protocol`). */
         const val PROTOKOL_V1 = "1.0"
+        /** Sejni zetoni (prijava s podpisom): najvec hkrati in koliko casa veljajo. */
+        const val NAJVEC_SEJ = 64
+        const val SEJA_VELJA_MS = 12 * 60 * 60 * 1000L
         /** Najvec znakov besedila v enem deljenju (share.text po HTTP). */
         const val NAJVEC_BESEDILA = 20_000
 
