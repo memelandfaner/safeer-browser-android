@@ -175,6 +175,12 @@ class MainActivity : android.app.Activity(), com.safeer.mobile.browser.link.Dalj
         if (intent != null) {
             when (intent.action) {
                 Intent.ACTION_VIEW -> {
+                    // Prijava racunalnika s QR kodo (kamera odpre safeer.si/p#...): to ni stran za brskanje,
+                    // ampak vprasanje »Dovoli?« - tudi kadar je Safeer privzeti brskalnik.
+                    if (com.safeer.mobile.browser.link.QrPrijavaActivity.razcleni(intent.data) != null) {
+                        startActivity(Intent(this, com.safeer.mobile.browser.link.QrPrijavaActivity::class.java).setData(intent.data))
+                        return
+                    }
                     targetUrl = intent.dataString
                 }
                 Intent.ACTION_WEB_SEARCH -> {

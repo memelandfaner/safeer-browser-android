@@ -119,6 +119,29 @@
         </activity>
 
         <!-- 🎵 Predvajanje v ozadju (YouTube, YouTube Music, radio): obvestilo s premorom, proces ostane živ -->
+        <!-- Safeer Link: prijava racunalnika s QR kodo. Kamera odpre kodo iz prijavnega okna Safeer OS /
+             Safeer Control; telefon (ze v Safeer Linku) po uporabnikovem »Dovoli« prijavo potrdi. -->
+        <activity
+            android:name="com.safeer.mobile.browser.link.QrPrijavaActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="safeer" android:host="link" android:path="/qr" />
+            </intent-filter>
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="safeer.si" android:path="/p" />
+                <data android:scheme="https" android:host="safeer.si" android:path="/p/" />
+            </intent-filter>
+        </activity>
+
         <service
             android:name="com.safeer.mobile.browser.MediaPlaybackService"
             android:exported="false"

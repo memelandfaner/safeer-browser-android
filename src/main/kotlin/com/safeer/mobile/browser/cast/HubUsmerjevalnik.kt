@@ -649,6 +649,127 @@ class HubUsmerjevalnik(
         return zeton
     }
 
+    // ------------------------------------------------------------------ prijava s QR kodo
+
+    /**
+     * Prijava s QR kodo (Safeer OS in Safeer Control na racunalniku): naprava pokaze QR, uporabnik ga
+     * poskenira s telefonom ali tablico, ki sta ze v Safeer Linku, in tam potrdi »Dovoli«.
+     *
+     * - V QR je skrivnost; hub pozna samo njen SHA-256, zato je ne more izdati niti sam.
+     * - Dovoli lahko samo ze seznanjena naprava (njen zeton) in samo, kdor QR vidi (skrivnost).
+     * - Zeton prevzame samo naprava, ki je prijavo zacela: za prevzem ima drugo skrivnost, ki je v QR
+     *   ni. Kdor QR fotografira, z njim zetona ne dobi.
+     * - Ugibanja ni: po NAJVEC_POSKUSOV napacnih skrivnostih prijava pade; velja PIN_VELJA_MS.
+     */
+    private class QrPrijava(
+        val qrId: String,
+        val deviceId: String,
+        val ime: String,
+        val platforma: String,
+        /** SHA-256 (hex) skrivnosti iz QR. */
+        val odtisSkrivnosti: String,
+        /** Skrivnost za prevzem zetona; pozna jo samo naprava, ki je prijavo zacela. */
+        val prevzem: String,
+        var nastala: Long,
+        var zeton: String? = null,
+        var odobril: String = "",
+        var poskusov: Int = 0
+    )
+
+    private val qrPrijave = LinkedHashMap<String, QrPrijava>()
+
+    /** Kar naprava, ki dovoljuje, pokaze uporabniku, preden potrdi. */
+    data class QrPodatki(val deviceId: String, val ime: String, val platforma: String)
+
+    private fun pocistiQr() {
+        val zdaj = ura()
+        qrPrijave.entries.removeAll { zdaj - it.value.nastala > (if (it.value.zeton != null) PREVZEM_VELJA_MS else PIN_VELJA_MS) }
+    }
+
+    /** Odpre prijavo s QR kodo. Vrne qr_id ali napako (prevec_prijav, neveljavno). */
+    fun zacniQr(deviceId: String, ime: String, platforma: String, odtisSkrivnosti: String, prevzem: String): Pair<String?, String?> =
+        synchronized(kljucnica) {
+            if (!Regex("^[0-9a-f]{64}$").matches(odtisSkrivnosti) || prevzem.length !in 16..128) return null to "neveljavno"
+            pocistiQr()
+            qrPrijave.entries.removeAll { it.value.deviceId == deviceId }
+            if (qrPrijave.size >= NAJVEC_CAKAJOCIH) return null to "prevec_prijav"
+            val p = QrPrijava(nakljucni(12), deviceId, if (ime.isBlank()) deviceId else ime,
+                platforma.take(16), odtisSkrivnosti, prevzem, ura())
+            qrPrijave[p.qrId] = p
+            return p.qrId to null
+        }
+
+    /** Prijava, ce skrivnost iz QR drzi; sicer napaka (qr_ne_obstaja, prevec_poskusov). Klice se pod kljucnico. */
+    private fun qrZaSkrivnost(qrId: String, skrivnost: String): Pair<QrPrijava?, String?> {
+        pocistiQr()
+        val p = qrPrijave[qrId] ?: return null to "qr_ne_obstaja"
+        if (!enaka(sha256Hex(skrivnost), p.odtisSkrivnosti)) {
+            p.poskusov += 1
+            if (p.poskusov >= NAJVEC_POSKUSOV) {
+                qrPrijave.remove(qrId)
+                return null to "prevec_poskusov"
+            }
+            return null to "qr_ne_obstaja"
+        }
+        return p to null
+    }
+
+    /** Kdo se zeli prijaviti - za vprasanje na napravi, ki dovoljuje. */
+    fun qrPodatki(qrId: String, skrivnost: String): Pair<QrPodatki?, String?> = synchronized(kljucnica) {
+        val (p, napaka) = qrZaSkrivnost(qrId, skrivnost)
+        if (p == null) return null to napaka
+        return QrPodatki(p.deviceId, p.ime, p.platforma) to null
+    }
+
+    /**
+     * Seznanjena naprava [odobril] dovoli prijavo. Zeton nastane takoj (kot pri kodi), prevzame
+     * ga naprava, ki je prijavo zacela. Ponovna potrditev iste prijave nicesar ne spremeni.
+     */
+    fun odobriQr(qrId: String, skrivnost: String, odobril: String): Pair<QrPodatki?, String?> {
+        val izid = synchronized(kljucnica) {
+            val (p, napaka) = qrZaSkrivnost(qrId, skrivnost)
+            if (p == null) return null to napaka
+            if (p.deviceId == odobril) return null to "ista_naprava"
+            if (p.zeton == null) {
+                if (jePolno(p.deviceId)) return null to "prevec_naprav"
+                val zeton = "saf_tv_" + nakljucni(24)
+                vpisiZeton(zeton, SeznanjenaNaprava(p.deviceId, p.ime, ura() / 1000.0))
+                shraniZetone()
+                p.zeton = zeton
+                p.odobril = odobril
+                p.nastala = ura()
+            }
+            QrPodatki(p.deviceId, p.ime, p.platforma)
+        }
+        naSpremembeNaprav?.invoke()
+        return izid to null
+    }
+
+    /**
+     * Naprava, ki je prijavo zacela, vprasa za izid: ("caka", null), ("odobreno", zeton) natanko enkrat,
+     * ali ("qr_ne_obstaja", null) - tudi ob napacni skrivnosti za prevzem, da ne izdamo, kaj obstaja.
+     */
+    fun prevzemiQr(qrId: String, deviceId: String, prevzem: String): Pair<String, String?> = synchronized(kljucnica) {
+        pocistiQr()
+        val p = qrPrijave[qrId] ?: return "qr_ne_obstaja" to null
+        if (p.deviceId != deviceId || !enaka(p.prevzem, prevzem)) return "qr_ne_obstaja" to null
+        val zeton = p.zeton ?: return "caka" to null
+        qrPrijave.remove(qrId)
+        return "odobreno" to zeton
+    }
+
+    /** Naprava je okno zaprla ali QR osvezila: stara prijava ne sme viseti do poteka. */
+    fun prekliciQr(qrId: String, deviceId: String, prevzem: String): Boolean = synchronized(kljucnica) {
+        val p = qrPrijave[qrId] ?: return false
+        if (p.deviceId != deviceId || !enaka(p.prevzem, prevzem) || p.zeton != null) return false
+        qrPrijave.remove(qrId)
+        return true
+    }
+
+    private fun sha256Hex(niz: String): String =
+        java.security.MessageDigest.getInstance("SHA-256").digest(niz.toByteArray(Charsets.UTF_8))
+            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+
     fun seznanjeneNaprave(): List<SeznanjenaNaprava> = synchronized(kljucnica) {
         zetoni.values.map { n -> vzdevki[n.deviceId]?.let { n.copy(ime = it) } ?: n }
     }
@@ -1354,6 +1475,11 @@ class HubUsmerjevalnik(
             )
         }
 
+        if (pot.startsWith("/cast/pair/qr/") && zahteva.metoda == "POST") {
+            if (!krajevni) return HubStreznik.Odgovor(403, napakaJson("Seznanjanje je mogoče samo v krajevnem omrežju.", "samo_krajevno"))
+            return odgovorQr(pot, zahteva)
+        }
+
         if (pot == "/cast/share/screen/start" && zahteva.metoda == "POST") {
             if (!krajevni || !jeVeljavenZeton(zahteva.glave["x-safeer-token"])) {
                 return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
@@ -1583,6 +1709,61 @@ class HubUsmerjevalnik(
         return null
     }
 
+    /** Prijava s QR kodo po HTTP (glej [zacniQr]); klicatelj je ze preveril, da je zahteva krajevna. */
+    private fun odgovorQr(pot: String, zahteva: HubStreznik.Zahteva): HubStreznik.Odgovor {
+        val telo = JsonLahki.objekt(zahteva.telo)
+        val qrId = (telo?.niz("qr_id") ?: "").trim().take(64)
+        val deviceId = (telo?.niz("device_id") ?: "").trim().take(NAJVEC_IMENA)
+        val skrivnost = (telo?.niz("secret") ?: "").trim().take(128)
+        val prevzem = (telo?.niz("poll_secret") ?: "").trim().take(128)
+        fun napaka(koda: String?): HubStreznik.Odgovor = when (koda) {
+            "prevec_prijav" -> HubStreznik.Odgovor(429, napakaJson("Preveč čakajočih prijav; poskusite čez nekaj minut.", koda))
+            "prevec_poskusov" -> HubStreznik.Odgovor(429, napakaJson("Preveč poskusov. Na računalniku se je pokazala nova koda.", koda))
+            "prevec_naprav" -> HubStreznik.Odgovor(409, napakaJson("Preveč seznanjenih naprav.", koda))
+            "ista_naprava" -> HubStreznik.Odgovor(409, napakaJson("Naprava ne more dovoliti sama sebi.", koda))
+            "neveljavno" -> HubStreznik.Odgovor(400, napakaJson("Neveljavna zahteva.", koda))
+            else -> HubStreznik.Odgovor(404, napakaJson("Koda je potekla. Na računalniku se je pokazala nova.", "qr_ne_obstaja"))
+        }
+        fun podatki(p: QrPodatki) = JsonLahki.Zapis().niz("device_id", p.deviceId).niz("name", p.ime).niz("platform", p.platforma)
+        when (pot) {
+            "/cast/pair/qr/start" -> {
+                if (deviceId.isEmpty()) return HubStreznik.Odgovor(400, napakaJson("Manjka device_id.", "manjka_device_id"))
+                val ime = (telo?.niz("name") ?: "").trim().take(NAJVEC_IMENA)
+                val platforma = (telo?.niz("platform") ?: "").trim()
+                val (id, n) = zacniQr(deviceId, ime, platforma, (telo?.niz("secret_sha256") ?: "").trim().lowercase(), prevzem)
+                if (id == null) return napaka(n)
+                return HubStreznik.Odgovor(200, JsonLahki.Zapis()
+                    .niz("qr_id", id)
+                    .niz("hub_id", IDENTITETA_HUBA)
+                    .niz("fp", lastniOdtis)
+                    .stevilo("expires_in_seconds", (PIN_VELJA_MS / 1000).toDouble())
+                    .toString())
+            }
+            "/cast/pair/qr/info", "/cast/pair/qr/approve" -> {
+                // Samo naprava, ki je ze v Safeer Linku (telefon, tablica), vidi in dovoli prijavo.
+                val odobril = napravaZeZetona(zahteva.glave["x-safeer-token"])
+                    ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
+                if (qrId.isEmpty() || skrivnost.isEmpty()) return napaka("qr_ne_obstaja")
+                val (p, n) = if (pot.endsWith("/info")) qrPodatki(qrId, skrivnost) else odobriQr(qrId, skrivnost, odobril)
+                if (p == null) return napaka(n)
+                val z = podatki(p)
+                if (pot.endsWith("/approve")) z.logicno("approved", true)
+                return HubStreznik.Odgovor(200, z.toString())
+            }
+            "/cast/pair/qr/status" -> {
+                val (stanje, zeton) = prevzemiQr(qrId, deviceId, prevzem)
+                if (stanje == "qr_ne_obstaja") return napaka(stanje)
+                val z = JsonLahki.Zapis().logicno("approved", zeton != null)
+                if (zeton != null) z.niz("token", zeton).niz("hub_id", IDENTITETA_HUBA).niz("fp", lastniOdtis)
+                return HubStreznik.Odgovor(200, z.toString())
+            }
+            "/cast/pair/qr/cancel" -> {
+                return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("cancelled", prekliciQr(qrId, deviceId, prevzem)).toString())
+            }
+        }
+        return HubStreznik.Odgovor(404, napakaJson("Ni te poti.", "ni_poti"))
+    }
+
     /**
      * Nadgradnja v WebSocket je dovoljena samo iz krajevnega omrezja in samo z veljavno
      * enokratno vstopnico. Vrne razlog zavrnitve ali null, ce je vse v redu.
@@ -1607,7 +1788,8 @@ class HubUsmerjevalnik(
 
         private val ZNANE_POTI = setOf(
             "/cast/pair/start", "/cast/pair/claim", "/cast/pair/sibling", "/cast/ticket", "/cast/devices", "/cast/health",
-            "/cast/trust/enroll", "/cast/trust/ring", "/cast/trust/alias", "/cast/auth/challenge", "/cast/auth/ticket"
+            "/cast/trust/enroll", "/cast/trust/ring", "/cast/trust/alias", "/cast/auth/challenge", "/cast/auth/ticket",
+            "/cast/pair/qr/start", "/cast/pair/qr/info", "/cast/pair/qr/approve", "/cast/pair/qr/status", "/cast/pair/qr/cancel"
         )
         /** Izziv za prijavo s podpisom velja minuto: dovolj za en krog po omrezju, premalo za zbiranje. */
         private const val IZZIV_VELJA_MS = 60_000L
