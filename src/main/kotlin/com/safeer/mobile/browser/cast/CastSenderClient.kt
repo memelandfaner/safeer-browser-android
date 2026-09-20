@@ -172,6 +172,12 @@ class CastSenderClient(
                         zmoznosti.forEach { caps.put(it) }
                         if (sinhronizira) caps.put("sync")
                         if (caps.length() > 0) put("capabilities", caps)
+                        // Protocol v1: model naprave (telefon je rocna naprava; huba ne gosti, zato brez prioritete).
+                        put("protocol", HubUsmerjevalnik.PROTOKOL_V1)
+                        put("platform", platforma)
+                        put("kind", "handheld")
+                        val razlicica = try { context?.let { it.packageManager.getPackageInfo(it.packageName, 0).versionName } } catch (_: Throwable) { null }
+                        if (!razlicica.isNullOrBlank()) put("version", razlicica)
                     })
                 }
                 ws.send(registerMsg.toString())

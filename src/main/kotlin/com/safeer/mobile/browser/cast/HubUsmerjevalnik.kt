@@ -61,7 +61,15 @@ class HubUsmerjevalnik(
         var zmoznosti: List<String>,
         var naslov: String,
         var zadnjic: Double,
-        var povezava: Odjemalec?
+        var povezava: Odjemalec?,
+        // Protocol v1: model naprave. Prazno pri odjemalcih protokola 0.2.
+        var protokol: String = "",
+        var platforma: String = "",
+        var vrsta: String = "",
+        var razlicica: String = "",
+        var prioriteta: Int = 0,
+        /** Katalog aplikacij naprave: JSON objekt {"<id>": {"name": ..., "kind": ...}} ali prazno. */
+        var aplikacije: String = ""
     )
 
     private class Prijava(
@@ -699,6 +707,13 @@ class HubUsmerjevalnik(
             .niz("ip", naprava.naslov)
             .nic("port")
             .stevilo("last_seen", naprava.zadnjic)
+        // Protocol v1: model naprave in katalog aplikacij, samo kadar ju naprava pove.
+        if (naprava.protokol.isNotBlank()) zapis.niz("protocol", naprava.protokol)
+        if (naprava.platforma.isNotBlank()) zapis.niz("platform", naprava.platforma)
+        if (naprava.vrsta.isNotBlank()) zapis.niz("kind", naprava.vrsta)
+        if (naprava.razlicica.isNotBlank()) zapis.niz("version", naprava.razlicica)
+        if (naprava.prioriteta > 0) zapis.stevilo("priority", naprava.prioriteta.toDouble())
+        if (naprava.aplikacije.isNotBlank()) zapis.surovo("apps", naprava.aplikacije)
         val z = zasedeno[naprava.id]
         if (z != null) {
             zapis.niz("busy_by", z.posiljatelj)
@@ -851,6 +866,20 @@ class HubUsmerjevalnik(
 
         if (tip == "cast.ack") return null
 
+        if (tip == "apps.announce") {
+            // Protocol v1: naprava (ponudnik) naknadno objavi ali osvezi svoj katalog aplikacij.
+            // Hub ga hrani in razposlje v cast.devices; vsebine ne razlaga.
+            val katalog = sporocilo.objekt("payload")?.surovo("apps")
+                ?: return potrditev(id, "rejected", "Manjka apps.", "apps", "manjka_apps")
+            val preverjen = preveriKatalog(katalog)
+            val spremenjeno = synchronized(kljucnica) {
+                val n = idPovezave(od)?.let { naprave[it] } ?: return potrditev(id, "rejected", "Naprava ni prijavljena.", "apps", "ni_prijavljena")
+                if (n.aplikacije == preverjen) false else { n.aplikacije = preverjen; true }
+            }
+            if (spremenjeno) { objaviNaprave(); naSpremembeNaprav?.invoke() }
+            return potrditev(id, "accepted", null, "apps")
+        }
+
         // Kar ni na seznamu, se ne posreduje nikamor. Dovoljenja se ne smejo siriti po nesreci.
         return potrditev(id, "error", "Neznan tip sporočila: '$tip'", prostor, koda = "neznan_tip")
     }
@@ -882,6 +911,13 @@ class HubUsmerjevalnik(
             naprava.ime = (tovor.niz("name")?.takeIf { it.isNotBlank() } ?: deviceId).take(NAJVEC_IMENA)
             naprava.vloga = vloga
             naprava.zmoznosti = zmoznosti
+            // Protocol v1: model naprave (odjemalec 0.2 teh polj nima - ostanejo prazna).
+            naprava.protokol = tovor.nizAli("protocol").take(8)
+            naprava.platforma = tovor.nizAli("platform").take(16)
+            naprava.vrsta = tovor.nizAli("kind").take(16)
+            naprava.razlicica = tovor.nizAli("version").take(32)
+            naprava.prioriteta = (tovor.stevilo("priority") ?: 0.0).toInt().coerceIn(0, 1000)
+            tovor.surovo("apps")?.let { naprava.aplikacije = preveriKatalog(it) }
             // Naslov vzamemo iz vticnice, ne iz tega, kar naprava trdi o sebi.
             naprava.naslov = od.naslov
             naprava.zadnjic = ura() / 1000.0
@@ -894,6 +930,31 @@ class HubUsmerjevalnik(
         // Krog zaupanja dobi vsaka naprava ob prijavi, da ga ima tudi takrat, ko hub ugasne.
         if (krog.stevilo() > 0) posljiVarno(od, sporociloKroga())
         return potrditev(id, "accepted")
+    }
+
+    /**
+     * Katalog aplikacij, kot ga sme hub hraniti: JSON objekt {"<id>": {"name": "...", "kind": "..."}},
+     * najvec NAJVEC_APLIKACIJ vnosov, kratka imena. Kar ne ustreza, odpade - naprava z malo
+     * pomnilnika ne sme hraniti tujega smetja. Vrne ociscen zapis ali prazno.
+     */
+    fun preveriKatalog(surovo: String): String {
+        if (surovo.length > NAJVEC_KATALOG_BAJTOV) return ""
+        val pogled = JsonLahki.objekt(surovo) ?: return ""
+        val zapis = JsonLahki.Zapis()
+        var stevilo = 0
+        for (idApp in pogled.kljuci()) {
+            if (stevilo >= NAJVEC_APLIKACIJ) break
+            val a = pogled.objekt(idApp) ?: continue
+            val cistId = idApp.take(NAJVEC_IMENA)
+            if (cistId.isBlank()) continue
+            val vnos = JsonLahki.Zapis()
+                .niz("name", a.nizAli("name", cistId).take(NAJVEC_IMENA))
+                .niz("kind", a.nizAli("kind").take(16))
+            a.niz("icon")?.let { if (it.length <= 256) vnos.niz("icon", it) }
+            zapis.surovo(cistId, vnos.toString())
+            stevilo++
+        }
+        return if (stevilo == 0) "" else zapis.toString()
     }
 
     private fun usmeriSinhronizacijo(
@@ -1515,6 +1576,11 @@ class HubUsmerjevalnik(
         const val NAJVECJA_KATEGORIJA = 192 * 1024
         const val NAJVEC_SKUPAJ_SYNC = 512 * 1024
         const val NAJVEC_IMENA = 64
+        /** Protocol v1: katalog aplikacij ene naprave (vnosov in bajtov). */
+        const val NAJVEC_APLIKACIJ = 200
+        const val NAJVEC_KATALOG_BAJTOV = 32 * 1024
+        /** Razlicica protokola, ki jo odjemalci v1 povedo v cast.register (`protocol`). */
+        const val PROTOKOL_V1 = "1.0"
         /** Najvec znakov besedila v enem deljenju (share.text po HTTP). */
         const val NAJVEC_BESEDILA = 20_000
 
