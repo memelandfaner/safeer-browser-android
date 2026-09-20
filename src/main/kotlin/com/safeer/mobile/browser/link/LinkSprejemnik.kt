@@ -171,7 +171,8 @@ class LinkSprejemnik : Service() {
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(this),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST)
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST),
+            context = applicationContext
         )
         nov.onShare = { sporocilo -> prejmi(sporocilo) }
         nov.onControl = { sporocilo -> izvediUkaz(nov, sporocilo) }

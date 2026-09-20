@@ -92,6 +92,25 @@ object HubTls {
     /** Prstni odtis (SHA-256, hex) lastnega potrdila. */
     fun lastniOdtis(): String = odtis(potrdilo())
 
+    /**
+     * Javni kljuc te naprave (isti kljuc kot za TLS huba), base64 zapisa SubjectPublicKeyInfo:
+     * vnos v krog zaupanja. Ker hubovo potrdilo nosi prav ta kljuc, naprave hub prepoznajo po
+     * krogu, ne po odtisu enega potrdila.
+     */
+    fun javniKljucB64(): String =
+        android.util.Base64.encodeToString(potrdilo().publicKey.encoded, android.util.Base64.NO_WRAP)
+
+    /** Podpis s kljucem te naprave (SHA256withECDSA, DER), base64. Kljuc ne zapusti KeyStore. */
+    fun podpisi(podatki: ByteArray): String {
+        potrdilo()
+        val ks = KeyStore.getInstance(SHRAMBA).apply { load(null) }
+        val kljuc = ks.getKey(ALIAS, null) as java.security.PrivateKey
+        val s = java.security.Signature.getInstance("SHA256withECDSA")
+        s.initSign(kljuc)
+        s.update(podatki)
+        return android.util.Base64.encodeToString(s.sign(), android.util.Base64.NO_WRAP)
+    }
+
     /** Tovarna streznih vticnic: samo TLS 1.2/1.3, kljuc iz KeyStore. */
     fun streznik(): SSLServerSocketFactory {
         potrdilo()

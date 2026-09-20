@@ -48,7 +48,13 @@ class CastSenderClient(
     /** Ime, ki ga vidijo druge naprave v seznamu. */
     private val deviceName: String = "Safeer Mobile Phone",
     /** Kaj ta naprava zna sprejeti od drugih (text, file, screen). */
-    private val zmoznosti: List<String> = emptyList()
+    private val zmoznosti: List<String> = emptyList(),
+    /**
+     * Krog zaupanja (KrogNaprave) zivi v nastavitvah aplikacije; s kontekstom se naprava prijavi s
+     * podpisom svojega kljuca in se ob prvem stiku vpise v krog. Brez konteksta gre po starem z zetonom.
+     */
+    private val context: android.content.Context? = null,
+    private val platforma: String = "phone"
 ) {
     companion object {
         private const val TAG = "SafeerCastSender"
@@ -123,7 +129,13 @@ class CastSenderClient(
             return
         }
         Log.i(TAG, "Povezujem se na Safeer Cast Hub: $hubWsUrl")
-        zVstopnico(hubWsUrl, controlToken) { naslov -> odpriPovezavo(naslov) }
+        val ctx = context
+        val vpisana = ctx != null && try { KrogNaprave.jeVpisana(ctx, senderId) } catch (_: Throwable) { false }
+        if (vpisana) {
+            zVstopnicoSPodpisom(hubWsUrl) { naslov -> odpriPovezavo(naslov) }
+        } else {
+            zVstopnico(hubWsUrl, controlToken) { naslov -> vpisiVKrog(); odpriPovezavo(naslov) }
+        }
     }
 
     /**
@@ -181,6 +193,87 @@ class CastSenderClient(
                 mainHandler.post { onConnectedStateChanged?.invoke(false); nacrtujPonovno() }
             }
         })
+    }
+
+
+    private fun osnova(wsUrl: String): String =
+        wsUrl.replace(Regex("^wss"), "https").replace(Regex("^ws"), "http")
+            .substringBefore("/cast/ws").substringBefore("/link/ws").substringBefore("/safeer/ws")
+            .trimEnd('/')
+
+    /** POST JSON na hub (z zetonom ali brez); naprej(koda, telo). Napaka omrezja = koda 0. */
+    private fun klic(pot: String, telo: JSONObject?, zeton: String?, naprej: (Int, String) -> Unit) {
+        val z = Request.Builder().url("${osnova(hubWsUrl)}$pot")
+            .post((telo?.toString() ?: "").toRequestBody("application/json".toMediaTypeOrNull()))
+        if (!zeton.isNullOrBlank()) z.addHeader("X-Safeer-Token", zeton)
+        client.newCall(z.build()).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: java.io.IOException) { naprej(0, "") }
+            override fun onResponse(call: Call, response: Response) {
+                response.use { naprej(it.code, it.body?.string().orEmpty()) }
+            }
+        })
+    }
+
+    /**
+     * Vstopnica s podpisom kljuca naprave (krog zaupanja): izziv -> podpis -> vstopnica. Zeton ni
+     * potreben, zato ta pot prezivi tudi zamenjavo huba. Ce hub kroga ne pozna (star hub) ali nas v
+     * njem nima, gre po starem z zetonom.
+     */
+    private fun zVstopnicoSPodpisom(wsUrl: String, naprej: (String) -> Unit) {
+        val ctx = context ?: return zVstopnico(wsUrl, controlToken, naprej)
+        klic("/cast/auth/challenge", JSONObject().put("device_id", senderId), null) { koda, telo ->
+            val j = try { JSONObject(telo) } catch (_: Throwable) { JSONObject() }
+            val nonce = j.optString("nonce")
+            if (koda != 200 || nonce.isBlank()) {
+                Log.i(TAG, "Prijava s podpisom ni mogoca ($koda); z zetonom.")
+                zVstopnico(wsUrl, controlToken, naprej); return@klic
+            }
+            val odtisHuba = j.optString("fp").ifBlank { hubOdtis.orEmpty() }
+            val podpis = try { KrogNaprave.podpisPrijave(senderId, odtisHuba, nonce) } catch (e: Throwable) {
+                Log.w(TAG, "Podpisa ni bilo mogoce narediti: ${e.message}"); zVstopnico(wsUrl, controlToken, naprej); return@klic
+            }
+            klic("/cast/auth/ticket", JSONObject().put("device_id", senderId).put("nonce", nonce).put("signature", podpis), null) { koda2, telo2 ->
+                val j2 = try { JSONObject(telo2) } catch (_: Throwable) { JSONObject() }
+                val vstopnica = j2.optString("ticket")
+                if (koda2 != 200 || vstopnica.isBlank()) {
+                    Log.w(TAG, "Hub podpisa ni sprejel ($koda2); z zetonom.")
+                    zVstopnico(wsUrl, controlToken, naprej); return@klic
+                }
+                j2.optJSONObject("ring")?.let { KrogNaprave.sprejmi(ctx, it.toString()) }
+                Log.i(TAG, "Prijava s podpisom kljuca naprave.")
+                val locilo = if (wsUrl.contains("?")) "&" else "?"
+                naprej("$wsUrl${locilo}ticket=$vstopnica")
+            }
+        }
+    }
+
+    /**
+     * Prehod z zetona na kljuc: naprava z veljavnim zetonom vpise svoj javni kljuc v krog huba
+     * (enkrat; potem gre s podpisom). Star hub brez kroga vrne 404 - ostanemo pri zetonu.
+     */
+    private fun vpisiVKrog() {
+        val ctx = context ?: return
+        if (controlToken.isNullOrBlank()) return
+        if (try { KrogNaprave.jeVpisana(ctx, senderId) } catch (_: Throwable) { true }) return
+        val kljuc = try { HubTls.javniKljucB64() } catch (e: Throwable) {
+            Log.w(TAG, "Kljuca naprave ni: ${e.message}"); return
+        }
+        val telo = JSONObject().put("pubkey", kljuc).put("name", deviceName).put("platform", platforma)
+        klic("/cast/trust/enroll", telo, controlToken) { koda, odgovor ->
+            if (koda != 200) { Log.i(TAG, "Vpis v krog zaupanja ni mogoc ($koda)."); return@klic }
+            val ring = try { JSONObject(odgovor).optJSONObject("ring") } catch (_: Throwable) { null }
+            if (ring != null) KrogNaprave.sprejmi(ctx, ring.toString())
+            Log.i(TAG, "Kljuc naprave vpisan v krog zaupanja.")
+        }
+    }
+
+    /** Krog zaupanja s huba (ob prijavi in ob vsaki spremembi); shranimo ga, da nas pozna tudi naslednji hub. */
+    private fun sprejmiKrog(json: JSONObject) {
+        val ctx = context ?: return
+        val krog = json.optJSONObject("payload") ?: return
+        try { KrogNaprave.sprejmi(ctx, krog.toString()) } catch (e: Throwable) {
+            Log.w(TAG, "Kroga zaupanja ni bilo mogoce shraniti: ${e.message}")
+        }
     }
 
 
@@ -245,6 +338,7 @@ class CastSenderClient(
             val type = json.optString("type")
 
             when (type) {
+                "trust.update" -> sprejmiKrog(json)
                 "cast.devices" -> {
                     val devicesArray = json.optJSONArray("devices") ?: JSONArray()
                     val devicesList = mutableListOf<Device>()
