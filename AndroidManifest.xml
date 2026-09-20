@@ -9,6 +9,12 @@
         android:targetSdkVersion="36" />
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Safeer Link: videi, glasba in slike tega telefona za druge naprave - samo ko uporabnik to
+         vklopi na strani Linka in dovoli dostop. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <!-- Safeer Link: stran ali ukaz z druge naprave odpre brskalnik, tudi ko ni v ospredju
          (Android 10+ zagon iz ozadja dovoli le prek obvestila s celozaslonsko namero). -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />

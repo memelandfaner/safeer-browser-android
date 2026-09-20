@@ -39,7 +39,9 @@ object Daljinec {
         // (Safeer OS, Control) aplikacije katere koli naprave nasteje in zazene na en nacin.
         "apps.list", "apps.launch",
         // Zvok racunalnika na tej napravi (Safeer OS za racunalnik: Zvok -> Predvajaj tukaj).
-        "audio.play", "audio.stop"
+        "audio.play", "audio.stop",
+        // Datoteke te naprave (videi, glasba, slike) za druge naprave - kot jih deli Safeer Control.
+        "files.list"
     )
 
     /** Zmoznost, s katero se naprava javi, da zna predvajati zvok racunalnika ([ZvokSprejemnik]). */
@@ -116,6 +118,10 @@ object Daljinec {
         // Zvok z racunalnika igra ne glede na to, kaj je na zaslonu.
         if (d == "audio.play") return ZvokSprejemnik.zacni(context, parametri)
         if (d == "audio.stop") return ZvokSprejemnik.ustavi()
+        if (d == "files.list") {
+            val podatki = DatotekeStreznik.seznam(context, parametri.optString("folder", ""), parametri.optString("_posiljatelj", ""))
+            return Izid(true, if (podatki.optBoolean("shared")) "Datoteke" else "Naprava datotek ne deli", podatki)
+        }
         try {
             // Najprej dejavnost: tipke, drsenje, posnetek in tudi status z odprto stranjo.
             if (ospredje != null) {

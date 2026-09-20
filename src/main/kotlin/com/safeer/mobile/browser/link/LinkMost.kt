@@ -38,6 +38,8 @@ class LinkMost(
     companion object {
         private const val TAG = "SafeerLink"
         const val PREFS = "safeer_cast_prefs"
+        /** requestPermissions za medije (videi, glasba, slike za druge naprave). */
+        const val ZAHTEVA_DATOTEKE = 7322
     }
 
     private var odjemalec: CastSenderClient? = null
@@ -260,7 +262,7 @@ class LinkMost(
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(dejavnost),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST),
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST, Daljinec.ZMOZNOST_ZVOK, DatotekeStreznik.ZMOZNOST),
             context = dejavnost.applicationContext
         )
         nov.onShare = { sporocilo -> prejmiDeljenje(sporocilo) }
@@ -270,7 +272,9 @@ class LinkMost(
         nov.onControl = { sporocilo ->
             val tovor = sporocilo.optJSONObject("payload") ?: JSONObject()
             val dejanje = tovor.optString("action", "")
-            val izid = Daljinec.izvedi(dejavnost, dejanje, tovor.optJSONObject("params") ?: tovor, null,
+            val parametriUkaza = tovor.optJSONObject("params") ?: tovor
+            try { parametriUkaza.put("_posiljatelj", sporocilo.optString("sender", "")) } catch (_: Throwable) { }
+            val izid = Daljinec.izvedi(dejavnost, dejanje, parametriUkaza, null,
                 LinkSprejemnik.DOMACA_STRAN) { url, _ -> zapriZaslon(); odpriVBrskalniku(url) }
             val posiljatelj = sporocilo.optString("sender", "")
             if (posiljatelj.isNotBlank()) nov.posljiSporocilo(Daljinec.sporociloIzida(posiljatelj, sporocilo.optString("id", ""), dejanje, izid))
@@ -920,6 +924,32 @@ class LinkMost(
         } catch (e: Throwable) {
             napaka("sync_ni_nastavljena", "Sinhronizacije ni bilo mogoce nastaviti: ${e.message}")
         }
+    }
+
+
+    /** Videi, glasba in slike te naprave za druge naprave v Linku (DatotekeStreznik). */
+    @JavascriptInterface
+    fun datotekeStanje(): String = DatotekeStreznik.stanje(dejavnost).toString()
+
+    /**
+     * Vklop najprej vprasa za dovoljenje za medije (izid pride prek [naDovoljenje]); brez njega
+     * naprava ne deli nicesar. Izklop velja takoj.
+     */
+    @JavascriptInterface
+    fun nastaviDatoteke(vklop: Boolean) {
+        DatotekeStreznik.nastavi(dejavnost, vklop)
+        if (vklop && !DatotekeStreznik.imamoDovoljenje(dejavnost)) {
+            dejavnost.runOnUiThread {
+                try { dejavnost.requestPermissions(DatotekeStreznik.dovoljenja(), ZAHTEVA_DATOTEKE) } catch (_: Throwable) { }
+            }
+            return
+        }
+        odziv("datoteke", DatotekeStreznik.stanje(dejavnost))
+    }
+
+    /** Dejavnost sporoci izid vprasanja za dovoljenje; stran se nato izrise znova. */
+    fun naDovoljenje(koda: Int) {
+        if (koda == ZAHTEVA_DATOTEKE) odziv("datoteke", DatotekeStreznik.stanje(dejavnost))
     }
 
     /** Ali tece na televizorju. Televizor je zaslon in nima komu posiljati. */

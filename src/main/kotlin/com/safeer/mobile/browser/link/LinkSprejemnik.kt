@@ -172,7 +172,7 @@ class LinkSprejemnik : Service() {
             senderId = ime(),
             sinhronizira = ZaznamkiSync.jeVklopljena(this),
             deviceName = imeNaprave(),
-            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST, Daljinec.ZMOZNOST_ZVOK),
+            zmoznosti = listOf("url", "text", "file", "screen", Daljinec.ZMOZNOST, Daljinec.ZMOZNOST_ZVOK, DatotekeStreznik.ZMOZNOST),
             context = applicationContext
         )
         nov.onShare = { sporocilo -> prejmi(sporocilo) }
@@ -291,6 +291,8 @@ class LinkSprejemnik : Service() {
         val posiljatelj = sporocilo.optString("sender", "")
         val dejanje = tovor.optString("action", "")
         val parametri = tovor.optJSONObject("params") ?: tovor
+        // Posiljatelj iz sporocila huba, ne iz parametrov (zeton za datoteke je na napravo).
+        try { parametri.put("_posiljatelj", posiljatelj) } catch (_: Throwable) { }
         val refId = sporocilo.optString("id", "")
         glavnaNit.post {
             val ospredje = naUkaz
