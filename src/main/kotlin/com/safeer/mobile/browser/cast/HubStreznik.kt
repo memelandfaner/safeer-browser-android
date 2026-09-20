@@ -425,6 +425,9 @@ class HubStreznik(
         return izpis.toString()
     }
 
+    /** En okvir, ki caka na pisalno nit povezave. */
+    private class Izhod(val opkoda: Int, val podatki: ByteArray, val seznamNaprav: Boolean = false)
+
     /** Ena odprta povezava z napravo. */
     inner class Povezava(
         private val vticnica: Socket,
@@ -443,7 +446,19 @@ class HubStreznik(
         val zmoznosti = HashSet<String>()
 
         private val odprta = AtomicBoolean(true)
-        private val kljucnicaPisanja = Any()
+
+        /**
+         * Izhodna vrsta povezave. Pisanje na vticnico je blokirajoce: naprava, ki svojih
+         * podatkov ne bere (zamrznjena aplikacija, izgubljen WiFi), bi drzala nit, ki je
+         * hotela poslati - in z njo vse ostale naprave, ker hub seznam objavi vsem zapored.
+         * Zato posiljanje samo doda okvir v vrsto, pise pa ena sama nit te povezave.
+         */
+        private val kljucnicaVrste = Object()
+        private val vrsta = ArrayDeque<Izhod>()
+        private var bajtovVVrsti = 0L
+        private var pisec: Thread? = null
+        private var zaprtjeKoda = 1000
+        private var zaprtjeRazlog = ""
 
         /**
          * Koliko bajtov ta povezava trenutno zadrzuje pri sestavljanju sporocila. Racun je
@@ -480,31 +495,117 @@ class HubStreznik(
 
         fun jeOdprta(): Boolean = odprta.get() && !vticnica.isClosed
 
+        /**
+         * Postavi sporocilo v vrsto te povezave. Nikoli ne caka na omrezje: ce naprava ne bere
+         * in se vrsta napolni, povezavo zapremo (naprava se lahko takoj vrne z novo povezavo).
+         */
         fun poslji(besedilo: String) {
+            vVrsto(OPKODA_BESEDILO, besedilo.toByteArray(Charsets.UTF_8), besedilo.contains(OZNAKA_SEZNAMA))
+        }
+
+        private fun vVrsto(opkoda: Int, podatki: ByteArray, seznamNaprav: Boolean = false) {
             if (!jeOdprta()) return
-            val podatki = besedilo.toByteArray(Charsets.UTF_8)
-            synchronized(kljucnicaPisanja) {
+            var prepolna = false
+            synchronized(kljucnicaVrste) {
+                if (seznamNaprav) {
+                    // Seznam naprav je vedno cel: ce prejsnji se caka, ga novi nadomesti. Ob
+                    // ponovnem zagonu sredisca se tako ne nabere dvajset zastarelih seznamov.
+                    val stari = vrsta.indexOfFirst { it.seznamNaprav }
+                    if (stari >= 0) {
+                        bajtovVVrsti += podatki.size - vrsta[stari].podatki.size
+                        vrsta[stari] = Izhod(opkoda, podatki, true)
+                        return
+                    }
+                }
+                if (vrsta.size >= NAJVEC_V_VRSTI || bajtovVVrsti + podatki.size > NAJVEC_BAJTOV_V_VRSTI) {
+                    prepolna = true
+                } else {
+                    vrsta.addLast(Izhod(opkoda, podatki, seznamNaprav))
+                    bajtovVVrsti += podatki.size
+                    zagotoviPisca()
+                    kljucnicaVrste.notifyAll()
+                }
+            }
+            if (prepolna) {
+                Log.w(OZNAKA, "Naprava ne bere (${imeNaprave.ifBlank { naslov }}); povezavo zapiram.")
+                zapri(1011, "naprava ne bere")
+            }
+        }
+
+        /** Nit, ki edina pise na vticnico te povezave; zazene se ob prvem sporocilu. */
+        private fun zagotoviPisca() {
+            if (pisec != null) return
+            val nit = Thread(null, { zankaPisanja() }, "safeer-hub-pisec")
+            nit.isDaemon = true
+            pisec = nit
+            nit.start()
+        }
+
+        private fun zankaPisanja() {
+            while (true) {
+                var naslednji: Izhod? = null
+                synchronized(kljucnicaVrste) {
+                    while (vrsta.isEmpty() && odprta.get()) {
+                        try {
+                            kljucnicaVrste.wait(1_000)
+                        } catch (_: InterruptedException) {
+                            return
+                        }
+                    }
+                    if (vrsta.isNotEmpty()) {
+                        naslednji = vrsta.removeFirst()
+                        bajtovVVrsti -= naslednji!!.podatki.size
+                    }
+                }
+                val okvir = naslednji
+                if (okvir == null) {
+                    // Povezava se zapira in vrsta je prazna: posljemo se zakljucni okvir.
+                    posljiZakljucek()
+                    return
+                }
                 try {
-                    zapisiOkvir(OPKODA_BESEDILO, podatki)
+                    zapisiOkvir(okvir.opkoda, okvir.podatki)
                 } catch (e: Exception) {
                     Log.w(OZNAKA, "Pisanje ni uspelo: ${e.message}")
                     zapri(1011, "napaka pri pisanju")
+                    return
                 }
             }
         }
 
+        private fun posljiZakljucek() {
+            try {
+                val telo = ByteArrayOutputStream()
+                telo.write((zaprtjeKoda shr 8) and 0xFF)
+                telo.write(zaprtjeKoda and 0xFF)
+                telo.write(zaprtjeRazlog.toByteArray(Charsets.UTF_8))
+                zapisiOkvir(OPKODA_ZAPRI, telo.toByteArray())
+            } catch (_: Exception) {
+            }
+        }
+
+        /**
+         * Zapre povezavo. Zakljucni okvir poslje pisalna nit (edina pise na vticnico); ce se
+         * je zataknila na napravi, ki ne bere, po kratkem roku vticnico zapremo brez njega -
+         * zapiranje huba nikoli ne sme cakati na napravo.
+         */
         fun zapri(koda: Int = 1000, razlog: String = "") {
             if (!odprta.getAndSet(false)) return
             sprostiZadrzek()
-            try {
-                synchronized(kljucnicaPisanja) {
-                    val telo = ByteArrayOutputStream()
-                    telo.write((koda shr 8) and 0xFF)
-                    telo.write(koda and 0xFF)
-                    telo.write(razlog.toByteArray(Charsets.UTF_8))
-                    zapisiOkvir(OPKODA_ZAPRI, telo.toByteArray())
+            var nit: Thread? = null
+            synchronized(kljucnicaVrste) {
+                zaprtjeKoda = koda
+                zaprtjeRazlog = razlog
+                nit = pisec
+                kljucnicaVrste.notifyAll()
+            }
+            if (nit == null) {
+                posljiZakljucek()   // nic ni bilo poslanega: pisca ni, okvir zapisemo sami
+            } else if (nit !== Thread.currentThread()) {
+                try {
+                    nit!!.join(ZAPIRALNI_ROK_MS)
+                } catch (_: InterruptedException) {
                 }
-            } catch (_: Exception) {
             }
             try {
                 vticnica.close()
@@ -561,9 +662,9 @@ class HubStreznik(
                             zapri(1001, "naprava se ne oglaša")
                             break
                         }
-                        synchronized(kljucnicaPisanja) {
+                        run {
                             try {
-                                zapisiOkvir(OPKODA_PING, ByteArray(0))
+                                vVrsto(OPKODA_PING, ByteArray(0))
                             } catch (_: Exception) {
                                 zapri(1011, "ping ni uspel")
                             }
@@ -612,9 +713,9 @@ class HubStreznik(
                         zapri(1000, "")
                         return
                     }
-                    OPKODA_PING -> synchronized(kljucnicaPisanja) {
+                    OPKODA_PING -> run {
                         try {
-                            zapisiOkvir(OPKODA_PONG, podatki)
+                            vVrsto(OPKODA_PONG, podatki)
                         } catch (_: Exception) {
                         }
                     }
@@ -700,5 +801,17 @@ class HubStreznik(
         /** Po toliko zaporednih pingih brez odziva povezavo zapremo, da se ne kopicijo. */
         private const val NAJVEC_TIHIH_KROGOV = 3
         private const val CAKALNA_VRSTA = 16
+
+        /**
+         * Izhodna vrsta ene povezave. Sporocila huba so majhna (seznam naprav, ukazi daljinca),
+         * zato je vrsta kratka: kdor toliko zaostane, ne bere - povezavo zapremo in naprava se
+         * lahko takoj vrne z novo. Datoteke in zaslon ne gredo skozi vrsto (svoje povezave).
+         */
+        private const val NAJVEC_V_VRSTI = 64
+        private const val NAJVEC_BAJTOV_V_VRSTI = 512L * 1024
+        /** Koliko cakamo, da pisalna nit poslje zakljucni okvir, preden vticnico zapremo. */
+        private const val ZAPIRALNI_ROK_MS = 300L
+        /** Po tem prepoznamo objavo seznama naprav, ki jo je smiselno zdruziti. */
+        const val OZNAKA_SEZNAMA = "\"type\":\"cast.devices\""
     }
 }
