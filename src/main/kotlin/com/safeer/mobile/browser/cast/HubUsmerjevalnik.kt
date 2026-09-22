@@ -1080,6 +1080,40 @@ class HubUsmerjevalnik(
             else potrditev(id, "error", "Napaka pri posredovanju.", "share", "posredovanje_ni_uspelo")
         }
 
+        if (tip == "handoff.request") {
+            // Nadaljuj na: uporabnik izrecno preda stran/predvajanje izbrani napravi. Hub vsebine
+            // ne odpira; vpise pravega posiljatelja in tovor (url, naslov, polozaj) posreduje cilju.
+            val cilj = sporocilo.niz("target") ?: ""
+            val posiljatelj = idPovezave(od) ?: ""
+            val prejemnik = register.povezavaOd(cilj)
+                ?: return potrditev(id, "rejected", "Ciljna naprava '$cilj' ni povezana ali ne obstaja.", "handoff", "naprava_ni_povezana")
+            if (prejemnik === od) return potrditev(id, "rejected", "Ista naprava.", "handoff", "ista_naprava")
+            val tovor = JsonLahki.objekt(surovo)?.surovo("payload")
+            if (tovor == null || tovor.length > 8 * 1024) return potrditev(id, "rejected", "Neveljavna predaja.", "handoff", "neveljavno")
+            val naprej = JsonLahki.Zapis().niz("id", id).niz("type", tip).niz("target", cilj)
+                .niz("sender", posiljatelj).niz("sender_name", imeNaprave(posiljatelj)).stevilo("timestamp", ura() / 1000.0)
+                .surovo("payload", tovor)
+            return if (posljiVarno(prejemnik, naprej.toString())) potrditev(id, "accepted", null, "handoff")
+            else potrditev(id, "error", "Napaka pri posredovanju.", "handoff", "posredovanje_ni_uspelo")
+        }
+
+        if (tip in INTERNET_POSREDOVANJE) {
+            // Application gateway: samo kontrolni/omejeni podatkovni kosi med dvema seznanjenima
+            // napravama. Hub sam nikoli ne odpira interneta. Sender vedno vpise hub.
+            val cilj = sporocilo.niz("target") ?: ""
+            val posiljatelj = idPovezave(od) ?: ""
+            val prejemnik = register.povezavaOd(cilj)
+                ?: return potrditev(id, "rejected", "Internet gateway ni povezan.", "internet", "naprava_ni_povezana")
+            if (prejemnik === od) return potrditev(id, "rejected", "Ista naprava.", "internet", "ista_naprava")
+            val zapis = JsonLahki.objekt(surovo) ?: return potrditev(id, "error", "Neveljavno sporocilo.", "internet", "neveljavno")
+            val naprej = JsonLahki.Zapis().niz("id", id).niz("type", tip).niz("target", cilj)
+                .niz("sender", posiljatelj).niz("sender_name", imeNaprave(posiljatelj)).stevilo("timestamp", ura() / 1000.0)
+            for (polje in listOf("stream_id", "host", "path_id", "data", "reason")) zapis.niz(polje)?.let { naprej.niz(polje, it) }
+            zapis.stevilo("port")?.let { naprej.stevilo("port", it) }
+            return if (posljiVarno(prejemnik, naprej.toString())) null
+            else potrditev(id, "error", "Gateway sporocila ni bilo mogoce dostaviti.", "internet", "posredovanje_ni_uspelo")
+        }
+
         if (tip in CONTROL_POSREDOVANJE) {
             // Daljinec med napravama (Safeer Control): ukaz gre samo napravi, ki je prijavila
             // zmoznost "remote", odgovor pa nazaj posiljatelju ukaza. Hub ukaza ne izvaja in
@@ -1501,6 +1535,7 @@ class HubUsmerjevalnik(
         private val SHARE_POSREDOVANJE = setOf("share.text", "share.file", "share.screen")
         /** Daljinec (Safeer Control): ukaz napravi z zmoznostjo "remote" in njen odgovor nazaj. */
         private val CONTROL_POSREDOVANJE = setOf("control.command", "control.result")
+        private val INTERNET_POSREDOVANJE = setOf("internet.open", "internet.opened", "internet.data", "internet.close", "internet.error")
         const val ZMOZNOST_DALJINEC = "remote"
 
         // Meje so del zasnove, ne naknadni popravek. Televizor ima malo pomnilnika in ga
