@@ -97,7 +97,7 @@ class HubTokovi(
         val z = zasloni.remove(id) ?: return
         z.tece = false
         for (g in z.gledalci) g.konec = true
-        try { naKonecZaslona?.invoke(id, z.posiljatelj) } catch (_: Exception) { }
+        try { naKonecZaslona?.invoke(id, z.posiljatelj) } catch (e: Exception) { SafeerLog.napaka("Tokovi", "naKonecZaslona", e) }
     }
 
     fun zaslonTece(id: String): Boolean = zasloni[id]?.tece == true
@@ -331,10 +331,10 @@ class HubTokovi(
         val d = Datoteka(id, cilja.name, prejeto, cilja, kljuc, cilj, posiljatelj, zaGostitelja, ura(), sha256)
         datoteke[id] = d
         if (zaGostitelja) {
-            try { naPrejetoDatoteko(d.ime, cilja) } catch (_: Exception) { }
+            try { naPrejetoDatoteko(d.ime, cilja) } catch (e: Exception) { SafeerLog.napaka("Tokovi", "prejeta datoteka ni oddana", e) }
         }
         // Ciljni napravi pove Hub (share.file), posiljatelj je s tem opravil.
-        try { naDatoteko?.invoke(d) } catch (_: Exception) { }
+        try { naDatoteko?.invoke(d) } catch (e: Exception) { SafeerLog.napaka("Tokovi", "naDatoteko", e) }
         odgovori(izhod, 200, "{\"id\":\"$id\",\"name\":\"${ubezi(d.ime)}\",\"size\":$prejeto,\"key\":\"$kljuc\",\"for_host\":$zaGostitelja,\"sha256\":\"$sha256\"}")
     }
 

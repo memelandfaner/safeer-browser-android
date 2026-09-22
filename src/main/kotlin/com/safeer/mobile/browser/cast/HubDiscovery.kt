@@ -120,7 +120,7 @@ object HubDiscovery {
      * Za izvolitev huba: klicatelj kandidate prefiltrira po krogu zaupanja in izbere najboljsega.
      * Klic na glavni niti, natanko enkrat.
      */
-    fun poisciVse(context: Context, timeoutMs: Long = 2500L, naprej: (List<NajdeniHub>) -> Unit) {
+    fun poisciVse(context: Context, timeoutMs: Long = 4000L, naprej: (List<NajdeniHub>) -> Unit) {
         val app = context.applicationContext
         val glavna = Handler(Looper.getMainLooper())
         val nsd = app.getSystemService(Context.NSD_SERVICE) as? NsdManager
@@ -132,6 +132,12 @@ object HubDiscovery {
                 ?.createMulticastLock("safeer-hub-izvolitev")?.apply { setReferenceCounted(false); acquire() }
         } catch (_: Exception) { null }
         var listener: NsdManager.DiscoveryListener? = null
+        // Razresujemo enega za drugim: Android pred 14 drugi hkratni resolveService zavrne
+        // (FAILURE_ALREADY_ACTIVE) - televizor je razresil svoj oglas, racunalnikovega pa izgubil in
+        // pri izvolitvi ni videl nikogar (22. 9. 2026: "drugih v krogu: 0" ob hubu racunalnika).
+        val cakalna = java.util.ArrayDeque<NsdServiceInfo>()
+        var razresujem = false
+        lateinit var razresi: () -> Unit
         fun zakljuci() {
             if (!koncano.compareAndSet(false, true)) return
             try { listener?.let { nsd.stopServiceDiscovery(it) } } catch (_: Exception) {}
@@ -140,8 +146,13 @@ object HubDiscovery {
             glavna.post { naprej(kopija) }
         }
         fun razresevalec(): NsdManager.ResolveListener = object : NsdManager.ResolveListener {
-            override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {}
+            override fun onResolveFailed(info: NsdServiceInfo, errorCode: Int) {
+                synchronized(cakalna) { razresujem = false }
+                razresi()
+            }
             override fun onServiceResolved(info: NsdServiceInfo) {
+                synchronized(cakalna) { razresujem = false }
+                razresi()
                 val gostitelj = info.host?.hostAddress ?: return
                 val l = info.attributes ?: emptyMap<String, ByteArray>()
                 if (l["tls"]?.toString(Charsets.UTF_8) != "1") return
@@ -161,12 +172,26 @@ object HubDiscovery {
             override fun onDiscoveryStarted(serviceType: String) {}
             override fun onServiceFound(info: NsdServiceInfo) {
                 if (koncano.get()) return
-                try { @Suppress("DEPRECATION") nsd.resolveService(info, razresevalec()) } catch (_: Exception) {}
+                synchronized(cakalna) { cakalna.addLast(info) }
+                razresi()
             }
             override fun onServiceLost(info: NsdServiceInfo) {}
             override fun onDiscoveryStopped(serviceType: String) {}
             override fun onStartDiscoveryFailed(serviceType: String, errorCode: Int) { zakljuci() }
             override fun onStopDiscoveryFailed(serviceType: String, errorCode: Int) {}
+        }
+        razresi = {
+            while (true) {
+                val naslednji = synchronized(cakalna) {
+                    if (razresujem || koncano.get()) null else cakalna.pollFirst()?.also { razresujem = true }
+                } ?: break
+                try {
+                    @Suppress("DEPRECATION") nsd.resolveService(naslednji, razresevalec())
+                    break
+                } catch (_: Exception) {
+                    synchronized(cakalna) { razresujem = false }
+                }
+            }
         }
         try { nsd.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, listener) } catch (_: Exception) { zakljuci(); return }
         glavna.postDelayed({ zakljuci() }, timeoutMs)
