@@ -239,17 +239,41 @@ class HubUsmerjevalnik(
         shramba.pisi(KLJUC_VZDEVKOV, zapis.toString())
     }
 
-    /** Ime, kot ga vidi uporabnik: njegov vzdevek, sicer ime, ki ga je naprava povedala o sebi. */
-    fun imeNaprave(id: String): String = synchronized(kljucnica) {
-        vzdevki[id] ?: register.najdi(id)?.ime ?: zetoni.values.firstOrNull { it.deviceId == id }?.ime ?: id
+    /**
+     * Fizicna naprava, ki ji pripada [id]: id iz kljuca (`n-<16 hex>`) njenega clana v krogu zaupanja.
+     * Identiteta naprave je kljuc; id-ji so le imena zanj. Brskalnik in Safeer Control na istem
+     * racunalniku (isti kljuc, `pc-x` in `pc-x-control`), stari in novi id iste naprave (`tv-…` in `n-…`)
+     * imajo zato isto napravo. Naprava brez kljuca v krogu (odjemalec pred krogom) je nima: null.
+     */
+    fun napravaIzKljuca(id: String): String? = krog.clanZaId(id)?.let { KrogZaupanja.idIzKljuca(it.kljuc) }
+
+    /** Vzdevek za [id]: dan temu id-ju, sicer napravi (kljucu), sicer drugemu id-ju istega kljuca (stari vzdevki). */
+    private fun vzdevek(id: String): String? = synchronized(kljucnica) {
+        vzdevki[id]?.let { return@synchronized it }
+        val naprava = napravaIzKljuca(id) ?: return@synchronized null
+        vzdevki[naprava] ?: vzdevki.entries.firstOrNull { (k, _) -> k != id && napravaIzKljuca(k) == naprava }?.value
     }
 
-    /** Preimenuje napravo; prazno ime vzdevek odstrani. Vrne false pri neveljavnem imenu. */
+    /** Ime, kot ga vidi uporabnik: njegov vzdevek, sicer ime, ki ga je naprava povedala o sebi. */
+    fun imeNaprave(id: String): String = synchronized(kljucnica) {
+        vzdevek(id) ?: register.najdi(id)?.ime ?: zetoni.values.firstOrNull { it.deviceId == id }?.ime ?: id
+    }
+
+    /**
+     * Preimenuje napravo; prazno ime vzdevek odstrani. Vrne false pri neveljavnem imenu. Naprava s kljucem
+     * v krogu dobi vzdevek kot celota (vsi njeni id-ji), sicer velja za ta id.
+     */
     fun preimenuj(id: String, ime: String): Boolean {
         val cisto = ime.replace(Regex("[\\u0000-\\u001f<>]"), "").trim().take(NAJVEC_IMENA)
         if (id.isBlank()) return false
         synchronized(kljucnica) {
-            if (cisto.isEmpty()) vzdevki.remove(id) else vzdevki[id] = cisto
+            val naprava = napravaIzKljuca(id)
+            if (naprava != null) {
+                // Vzdevki posameznih id-jev iste naprave bi novega prekrili.
+                vzdevki.keys.filter { it == id || it == naprava || napravaIzKljuca(it) == naprava }.forEach { vzdevki.remove(it) }
+            }
+            val kljuc = naprava ?: id
+            if (cisto.isEmpty()) vzdevki.remove(kljuc) else vzdevki[kljuc] = cisto
             shraniVzdevke()
         }
         objaviNaprave()
@@ -813,7 +837,7 @@ class HubUsmerjevalnik(
             nov
         }
         naSpremembeNaprav?.invoke()
-        try { naPridruzitev?.invoke(deviceId, ime) } catch (_: Throwable) { }
+        try { naPridruzitev?.invoke(deviceId, ime) } catch (e: Throwable) { SafeerLog.napaka("Usmerjevalnik", "naPridruzitev", e) }
         return zeton to null
     }
 
@@ -822,7 +846,7 @@ class HubUsmerjevalnik(
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
     fun seznanjeneNaprave(): List<SeznanjenaNaprava> = synchronized(kljucnica) {
-        zetoni.values.map { n -> vzdevki[n.deviceId]?.let { n.copy(ime = it) } ?: n }
+        zetoni.values.map { n -> vzdevek(n.deviceId)?.let { n.copy(ime = it) } ?: n }
     }
 
     /** Odvzame dostop napravi in jo, ce je povezana, tudi odklopi. */
@@ -927,13 +951,15 @@ class HubUsmerjevalnik(
     private fun napravaJson(naprava: RegisterNaprav.Naprava): String {
         val zapis = JsonLahki.Zapis()
             .niz("id", naprava.id)
-            .niz("name", vzdevki[naprava.id] ?: naprava.ime)
+            .niz("name", vzdevek(naprava.id) ?: naprava.ime)
             .niz("own_name", naprava.ime)
             .niz("role", naprava.vloga)
             .seznamNizov("capabilities", naprava.zmoznosti)
             .niz("ip", naprava.naslov)
             .nic("port")
             .stevilo("last_seen", naprava.zadnjic)
+        // Fizicna naprava (kljuc): vmesnik zdruzi sorodnike (brskalnik + Control) v eno napravo.
+        napravaIzKljuca(naprava.id)?.let { zapis.niz("device", it) }
         // Protocol v1: model naprave in katalog aplikacij, samo kadar ju naprava pove.
         if (naprava.protokol.isNotBlank()) zapis.niz("protocol", naprava.protokol)
         if (naprava.platforma.isNotBlank()) zapis.niz("platform", naprava.platforma)
@@ -944,7 +970,7 @@ class HubUsmerjevalnik(
         val z = zasedeno[naprava.id]
         if (z != null) {
             zapis.niz("busy_by", z.posiljatelj)
-                .niz("busy_by_name", vzdevki[z.posiljatelj] ?: register.najdi(z.posiljatelj)?.ime ?: z.posiljatelj)
+                .niz("busy_by_name", vzdevek(z.posiljatelj) ?: register.najdi(z.posiljatelj)?.ime ?: z.posiljatelj)
                 .niz("busy_kind", z.vrsta)
         }
         return zapis.toString()
