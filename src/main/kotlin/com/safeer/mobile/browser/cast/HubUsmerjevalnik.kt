@@ -269,8 +269,8 @@ class HubUsmerjevalnik(
                 register.najdi(c.id)?.ime?.takeIf { it.isNotBlank() }
                     ?: zetoni.values.firstOrNull { it.deviceId == c.id }?.ime ?: c.ime
             }.take(NAJVEC_IMENA)
-            // Novejsi zapis zmaga pri zdruzevanju krogov na vseh napravah (tudi ob zamaknjeni uri).
-            if (novo != c.ime) krog.dodaj(c.copy(ime = novo, dodano = maxOf(zdaj, c.dodano + 0.001)))
+            // Novejse ime zmaga pri zdruzevanju krogov na vseh napravah (tudi ob zamaknjeni uri); dodano ostane.
+            if (novo != c.ime) krog.preimenuj(c.id, novo, maxOf(zdaj, c.imenovano + 0.001))
         }
     }
 
@@ -1118,6 +1118,15 @@ class HubUsmerjevalnik(
         }
 
         if (tip == "cast.ack") return null
+
+        if (tip == "trust.names") {
+            // Naprava ponudi imena iz svojega kroga (npr. preimenovanje na drugem hubu ali prehod starih vzdevkov).
+            // Hub vzame samo imena clanov, ki jih ze pozna z istim kljucem - nic novega ne vstopi v krog.
+            if (register.najdi(idPovezave(od)) == null) return potrditev(id, "rejected", "Naprava ni prijavljena.", "trust", "ni_prijavljena")
+            val tovor = sporocilo.surovo("payload") ?: return potrditev(id, "rejected", "Manjka krog.", "trust", "manjka_krog")
+            if (krog.zdruziImena(tovor)) { objaviNaprave(); naSpremembeNaprav?.invoke() }
+            return potrditev(id, "accepted", null, "trust")
+        }
 
         if (tip == "apps.announce") {
             // Protocol v1: naprava (ponudnik) naknadno objavi ali osvezi svoj katalog aplikacij.

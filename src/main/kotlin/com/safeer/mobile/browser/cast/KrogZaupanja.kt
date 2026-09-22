@@ -39,6 +39,8 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
         val platforma: String,
         val dodano: Double,
         val dodal: String,
+        /** Kdaj je uporabnik napravo nazadnje poimenoval (0 = nikoli); novejse ime zmaga, `dodano` ostane. */
+        val imenovano: Double = 0.0,
     )
 
     data class Umik(val id: String, val umaknjeno: Double, val umaknil: String)
@@ -133,11 +135,17 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
                     val z = c.objekt(id) ?: continue
                     val kljuc = z.niz("kljuc") ?: continue
                     if (dekodirajKljuc(kljuc) == null) continue
-                    val nov = Clan(id, kljuc, z.nizAli("ime", id), z.nizAli("platforma"), z.stevilo("dodano") ?: 0.0, z.nizAli("dodal"))
+                    val nov = Clan(id, kljuc, z.nizAli("ime", id), z.nizAli("platforma"), z.stevilo("dodano") ?: 0.0, z.nizAli("dodal"),
+                        z.stevilo("imenovano") ?: 0.0)
                     val obstojeci = clani[id]
                     if (obstojeci == null || obstojeci.dodano < nov.dodano
                         || (obstojeci.dodano == nov.dodano && obstojeci.kljuc != nov.kljuc && obstojeci.kljuc < nov.kljuc)) {
-                        clani[id] = nov
+                        // Novejsi vnos iste naprave ne izgubi imena, ki ga je dal uporabnik.
+                        clani[id] = if (obstojeci != null && obstojeci.kljuc == nov.kljuc && obstojeci.imenovano > nov.imenovano)
+                            nov.copy(ime = obstojeci.ime, imenovano = obstojeci.imenovano) else nov
+                        spremenjeno = true
+                    } else if (obstojeci.kljuc == nov.kljuc && nov.imenovano > obstojeci.imenovano && nov.ime.isNotBlank()) {
+                        clani[id] = obstojeci.copy(ime = nov.ime, imenovano = nov.imenovano)
                         spremenjeno = true
                     }
                 }
@@ -152,13 +160,57 @@ class KrogZaupanja(private val shramba: HubUsmerjevalnik.Shramba? = null) {
         return spremenjeno
     }
 
+    /**
+     * Uporabnik je napravo [id] poimenoval [ime] ob [ob]. Samo ime in cas imena - `dodano` ostane, zato
+     * preimenovanje ne more obuditi umaknjene naprave. Vrne true, ce se je krog spremenil.
+     */
+    fun preimenuj(id: String, ime: String, ob: Double = zdaj()): Boolean {
+        val cisto = ime.trim().take(64)
+        if (cisto.isEmpty()) return false
+        val spremenjeno = synchronized(kljucnica) {
+            val c = clani[id]?.takeIf { jeVeljaven(it) } ?: return@synchronized false
+            // Enako ime brez casa imena (star vnos) potrdimo, da ga hub sprejme kot uporabnikovo.
+            if ((c.ime == cisto && c.imenovano > 0) || ob <= c.imenovano) return@synchronized false
+            clani[id] = c.copy(ime = cisto, imenovano = ob)
+            true
+        }
+        if (spremenjeno) { shrani(); naSpremembo?.invoke() }
+        return spremenjeno
+    }
+
+    /**
+     * Imena, ki jih ponudi naprava (trust.names): sprejmemo samo ime clanov, ki jih ze poznamo z ISTIM kljucem
+     * in niso umaknjeni, in samo novejse (imenovano). Nov clan, drug kljuc ali umik po tej poti ne pride - to
+     * sme le hub z zdruzi(). Ura iz prihodnosti (vec kot dan) ne sme za vedno zakleniti imena.
+     */
+    fun zdruziImena(json: String): Boolean {
+        val c = JsonLahki.objekt(json)?.objekt("clani") ?: return false
+        val meja = zdaj() + 86_400.0
+        var spremenjeno = false
+        synchronized(kljucnica) {
+            for (id in c.kljuci()) {
+                val z = c.objekt(id) ?: continue
+                val obstojeci = clani[id]?.takeIf { jeVeljaven(it) } ?: continue
+                val ob = z.stevilo("imenovano") ?: continue
+                val ime = z.niz("ime")?.trim()?.take(64).orEmpty()
+                if (z.niz("kljuc") != obstojeci.kljuc || ime.isEmpty() || ob <= obstojeci.imenovano || ob > meja) continue
+                clani[id] = obstojeci.copy(ime = ime, imenovano = ob)
+                spremenjeno = true
+            }
+        }
+        if (spremenjeno) { shrani(); naSpremembo?.invoke() }
+        return spremenjeno
+    }
+
     /** Zapis kroga; clani in umiki po id, da je isti krog na vsaki napravi tudi isti niz. */
     fun json(): String = synchronized(kljucnica) {
         val c = JsonLahki.Zapis()
         for (clan in clani.values.sortedBy { it.id }) {
-            c.surovo(clan.id, JsonLahki.Zapis()
+            val z = JsonLahki.Zapis()
                 .niz("kljuc", clan.kljuc).niz("ime", clan.ime).niz("platforma", clan.platforma)
-                .stevilo("dodano", clan.dodano).niz("dodal", clan.dodal).toString())
+                .stevilo("dodano", clan.dodano).niz("dodal", clan.dodal)
+            if (clan.imenovano > 0) z.stevilo("imenovano", clan.imenovano)
+            c.surovo(clan.id, z.toString())
         }
         val u = JsonLahki.Zapis()
         for (umik in umiki.values.sortedBy { it.id }) {
