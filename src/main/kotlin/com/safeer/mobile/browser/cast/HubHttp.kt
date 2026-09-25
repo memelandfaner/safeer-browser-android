@@ -130,7 +130,9 @@ internal fun HubUsmerjevalnik.odgovoriSeznanitev(zahteva: HubStreznik.Zahteva, p
         if (pairId.isEmpty() || deviceId.isEmpty() || cb == null) {
             return HubStreznik.Odgovor(400, napakaJson("Manjka pair_id, device_id ali cb.", "manjka_cb"))
         }
-        val izid = spakeKorak2(pairId, deviceId, cb)
+        val pubkey = (telo?.niz("pubkey") ?: "").trim()
+        val platform = (telo?.nizAli("platform") ?: "").trim()
+        val izid = spakeKorak2(pairId, deviceId, cb, pubkey, platform)
         val zeton = izid.zeton
         if (zeton == null) {
             val (kodaHttp, sporocilo) = when (izid.napaka) {
@@ -142,10 +144,14 @@ internal fun HubUsmerjevalnik.odgovoriSeznanitev(zahteva: HubStreznik.Zahteva, p
             }
             return HubStreznik.Odgovor(kodaHttp, napakaJson(sporocilo, izid.napaka ?: "seznanitev_ni_mogoca"))
         }
-        return HubStreznik.Odgovor(
-            200,
-            JsonLahki.Zapis().logicno("approved", true).niz("token", zeton).toString()
-        )
+        val odziv = JsonLahki.Zapis()
+            .logicno("approved", true)
+            .niz("token", zeton)
+            .niz("hub_id", lastniId)
+            .niz("fp", lastniOdtis)
+            .surovo("ring", krog.json())
+        krog.lastniKljuc?.let { odziv.niz("hub_pubkey", it) }
+        return HubStreznik.Odgovor(200, odziv.toString())
     }
 
     if ((pot == "/cast/pair/verify" || pot == "/cast/pair/claim") && zahteva.metoda == "POST") {
@@ -507,10 +513,15 @@ internal fun HubUsmerjevalnik.odgovorQr(pot: String, zahteva: HubStreznik.Zahtev
             if (deviceId.isEmpty()) return HubStreznik.Odgovor(400, napakaJson("Manjka device_id.", "manjka_device_id"))
             if (qrId.isEmpty() || skrivnost.isEmpty()) return napaka("qr_ne_obstaja")
             val ime = (telo?.niz("name") ?: "").trim().take(NAJVEC_IMENA)
-            val (zeton, n) = pridruzi(qrId, skrivnost, deviceId, ime)
+            val pubkey = (telo?.niz("pubkey") ?: "").trim()
+            val platform = (telo?.nizAli("platform") ?: "").trim()
+            val (zeton, n) = pridruzi(qrId, skrivnost, deviceId, ime, pubkey, platform)
             if (zeton == null) return napaka(n)
-            return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("approved", true).niz("token", zeton)
-                .niz("hub_id", IDENTITETA_HUBA).niz("fp", lastniOdtis).toString())
+            val odziv = JsonLahki.Zapis().logicno("approved", true).niz("token", zeton)
+                .niz("hub_id", lastniId).niz("fp", lastniOdtis)
+                .surovo("ring", krog.json())
+            krog.lastniKljuc?.let { odziv.niz("hub_pubkey", it) }
+            return HubStreznik.Odgovor(200, odziv.toString())
         }
         "/cast/pair/qr/cancel" -> {
             return HubStreznik.Odgovor(200, JsonLahki.Zapis().logicno("cancelled", prekliciQr(qrId, deviceId, prevzem)).toString())
@@ -522,8 +533,9 @@ internal fun HubUsmerjevalnik.odgovorQr(pot: String, zahteva: HubStreznik.Zahtev
             napravaZeZetona(zahteva.glave["x-safeer-token"])
                 ?: return HubStreznik.Odgovor(401, napakaJson("Naprava ni seznanjena.", "naprava_ni_seznanjena"))
             if (qrId.isNotEmpty()) prekliciPridruzitev(qrId)
-            val (id, s) = ustvariPridruzitev()
+            val (id, s, pin) = ustvariPridruzitev()
             return HubStreznik.Odgovor(200, JsonLahki.Zapis().niz("qr_id", id).niz("secret", s).niz("fp", lastniOdtis)
+                .niz("pin", pin).niz("code", pin)
                 .stevilo("expires_in_seconds", (PIN_VELJA_MS / 1000).toDouble())
                 // Spletni odjemalec: naprava, ki pokaze kodo, jo zgradi kot http://<sredisce>:<web_port>/#...
                 .stevilo("web_port", spletnaVrata.toDouble()).toString())
