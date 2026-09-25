@@ -243,6 +243,9 @@ object HubKrmilnik {
     /** Id po modelu naprave, kot je veljal pred prehodom na id iz kljuca (nadomestek in alias). */
     fun stariId(): String = "phone-" + android.os.Build.MODEL.replace(Regex("\\s+"), "-").lowercase()
 
+    /** Platforma te naprave za seznanjanje (HubPairing): telefon je vedno "phone", ni tablicnega izvoda. */
+    fun platforma(context: Context): String = "phone"
+
     /**
      * Mapa za datoteke, ki jih telefon prejme prek Safeer Linka: ista, kot jo je uporabnik
      * izbral za prenose. Ce vanjo ni mogoce pisati (novejsi Android brez dovoljenja), gre v

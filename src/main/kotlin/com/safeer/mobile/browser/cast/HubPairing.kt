@@ -212,6 +212,9 @@ object HubPairing {
                     put("pair_id", p.pairId)
                     put("device_id", deviceId)
                     put("cb", HubUsmerjevalnik.bajteVHex(cb))
+                    val pubkey = try { HubTls.javniKljucB64() } catch (_: Throwable) { "" }
+                    if (pubkey.isNotBlank()) put("pubkey", pubkey)
+                    put("platform", HubKrmilnik.platforma(app))
                 })
                 val zeton = j2?.optString("token").orEmpty()
                 if (k2 != 200 || zeton.isBlank()) {
@@ -221,10 +224,11 @@ object HubPairing {
                     return@Thread
                 }
                 shraniZeton(app, zeton, p.odtis)
+                j2?.optJSONObject("ring")?.let { KrogNaprave.sprejmi(app, it.toString()) }
                 zadnjaSeznanitev = Izid(p.hubId, p.odtis, zeton)
                 tece = false
                 odprta = null
-                Log.i(TAG, "Naprava je seznanjena s Safeer Hubom; odtis potrdila pripet.")
+                Log.i(TAG, "Naprava je seznanjena s Safeer Hubom; odtis potrdila pripet in krog shranjen.")
                 glavna.post { izid(true, null) }
             } catch (e: Exception) {
                 Log.w(TAG, "Kode ni bilo mogoce potrditi: ${e.message}")
@@ -255,6 +259,9 @@ object HubPairing {
                     put("secret", skrivnost)
                     put("device_id", deviceId)
                     put("name", ime)
+                    val pubkey = try { HubTls.javniKljucB64() } catch (_: Throwable) { "" }
+                    if (pubkey.isNotBlank()) put("pubkey", pubkey)
+                    put("platform", HubKrmilnik.platforma(app))
                 })
                 val zeton = json?.optString("token").orEmpty()
                 if (koda != 200 || zeton.isBlank()) {
@@ -265,8 +272,9 @@ object HubPairing {
                 app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
                     .putString("hub_url", "wss://$naslov/cast/ws").putString("hub_ticket_path", "/cast/ticket").apply()
                 shraniZeton(app, zeton, odtis.lowercase())
+                json?.optJSONObject("ring")?.let { KrogNaprave.sprejmi(app, it.toString()) }
                 zadnjaSeznanitev = Izid(HubUsmerjevalnik.IDENTITETA_HUBA, odtis.lowercase(), zeton)
-                Log.i(TAG, "Naprava se je pridruzila srediscu s QR kodo; odtis potrdila pripet.")
+                Log.i(TAG, "Naprava se je pridruzila srediscu s QR kodo; odtis potrdila pripet in krog shranjen.")
                 glavna.post { izid(true, null) }
             } catch (e: Exception) {
                 Log.w(TAG, "Pridruzitev s QR kodo ni uspela: ${e.message}")
