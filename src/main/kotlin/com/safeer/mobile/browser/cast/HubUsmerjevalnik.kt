@@ -1361,6 +1361,29 @@ class HubUsmerjevalnik(
     // ------------------------------------------------------------------ Safeer Chat
     /** Sporocila za nepovezane naprave (npr. telefon z zaprto aplikacijo): cilj -> surova sporocila s casom. */
     private val cakajociKlepet = HashMap<String, ArrayDeque<Pair<Long, String>>>()
+    private var klepetNalozen = false
+
+    /** Cakajoca sporocila prezivijo ponovni zagon huba (televizor ugasne): hrani jih Shramba. Klici pod zaklepom. */
+    private fun naloziKlepetZaklenjeno() {
+        if (klepetNalozen) return
+        klepetNalozen = true
+        val zapis = shramba?.beri(KLJUC_KLEPETA) ?: return
+        for (vrstica in zapis.split('\n')) {
+            val deli = vrstica.split('\t')
+            if (deli.size != 3) continue
+            val cas = deli[1].toLongOrNull() ?: continue
+            val surovo = try { String(java.util.Base64.getDecoder().decode(deli[2]), Charsets.UTF_8) } catch (_: Throwable) { continue }
+            cakajociKlepet.getOrPut(deli[0]) { ArrayDeque() }.addLast(cas to surovo)
+        }
+    }
+
+    private fun shraniKlepetZaklenjeno() {
+        val shramba = this.shramba ?: return
+        val zapis = cakajociKlepet.flatMap { (cilj, vrsta) ->
+            vrsta.map { (cas, surovo) -> cilj + "\t" + cas + "\t" + java.util.Base64.getEncoder().encodeToString(surovo.toByteArray(Charsets.UTF_8)) }
+        }.joinToString("\n")
+        try { shramba.pisi(KLJUC_KLEPETA, zapis) } catch (_: Throwable) { }
+    }
 
     /**
      * Safeer Chat med napravami v Linku. Hub vsebine ne razlaga; vpise pravega posiljatelja in ime ter
@@ -1390,25 +1413,33 @@ class HubUsmerjevalnik(
         val prejemnik = register.povezavaOd(cilj) ?: kandidati.firstOrNull { it.povezava != null }?.povezava
         if (prejemnik != null && posljiVarno(prejemnik, naprej)) return potrditev(id, "accepted", null, "chat")
         synchronized(cakajociKlepet) {
+            naloziKlepetZaklenjeno()
             val vrsta = cakajociKlepet.getOrPut(cilj) { ArrayDeque() }
             while (vrsta.size >= KLEPET_NA_NAPRAVO) vrsta.removeFirst()
             vrsta.addLast(ura() to naprej)
+            shraniKlepetZaklenjeno()
         }
         return potrditev(id, "queued", null, "chat")
     }
 
     private fun dostaviCakajociKlepet(cilj: String, povezava: Odjemalec) {
         val zdaj = ura()
-        val zaDostavo = synchronized(cakajociKlepet) { cakajociKlepet.remove(cilj)?.toList() } ?: return
+        val zaDostavo = synchronized(cakajociKlepet) {
+            naloziKlepetZaklenjeno()
+            cakajociKlepet.remove(cilj)?.toList().also { if (it != null) shraniKlepetZaklenjeno() }
+        } ?: return
         val neDostavljeno = zaDostavo.filter { (cas, sporocilo) ->
             zdaj - cas <= KLEPET_ZIVLJENJE_MS && !posljiVarno(povezava, sporocilo)
         }
         if (neDostavljeno.isNotEmpty()) synchronized(cakajociKlepet) {
             cakajociKlepet.getOrPut(cilj) { ArrayDeque() }.addAll(0, neDostavljeno)
+            shraniKlepetZaklenjeno()
         }
     }
 
-    internal fun steviloCakajocihKlepetov(cilj: String): Int = synchronized(cakajociKlepet) { cakajociKlepet[cilj]?.size ?: 0 }
+    internal fun steviloCakajocihKlepetov(cilj: String): Int = synchronized(cakajociKlepet) {
+        naloziKlepetZaklenjeno(); cakajociKlepet[cilj]?.size ?: 0
+    }
 
     /**
      * Katalog aplikacij, kot ga sme hub hraniti: JSON objekt {"<id>": {"name": "...", "kind": "..."}},
@@ -1698,6 +1729,7 @@ class HubUsmerjevalnik(
 
         private const val KLJUC_ZETONOV = "cast_naprave"
         private const val KLJUC_VZDEVKOV = "cast_vzdevki"
+        private const val KLJUC_KLEPETA = "cast_klepet_vrsta"
 
         private val ZNANE_POTI = setOf(
             "/cast/pair/start", "/cast/pair/claim", "/cast/pair/sibling", "/cast/ticket", "/cast/devices", "/cast/health",
