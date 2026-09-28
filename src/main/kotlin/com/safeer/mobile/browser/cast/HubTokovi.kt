@@ -61,6 +61,13 @@ class HubTokovi(
     /** Z eno napravo deli naenkrat ena naprava: vrne id naprave, ki cilj ze ima, ali null. */
     @Volatile var zasediCilj: ((String, String) -> String?)? = null
     @Volatile var sprostiCilj: ((String, String) -> Unit)? = null
+    /**
+     * Dotik ali poteg s strani gledalca (posiljatelj deljenja, akcija "input.tap"/"input.swipe"/
+     * "input.key", parametri kot JSON): usmerjevalnik ga posreduje gostitelju po WebSocketu, isto
+     * pot, kot bi ukaz poslala seznanjena naprava (Daljinec). Gledalec sam ni nujno seznanjen -
+     * dovoljenje mu da ze kljuc, s katerim gleda ta zaslon.
+     */
+    @Volatile var naVnosGledalca: ((String, String, String) -> Unit)? = null
 
     // ------------------------------------------------------------------ zaslon
 
@@ -136,6 +143,7 @@ class HubTokovi(
      *   POST /cast/screen/{id}?k=                tok okvirjev: 4 bajti dolzine + JPEG, ponavljaj
      *   GET  /cast/screen/{id}/stream?k=         MJPEG za gledalca
      *   GET  /cast/screen/{id}/view?k=           HTML stran gledalca (za televizor/brskalnik)
+     *   POST /cast/screen/{id}/input?k=          dotik/poteg gledalca nazaj h gostitelju
      */
     fun obdelaj(zahteva: HubStreznik.Zahteva, vhod: InputStream, izhod: OutputStream, vticnica: Socket): Boolean {
         val pot = zahteva.pot
@@ -149,6 +157,7 @@ class HubTokovi(
             pot.startsWith("/cast/file/") && zahteva.metoda == "GET" -> { posljiDatoteko(zahteva, izhod); true }
             pot.startsWith("/cast/screen/") && pot.endsWith("/stream") && zahteva.metoda == "GET" -> { gledajZaslon(zahteva, izhod, vticnica); true }
             pot.startsWith("/cast/screen/") && pot.endsWith("/view") && zahteva.metoda == "GET" -> { stranGledalca(zahteva, izhod); true }
+            pot.startsWith("/cast/screen/") && pot.endsWith("/input") && zahteva.metoda == "POST" -> { vnosVZaslon(zahteva, vhod, izhod); true }
             pot.startsWith("/cast/screen/") && zahteva.metoda == "POST" -> { sprejmiZaslon(zahteva, vhod, izhod, vticnica); true }
             else -> false
         }
@@ -240,8 +249,51 @@ class HubTokovi(
             odgovori(izhod, 404, STRAN_KONEC, "text/html; charset=utf-8")
             return
         }
-        val html = STRAN_GLEDALCA.replace("%%TOK%%", "/cast/screen/$id/stream?k=$kljuc")
+        val html = STRAN_GLEDALCA
+            .replace("%%TOK%%", "/cast/screen/$id/stream?k=$kljuc")
+            .replace("%%VNOS%%", "/cast/screen/$id/input?k=$kljuc")
         odgovori(izhod, 200, html, "text/html; charset=utf-8")
+    }
+
+    /**
+     * Dotik ali poteg gledalca: telo je majhen JSON ({"vrsta":"tap",x,y} ali {"vrsta":"swipe",...}
+     * ali {"vrsta":"key",key}), kljuc gledalca je isti kot za sliko - posebne seznanitve gledalec ne
+     * potrebuje. Posredujemo naprej h gostitelju (isti ukaz, kot bi ga poslala seznanjena naprava);
+     * odgovorimo takoj, brez cakanja na izvedbo, da dotik na sliki ostane odziven.
+     */
+    private fun vnosVZaslon(zahteva: HubStreznik.Zahteva, vhod: InputStream, izhod: OutputStream) {
+        val id = zahteva.pot.removePrefix("/cast/screen/").substringBefore('/')
+        val z = zasloni[id]
+        if (z == null || z.kljuc != zahteva.poizvedba["k"] || !z.tece) {
+            odgovori(izhod, 404, "{\"napaka\":\"tega deljenja ni\"}")
+            return
+        }
+        val dolzina = (zahteva.glave["content-length"] ?: "").toIntOrNull() ?: 0
+        if (dolzina <= 0 || dolzina > NAJVECJI_VNOS) {
+            odgovori(izhod, 400, "{\"napaka\":\"neveljavno telo\"}")
+            return
+        }
+        val telo = ByteArray(dolzina)
+        if (!preberiTocno(vhod, telo, dolzina)) {
+            odgovori(izhod, 400, "{\"napaka\":\"telo je prekinjeno\"}")
+            return
+        }
+        try {
+            val o = org.json.JSONObject(String(telo, Charsets.UTF_8))
+            val (akcija, parametri) = when (o.optString("vrsta", "")) {
+                "tap" -> "input.tap" to org.json.JSONObject().put("x", o.optDouble("x")).put("y", o.optDouble("y"))
+                "swipe" -> "input.swipe" to org.json.JSONObject()
+                    .put("x1", o.optDouble("x1")).put("y1", o.optDouble("y1"))
+                    .put("x2", o.optDouble("x2")).put("y2", o.optDouble("y2"))
+                    .put("ms", o.optLong("ms", 220L).coerceIn(60L, 1500L))
+                "key" -> "input.key" to org.json.JSONObject().put("key", o.optString("key", "").take(24))
+                else -> null to null
+            }
+            if (akcija != null && parametri != null) naVnosGledalca?.invoke(z.posiljatelj, akcija, parametri.toString())
+        } catch (_: Exception) {
+            // Slabo oblikovan dotik ne sme podreti gledanja - preprosto ga izpustimo.
+        }
+        odgovori(izhod, 200, "{\"ok\":true}")
     }
 
     // ---- datoteke ----
@@ -328,7 +380,9 @@ class HubTokovi(
             odgovori(izhod, 400, "{\"napaka\":\"prstni odtis se ne ujema\",\"koda\":\"napacen_odtis\"}")
             return
         }
-        val d = Datoteka(id, cilja.name, prejeto, cilja, kljuc, cilj, posiljatelj, zaGostitelja, ura(), sha256)
+        // Zacasna datoteka ima nakljucno predpono (vec hkratnih prenosov z istim imenom); prejemnik pa
+        // dobi izvirno ime, kot ga je poslal posiljatelj (podvojitve razresi sam, v svoji mapi).
+        val d = Datoteka(id, if (zaGostitelja) cilja.name else ime, prejeto, cilja, kljuc, cilj, posiljatelj, zaGostitelja, ura(), sha256)
         datoteke[id] = d
         if (zaGostitelja) {
             try { naPrejetoDatoteko(d.ime, cilja) } catch (e: Exception) { SafeerLog.napaka("Tokovi", "prejeta datoteka ni oddana", e) }
@@ -408,6 +462,8 @@ class HubTokovi(
         const val NAJVEC_GLEDALCEV = 4
         const val VRSTA_GLEDALCA = 2
         const val NAJVECJI_OKVIR = 2 * 1024 * 1024
+        /** Telo POST .../input je majhen JSON - nekaj deset bajtov; ta meja je ze zelo velikodusna. */
+        const val NAJVECJI_VNOS = 2 * 1024
         const val NAJVEC_PRENOSOV = 3
         const val NAJVECJA_DATOTEKA = 4L * 1024 * 1024 * 1024
         const val REZERVA_PROSTORA = 200L * 1024 * 1024
@@ -446,18 +502,45 @@ class HubTokovi(
             return kandidat
         }
 
-        /** Gledalec: crno ozadje, slika umerjena po krajsi stranici, razmerje vedno ohranjeno. */
+        /**
+         * Gledalec: crno ozadje, slika umerjena po krajsi stranici, razmerje vedno ohranjeno. Dotik
+         * na sliki gre nazaj h gostitelju (kratek dotik = tap, premik = poteg) prek %%VNOS%% - stran
+         * ni le mirujoca slika, aplikacijo na drugi napravi je mogoce dejansko upravljati od tu.
+         */
         private const val STRAN_GLEDALCA = """<!doctype html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1"><title>Safeer Link – zaslon</title>
-<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}
-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000}
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"><title>Safeer Link – zaslon</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden;touch-action:none}
+img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;-webkit-user-select:none;user-select:none}
 #konec{display:none;position:absolute;inset:0;color:#cbd5e1;font:20px sans-serif;align-items:center;justify-content:center;text-align:center;padding:24px}
 </style></head><body>
-<img id="zaslon" src="%%TOK%%" alt="">
+<img id="zaslon" src="%%TOK%%" alt="" draggable="false">
 <div id="konec">Deljenje zaslona je končano.</div>
 <script>
 var s=document.getElementById('zaslon');
 s.onerror=function(){s.style.display='none';document.getElementById('konec').style.display='flex';};
+var vnosPot='%%VNOS%%';
+function tocka(e){
+  var r=s.getBoundingClientRect();
+  var t=e.changedTouches?e.changedTouches[0]:e;
+  var x=(t.clientX-r.left)/r.width, y=(t.clientY-r.top)/r.height;
+  return [Math.min(1,Math.max(0,x)), Math.min(1,Math.max(0,y))];
+}
+var zacetna=null, zacetniCas=0;
+function dol(e){ e.preventDefault(); zacetna=tocka(e); zacetniCas=Date.now(); }
+function gor(e){
+  e.preventDefault();
+  if(!zacetna) return;
+  var koncna=tocka(e), trajanje=Date.now()-zacetniCas;
+  var dx=koncna[0]-zacetna[0], dy=koncna[1]-zacetna[1], telo;
+  if(Math.abs(dx)<0.02 && Math.abs(dy)<0.02) telo={vrsta:'tap',x:zacetna[0],y:zacetna[1]};
+  else telo={vrsta:'swipe',x1:zacetna[0],y1:zacetna[1],x2:koncna[0],y2:koncna[1],ms:Math.max(80,Math.min(1200,trajanje))};
+  zacetna=null;
+  fetch(vnosPot,{method:'POST',body:JSON.stringify(telo)}).catch(function(){});
+}
+s.addEventListener('touchstart',dol,{passive:false});
+s.addEventListener('touchend',gor,{passive:false});
+s.addEventListener('mousedown',dol);
+s.addEventListener('mouseup',gor);
 </script></body></html>"""
 
         private const val STRAN_KONEC = """<!doctype html><html><head><meta charset="utf-8"><title>Safeer Link</title>

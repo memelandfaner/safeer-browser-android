@@ -854,7 +854,7 @@ class HubUsmerjevalnik(
      * ugibanje je omejeno. Kodo ustvari proces sredisca (zaslon) ali seznanjena naprava v krajevnem
      * omrezju (/cast/pair/qr/invite, »Poveži novo napravo« na racunalniku) - nikoli tujec.
      */
-    internal class Pridruzitev(val id: String, val odtisSkrivnosti: String, val pin: String, val nastala: Long, var poskusov: Int = 0)
+    internal class Pridruzitev(val id: String, val odtisSkrivnosti: String, val skrivnost: String, val pin: String, val nastala: Long, var poskusov: Int = 0)
 
     data class PridruzitevIzid(val id: String, val skrivnost: String, val pin: String)
 
@@ -872,15 +872,30 @@ class HubUsmerjevalnik(
         pridruzitve.entries.removeAll { zdaj - it.value.nastala > PIN_VELJA_MS }
     }
 
-    /** Nova koda za zaslon sredisca: (id, skrivnost, pin). Klice se samo v procesu ali ob povabilu. */
+    /** Nova koda za zaslon sredisca: (id, skrivnost, pin). Vedno skuje SVEZO kodo in staro zavrze -
+        za to poklici samo, ko zaslon eksplicitno zamenja kodo (npr. redna obnovitev pred potekom,
+        ali ko se je nekdo ravno pridruzil in caka naslednja naprava). Za ponovni izris istega zaslona
+        (npr. ker klic ni uspel in poskusa znova) uporabi zagotoviPridruzitev(), da se koda ne spreminja. */
     fun ustvariPridruzitev(): PridruzitevIzid = synchronized(kljucnica) {
         pocistiPridruzitve()
         while (pridruzitve.size >= NAJVEC_CAKAJOCIH) pridruzitve.remove(pridruzitve.keys.first())
         val id = nakljucni(12)
         val skrivnost = nakljucni(16)
         val koda = pin()
-        pridruzitve[id] = Pridruzitev(id, sha256Hex(skrivnost), koda, ura())
+        pridruzitve[id] = Pridruzitev(id, sha256Hex(skrivnost), skrivnost, koda, ura())
         PridruzitevIzid(id, skrivnost, koda)
+    }
+
+    /** Kot ustvariPridruzitev(), le da NE skuje nove kode, ce ze imamo se veljavno: zaslon jo lahko
+        klice poljubnokrat (npr. vsakih 5 s, ko krajevni naslov/vrata sredisca se niso pripravljena, ali
+        katerikoli drug ponovni poskus) in uporabnik vidno vidi VEDNO ISTO kodo, dokler ne potece ali
+        dokler je zaslon eksplicitno ne zamenja prek ustvariPridruzitev(). To je popravek napake, kjer se
+        je koda na zaslonu spreminjala prehitro, da bi jo uporabnik utegnil prepisati. */
+    fun zagotoviPridruzitev(): PridruzitevIzid = synchronized(kljucnica) {
+        pocistiPridruzitve()
+        val obstojeca = pridruzitve.values.lastOrNull()
+        if (obstojeca != null) PridruzitevIzid(obstojeca.id, obstojeca.skrivnost, obstojeca.pin)
+        else ustvariPridruzitev()
     }
 
     /** Zaslon je kodo zamenjal ali zaprl. */
@@ -1198,6 +1213,8 @@ class HubUsmerjevalnik(
             } else potrditev(id, "error", "Napaka pri posredovanju.", "control", "posredovanje_ni_uspelo")
         }
 
+        if (tip == "chat.send") return usmeriKlepet(od, surovo, id)
+
         if (tip in DATA_POSREDOVANJE) {
             // Safeer Data Transport (v0.26, docs/P2P-NACRT.md): dogovor (data.offer/data.answer) in
             // nato sifrirani kosi (data.chunk/data.ack/data.close) med dvema seznanjenima napravama.
@@ -1243,8 +1260,11 @@ class HubUsmerjevalnik(
         if (tip == "pair.invite") {
             // Naprava v Linku pokaze QR kodo in 6-mestno kodo za novo napravo; kodo naredi sredisce, naprava jo le pokaze.
             if (register.najdi(idPovezave(od)) == null) return potrditev(id, "rejected", "Naprava ni prijavljena.", "pair", "ni_prijavljena")
-            sporocilo.objekt("payload")?.niz("preklici")?.takeIf { it.isNotBlank() }?.let { prekliciPridruzitev(it) }
-            val (qrId, skrivnost, pin) = ustvariPridruzitev()
+            val zahtevaPreklic = sporocilo.objekt("payload")?.niz("preklici").orEmpty()
+            if (zahtevaPreklic.isNotBlank()) prekliciPridruzitev(zahtevaPreklic)
+            // Brez izrecnega preklica ponovimo isto kodo (naprava morda le ponavlja neuspel poskus) -
+            // da se koda, ki jo uporabnik ravno prepisuje, ne spreminja izpod prstov.
+            val (qrId, skrivnost, pin) = if (zahtevaPreklic.isBlank()) zagotoviPridruzitev() else ustvariPridruzitev()
             val naslov = krajevniNaslovHuba()
             posljiVarno(od, ovojnica("pair.invite.ok").surovo("payload", JsonLahki.Zapis()
                 .niz("qr_id", qrId).niz("secret", skrivnost).niz("fp", lastniOdtis).niz("address", naslov)
@@ -1331,8 +1351,64 @@ class HubUsmerjevalnik(
         naSpremembeNaprav?.invoke()
         // Krog zaupanja dobi vsaka naprava ob prijavi, da ga ima tudi takrat, ko hub ugasne.
         if (krog.stevilo() > 0) posljiVarno(od, sporociloKroga())
+        // Safeer Chat: sporocila, ki so cakala, da se naprava spet poveze.
+        dostaviCakajociKlepet(deviceId, od)
+        if (register.najdi(deviceId)?.zmoznosti?.contains(ZMOZNOST_KLEPET) == true)
+            napravaIzKljuca(deviceId)?.let { dostaviCakajociKlepet(it, od) }
         return potrditev(id, "accepted")
     }
+
+    // ------------------------------------------------------------------ Safeer Chat
+    /** Sporocila za nepovezane naprave (npr. telefon z zaprto aplikacijo): cilj -> surova sporocila s casom. */
+    private val cakajociKlepet = HashMap<String, ArrayDeque<Pair<Long, String>>>()
+
+    /**
+     * Safeer Chat med napravami v Linku. Hub vsebine ne razlaga; vpise pravega posiljatelja in ime ter
+     * sporocilo posreduje cilju. Ce cilj ni povezan, pa je znana naprava, sporocilo pocaka (najvec
+     * [KLEPET_NA_NAPRAVO] na napravo, [KLEPET_ZIVLJENJE_MS]) in pride ob naslednji prijavi.
+     */
+    private fun usmeriKlepet(od: Odjemalec, surovo: String, id: String): String? {
+        val zapis = JsonLahki.objekt(surovo) ?: return potrditev(id, "error", "Neveljavno sporočilo.", "chat", "neveljavno_sporocilo")
+        val cilj = zapis.niz("target") ?: ""
+        val posiljatelj = idPovezave(od) ?: return potrditev(id, "rejected", "Naprava ni prijavljena.", "chat", "naprava_ni_povezana")
+        if (cilj.isBlank() || cilj == posiljatelj) return potrditev(id, "rejected", "Neveljaven prejemnik.", "chat", "isti_naprava")
+        val tovor = zapis.surovo("payload")
+        val besedilo = JsonLahki.objekt(tovor ?: "")?.niz("text") ?: ""
+        if (tovor == null || besedilo.isEmpty() || besedilo.toByteArray().size > KLEPET_NAJVEC_B || tovor.length > KLEPET_NAJVEC_B * 2)
+            return potrditev(id, "rejected", "Sporočilo je prazno ali preveliko.", "chat", "meja")
+        // Cilj je fizicna naprava (kljuc iz kroga, en pogovor ne glede na to, katera aplikacija na njej
+        // je povezana) ali posamezen id. Za kljuc izberemo povezano registracijo, ki zna klepet.
+        val kandidati = register.vse().filter { it.zmoznosti.contains(ZMOZNOST_KLEPET) && napravaIzKljuca(it.id) == cilj }
+        val znan = register.najdi(cilj) != null || kandidati.isNotEmpty()
+        if (!znan) return potrditev(id, "rejected", "Naprave ni v Safeer Linku.", "chat", "ni_naprave")
+        if (napravaIzKljuca(posiljatelj)?.let { it == cilj } == true)
+            return potrditev(id, "rejected", "Neveljaven prejemnik.", "chat", "isti_naprava")
+        val zapisNaprej = JsonLahki.Zapis().niz("id", id).niz("type", "chat.send").niz("target", cilj)
+            .niz("sender", posiljatelj).niz("sender_name", imeNaprave(posiljatelj))
+        napravaIzKljuca(posiljatelj)?.let { zapisNaprej.niz("sender_device", it) }
+        val naprej = zapisNaprej.stevilo("timestamp", ura() / 1000.0).surovo("payload", tovor).toString()
+        val prejemnik = register.povezavaOd(cilj) ?: kandidati.firstOrNull { it.povezava != null }?.povezava
+        if (prejemnik != null && posljiVarno(prejemnik, naprej)) return potrditev(id, "accepted", null, "chat")
+        synchronized(cakajociKlepet) {
+            val vrsta = cakajociKlepet.getOrPut(cilj) { ArrayDeque() }
+            while (vrsta.size >= KLEPET_NA_NAPRAVO) vrsta.removeFirst()
+            vrsta.addLast(ura() to naprej)
+        }
+        return potrditev(id, "queued", null, "chat")
+    }
+
+    private fun dostaviCakajociKlepet(cilj: String, povezava: Odjemalec) {
+        val zdaj = ura()
+        val zaDostavo = synchronized(cakajociKlepet) { cakajociKlepet.remove(cilj)?.toList() } ?: return
+        val neDostavljeno = zaDostavo.filter { (cas, sporocilo) ->
+            zdaj - cas <= KLEPET_ZIVLJENJE_MS && !posljiVarno(povezava, sporocilo)
+        }
+        if (neDostavljeno.isNotEmpty()) synchronized(cakajociKlepet) {
+            cakajociKlepet.getOrPut(cilj) { ArrayDeque() }.addAll(0, neDostavljeno)
+        }
+    }
+
+    internal fun steviloCakajocihKlepetov(cilj: String): Int = synchronized(cakajociKlepet) { cakajociKlepet[cilj]?.size ?: 0 }
 
     /**
      * Katalog aplikacij, kot ga sme hub hraniti: JSON objekt {"<id>": {"name": "...", "kind": "..."}},
@@ -1641,6 +1717,10 @@ class HubUsmerjevalnik(
         private val CONTROL_POSREDOVANJE = setOf("control.command", "control.result")
         private val INTERNET_POSREDOVANJE = setOf("internet.open", "internet.opened", "internet.data", "internet.close", "internet.error")
         /** Safeer Data Transport (v0.26): dogovor + sifrirani kosi med dvema seznanjenima napravama. */
+        const val ZMOZNOST_KLEPET = "chat"
+        private const val KLEPET_NAJVEC_B = 16 * 1024
+        private const val KLEPET_NA_NAPRAVO = 100
+        private const val KLEPET_ZIVLJENJE_MS = 7L * 24 * 3600 * 1000
         private val DATA_POSREDOVANJE = setOf("data.offer", "data.answer", "data.chunk", "data.ack", "data.close", "data.error")
         const val ZMOZNOST_DALJINEC = "remote"
 
