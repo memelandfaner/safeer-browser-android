@@ -18,6 +18,9 @@
     <!-- Safeer Link: stran ali ukaz z druge naprave odpre brskalnik, tudi ko ni v ospredju
          (Android 10+ zagon iz ozadja dovoli le prek obvestila s celozaslonsko namero). -->
     <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <!-- Safeer Link: Android 10+ dovoli zagon programa iz ozadja (ukaz s seznanjene naprave) samo z
+         dovoljenjem "Prikaz cez druge aplikacije"; uporabnik ga vklopi sam, prek obvestila. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- mDNS: brez tega Android na Wi-Fi zavrze multicast in Safeer Hub ni najden. -->
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

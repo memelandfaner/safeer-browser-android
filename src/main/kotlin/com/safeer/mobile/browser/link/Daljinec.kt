@@ -225,6 +225,10 @@ object Daljinec {
         val ime = try {
             context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(paket, 0)).toString()
         } catch (_: Throwable) { paket }
+        if (!smeZagnatiIzOzadja(context)) {
+            prebudiZNamero(context, namera, ime)
+            return izidBrezDovoljenja(context, ime)
+        }
         try {
             context.startActivity(namera)
         } catch (e: Throwable) {
@@ -236,6 +240,61 @@ object Daljinec {
 
     private const val KANAL_ZAGON = "safeer_link_zagon"
     private const val OBVESTILO_ZAGON = 4046
+
+    private const val KANAL_DOVOLJENJE = "safeer_link_dovoljenje"
+    private const val OBVESTILO_DOVOLJENJE = 4047
+    const val KODA_DOVOLJENJE_PRIKAZ = "potrebno_dovoljenje_prikaz"
+
+    /** Ali sme Safeer odpreti program, ko ni v ospredju (Android 10+: "Prikaz cez druge aplikacije"). */
+    private fun smeZagnatiIzOzadja(context: Context): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return true
+        if (android.provider.Settings.canDrawOverlays(context)) return true
+        return jeVOspredju(context)
+    }
+
+    private fun jeVOspredju(context: Context): Boolean = try {
+        val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val moj = android.os.Process.myPid()
+        am.runningAppProcesses.orEmpty().any {
+            it.pid == moj && it.importance == android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+        }
+    } catch (_: Throwable) { false }
+
+    /** Enkratno obvestilo na tej napravi: dotik odpre nastavitev "Prikaz cez druge aplikacije" za Safeer. */
+    private fun obvestiZaDovoljenje(context: Context, ime: String) {
+        try {
+            val upravitelj = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && upravitelj.getNotificationChannel(KANAL_DOVOLJENJE) == null) {
+                val kanal = android.app.NotificationChannel(KANAL_DOVOLJENJE, "Safeer Link - dovoljenje za zagon",
+                    android.app.NotificationManager.IMPORTANCE_HIGH)
+                kanal.description = "Enkratna prosnja za dovoljenje, da Safeer Link odpira programe na tej napravi."
+                upravitelj.createNotificationChannel(kanal)
+            }
+            val nastavitev = Intent(android.provider.Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                android.net.Uri.parse("package:" + context.packageName)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            val cakajoca = PendingIntent.getActivity(context, OBVESTILO_DOVOLJENJE, nastavitev,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+            val gradnik = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) android.app.Notification.Builder(context, KANAL_DOVOLJENJE)
+            else @Suppress("DEPRECATION") android.app.Notification.Builder(context)
+            val obvestilo = gradnik
+                .setContentTitle("Safeer Link: dovoli odpiranje programov")
+                .setContentText("Seznanjena naprava je želela odpreti $ime. Dotakni se in vklopi »Prikaz čez druge aplikacije« za Safeer.")
+                .setStyle(android.app.Notification.BigTextStyle().bigText("Seznanjena naprava je želela odpreti $ime. Dotakni se in vklopi »Prikaz čez druge aplikacije« za Safeer."))
+                .setSmallIcon(android.R.drawable.ic_menu_send)
+                .setContentIntent(cakajoca)
+                .setAutoCancel(true)
+                .build()
+            upravitelj.notify(OBVESTILO_DOVOLJENJE, obvestilo)
+        } catch (e: Throwable) {
+            Log.w(TAG, "Obvestila za dovoljenje ni bilo mogoce objaviti: ${e.message}")
+        }
+    }
+
+    private fun izidBrezDovoljenja(context: Context, ime: String): Izid {
+        obvestiZaDovoljenje(context, ime)
+        return Izid(false, "Na tej napravi enkrat dovoli »Prikaz čez druge aplikacije« za Safeer (obvestilo je že na zaslonu), nato ponovi zagon $ime.",
+            koda = KODA_DOVOLJENJE_PRIKAZ)
+    }
 
     private fun prebudiZNamero(context: Context, namera: Intent, ime: String) {
         try {
@@ -280,6 +339,10 @@ object Daljinec {
         val ime = try {
             context.packageManager.getApplicationLabel(context.packageManager.getApplicationInfo(paket, 0)).toString()
         } catch (_: Throwable) { paket }
+        if (!smeZagnatiIzOzadja(context)) {
+            prebudiZNamero(context, namera, ime)
+            return izidBrezDovoljenja(context, ime)
+        }
         try { context.startActivity(namera) } catch (e: Throwable) { Log.w(TAG, "Zagon $paket z naslovom ni uspel: ${e.message}") }
         prebudiZNamero(context, namera, ime)
         return Izid(true, "Odpiram $ime", JSONObject().put("package", paket).put("label", ime))
