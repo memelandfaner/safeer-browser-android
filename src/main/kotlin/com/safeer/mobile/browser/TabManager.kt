@@ -235,6 +235,10 @@ class TabManager(
         view.destroy()
     }
 
+    private companion object PadecIzrisovalnika {
+        const val PONOVITEV_PADCA_MS = 60_000L
+    }
+
     private fun rendererGone(tab: TabModel, view: ChromiumEngineView) {
         if (tab.loadedWebView !== view) {
             android.util.Log.w("SafeerTabs", "renderer gone for a view the tab no longer holds")
@@ -247,14 +251,27 @@ class TabManager(
         release(tab, view)
         onAudioStateChanged?.invoke(tab, false)
         if (tab.id == activeTabId) {
-            // No automatic crash/reload loop. The user decides when to retry.
-            container.addView(Button(context).apply {
-                setText(R.string.tab_reload_after_crash)
-                setOnClickListener { switchTab(tab.id) }
-            })
+            // Kot Splet na Linuxu in TV brskalnik (14. 10. 2026): aktivni zavihek se po padcu izrisovalnika
+            // enkrat sam nalozi znova. Ce ista stran pade se enkrat v 60 s, ne vrtimo kroga sesutij -
+            // uporabnik dobi gumb in odloci sam.
+            val zdaj = SystemClock.elapsedRealtime()
+            val prej = zadnjiPadec[tab.id]
+            zadnjiPadec[tab.id] = tab.url to zdaj
+            val ponovitev = prej != null && prej.first == tab.url && zdaj - prej.second < PONOVITEV_PADCA_MS
+            if (!ponovitev) {
+                container.post { if (activeTabId == tab.id && tab.crashed) switchTab(tab.id) }
+            } else {
+                container.addView(Button(context).apply {
+                    setText(R.string.tab_reload_after_crash)
+                    setOnClickListener { switchTab(tab.id) }
+                })
+            }
         }
         notifyUpdated()
     }
+
+    /** Zadnji padec izrisovalnika po zavihku: (naslov, cas) - zascita pred krogom sesutij. */
+    private val zadnjiPadec = HashMap<String, Pair<String, Long>>()
 
     fun closeTab(context: Context, tabId: String) {
         val index = tabs.indexOfFirst { it.id == tabId }
